@@ -1,0 +1,4 @@
+order_id,amount,currency
+o-001,100,JPY
+o-001,-25,EUR
+o-003,50,JPY

@@ -1,0 +1,7 @@
+{
+  "description": "Artificial order data for the offline demonstration.",
+  "required_columns": ["order_id", "amount", "currency"],
+  "primary_key": "order_id",
+  "minimum_amount": 0,
+  "allowed_currencies": ["JPY", "USD"]
+}

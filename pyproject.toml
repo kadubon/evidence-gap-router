@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "evidence-gap-router"
+dynamic = ["version"]
+description = "Route work by missing evidence, not by agent count."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{name = "K. Takahashi"}]
+keywords = ["evidence", "verification", "routing", "agents", "data-quality"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Operating System :: OS Independent",
+  "Typing :: Typed",
+]
+dependencies = ["pydantic>=2.12,<3"]
+
+[project.urls]
+Homepage = "https://github.com/kadubon/evidence-gap-router"
+Repository = "https://github.com/kadubon/evidence-gap-router"
+Issues = "https://github.com/kadubon/evidence-gap-router/issues"
+Changelog = "https://github.com/kadubon/evidence-gap-router/blob/main/CHANGELOG.md"
+
+[project.scripts]
+egr = "evidence_gap_router.cli:main"
+
+[dependency-groups]
+dev = ["ruff>=0.14", "mypy>=1.19", "pytest>=8.4", "twine>=6.2"]
+
+[tool.hatch.version]
+path = "src/evidence_gap_router/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/evidence_gap_router"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
