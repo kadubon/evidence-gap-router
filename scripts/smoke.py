@@ -6,9 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from evidence_gap_router.demo import run_demo
-
 import evidence_gap_router as egr
+from evidence_gap_router.demo import run_demo
 from evidence_gap_router.models import State
 
 
