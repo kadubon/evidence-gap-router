@@ -1,0 +1,33 @@
+{
+  "protocol_id": "egr-023-local-ollama-v1",
+  "package_version": "0.2.3",
+  "models": ["gemma4:e4b", "qwen3.6:35b-a3b"],
+  "arms": ["A", "B", "C"],
+  "development_parents": 4,
+  "confirmation_profiles": [24, 16, 8],
+  "profile_parent_numbers": {
+    "24": {"L1": [1, 2, 3, 4, 5, 6], "L2": [1, 2, 3, 4, 5, 6], "L3": [1, 2, 3, 4, 5, 6], "L4": [1, 2, 3, 4, 5, 6]},
+    "16": {"L1": [1, 2, 3, 6], "L2": [1, 2, 3, 5], "L3": [1, 2, 3, 6], "L4": [1, 2, 3, 6]},
+    "8": {"L1": [1, 2], "L2": [1, 5], "L3": [1, 2], "L4": [1, 6]}
+  },
+  "profile_selection": "Largest profile whose conservative six-calls-per-arm forecast fits 90% of remaining global wall budget and remaining call/token caps. Per-model request forecast uses maximum observed client wall minus observed load duration plus observed controller/resource-sampling overhead; model-block load costs are reserved once per model. Missing load/sampling observations retain conservative whole-request wall and explicit unknown fields. Uses speed, memory and remaining budget only, never oracle outcomes. Eight is the smallest confirmation profile; otherwise pilot-only.",
+  "seed": 23031017,
+  "development_seed": 23031003,
+  "schedule_seed": 23031029,
+  "bootstrap_seed": 23031041,
+  "bootstrap_replicates": 2000,
+  "primary": "Within each model, parent-paired A minus B evidence-supported completion; false acceptance and grounded abstention separately. C is a pooled-information reference with a different information arrival policy.",
+  "global_limits": {"wall_seconds": 14400, "calls": 1200, "generated_tokens": 600000, "total_tokens": 5000000, "disk_bytes": 536870912},
+  "trial_limits": {"calls": 6, "wall_seconds": 600, "tokens": 27648, "actions": 16, "verifications": 8},
+  "request": {"num_ctx": 4096, "num_predict": 512, "temperature": 0.0, "think": false, "stream": false, "truncate": false, "shift": false, "wall_seconds": 120, "first_backend_cold_wall_seconds": 180, "socket_timeout_seconds": 180, "keep_alive": "5m"},
+  "server": {"version": "0.35.0", "parallel": 1, "maximum_loaded_models": 1, "cloud_disabled": true, "automatic_model_downloads": false},
+  "smoke": {"maximum_generation_calls_per_model": 4, "planned_generation_calls_per_model": 1},
+  "pilot": {"maximum_trials": 24, "maximum_common_prompt_adjustment_cycles": 1},
+  "auxiliary": {"maximum_generation_calls": 128, "maximum_extra_callbacks_per_trial": 2, "selected_parent_numbers": [1], "selected_families": ["L1", "L2", "L3", "L4"], "policy": "Predeclared first parent in every family, A and B both models. Immediately after a known no_progress main stop, preserve primary record and continue a copied exact checkpoint by at most two unused callbacks within the original trial wall/token/call budget. No ordinary run replay, budget reset or successful trial rerun. Mixed-role sensitivity only with remaining envelope; otherwise explicitly unexecuted."},
+  "resources": {"minimum_free_ram": "max(2 GiB, 10% of installed RAM)", "sampling": "before and after dispatch; process working/private bytes are observations, not a hard whole-server/GPU peak or energy meter", "stop_new_calls_on": ["low_memory", "disk_budget", "unknown_consumption", "pending_request", "OOM", "response_stall", "global_budget"]},
+  "analysis": {"unit": "task parent within model", "paired_keys": ["task_id", "model", "seed"], "include_failures": true, "cost_subsets": ["all attempted", "both A and B evidence-supported complete"], "success_subset_selection_bias": true, "model_brand_wall_comparison": false, "energy_or_price_claims": false},
+  "post_confirmation_changes": "Any runtime, harness, prompt, oracle or task change requires a new protocol and unused confirmation inputs; retain old records and never reset aggregate budgets.",
+  "public_gold_separation": "Only PublicTask enters factory, prompts, selector and callback. GoldTask is an evaluation-only posthoc input. No model PASS or SDK satisfied flag substitutes for independent witness/provenance/version scoring.",
+  "model_evidence_digest": "Canonical structured model output JSON only; request IDs, trace metadata and callback counters are retained separately and cannot manufacture new answer content.",
+  "release_authorization": "The user's explicit request authorizes v0.2.3 publication; the supplied file's no-new-version publication assumption is superseded. Existing tags and public assets are immutable."
+}

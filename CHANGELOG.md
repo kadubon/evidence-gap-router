@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.3
+
+- Correct the English/Japanese continuation example's import path, verified against
+  the actual installed 0.2.2 wheel. No router acceptance change is justified by
+  the new runtime/SDK audit; the default `no_progress` stop remains unchanged.
+- Add an optional, source-level local Ollama experiment with durable request
+  reservations, exact model identities, bounded usage and independent posthoc
+  witness scoring. The core wheel still depends only on Pydantic and the standard
+  library; importing the SDK or running its normal CLI makes no model request.
+- Preserve all previous release and benchmark records. Fresh native package
+  validation and the separately frozen real-model experiment accompany this
+  version; experiment limitations and unexecuted conditions remain explicit.
+
 ## 0.2.2
 
 - Candidate-helper reachability reuses current evaluation subproblems while

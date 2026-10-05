@@ -51,6 +51,11 @@ def main() -> None:
             or report.get("benchmark", {}).get("trials", 0) < 1
         ):
             raise ValueError(f"Profile is not a passing native test of this artifact: {name}")
+        if (
+            args.version == "0.2.3"
+            and report.get("experiment_contract", {}).get("status") != "passed"
+        ):
+            raise ValueError(f"Portable experiment contract did not pass: {name}")
         benchmark_hashes.add(report["benchmark"]["outcome_sha256"])
         rows.append(
             f"| {system} | {architecture} | {report['python']} | "
@@ -105,6 +110,47 @@ def main() -> None:
         "execution, statistical intelligence improvement or general performance advantage "
         "is established. Byte equality is not fully reproducible source builds.\n"
     )
+    if args.version == "0.2.3":
+        summary = json.loads(
+            Path("experiments/ollama/results/v0.2.3/summary.json").read_text("utf-8")
+        )
+        frozen = json.loads(
+            Path("experiments/ollama/results/freeze-v0.2.3.json").read_text("utf-8")
+        )
+        notes = (
+            "Evidence-gap router 0.2.3 corrects the installed continuation import example "
+            "and adds an optional source-level local Ollama experiment. The audited router "
+            "keeps its default no_progress behavior and its Pydantic/standard-library core. "
+            "The SDK and ordinary CLI do not load models or make network requests.\n\n"
+            f"[Fresh audit]({tree}/docs/audit-022.md), "
+            f"[experiment commands]({source_tree}/experiments/ollama), "
+            f"[English results]({tree}/docs/ollama-experiment.md), "
+            f"[Japanese results]({tree}/docs/ollama-experiment.ja.md). "
+            "Exact local model identities, durable attempts, known/unknown usage, "
+            "independent witness checks, failures and resource limits are retained. "
+            "A/B share the same public runner and complete candidate pool; C is a "
+            "pooled-information reference with different information arrival.\n\n"
+            f"Confirmation profile: {frozen['selected_parent_count']} task parents per model; "
+            f"recorded rows including pilot and unexecuted keys: {summary['rows']}. "
+            "Read the attached summary for actual assessed/paired counts and cost subsets. "
+            "Same-model review calls are not statistically independent agents, and these "
+            "small artificial tasks do not establish general performance superiority. "
+            "Model weights and user credentials are not bundled. Earlier tags, "
+            "benchmark records and public assets remain unchanged.\n\n"
+            "The same release wheel passed installed runtime/CLI/fixture regressions "
+            "and portable fake-HTTP experiment contracts on all six native profiles. "
+            "Live Ollama inference is never run by CI.\n\n"
+            "| OS | Actual architecture | Python | Pydantic / core | Installed checks |\n"
+            "| --- | --- | --- | --- | --- |\n" + "\n".join(rows) + "\n\n"
+            f"New model-free smoke outcome SHA256: {next(iter(benchmark_hashes))}\n\n"
+            f"Commit: {args.commit}\n\n"
+            f"Manual validation: https://github.com/kadubon/evidence-gap-router/actions/runs/{args.manual_run}\n\n"
+            f"Release validation: https://github.com/kadubon/evidence-gap-router/actions/runs/{args.release_run}\n\n"
+            "Actual official PyPI wheel/sdist bytes matched the build artifacts. "
+            "A cache-free official-index installation passed SDK/CLI/examples/migration "
+            "and model-free benchmark smoke. SHA256SUMS covers the distribution files; "
+            "the experiment has a separate raw-data manifest and checksum.\n"
+        )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding="utf-8")
 

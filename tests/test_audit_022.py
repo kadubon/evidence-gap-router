@@ -10,11 +10,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from benchmarks import audit_022  # noqa: E402
 from benchmarks.audit_022 import main, run_audit  # noqa: E402
+from evidence_gap_router import __version__  # noqa: E402
 
 
 def test_public_diagnostic_matrix_meets_new_properties_with_real_costed_records():
     report = run_audit()
-    assert report["sdk_version"] == "0.2.2"
+    assert report["sdk_version"] == __version__
     assert report["all_expected_properties_met"], [
         (r["case"], r["exception"])
         for r in report["cases"]
@@ -34,7 +35,7 @@ def test_audit_cli_writes_readable_actual_version_metadata(tmp_path):
     path = tmp_path / "audit.json"
     assert main(["--output", str(path)]) == 0
     report = json.loads(path.read_text(encoding="utf-8"))
-    assert report["sdk_version"] == "0.2.2" and report["sdk_import"]
+    assert report["sdk_version"] == __version__ and report["sdk_import"]
     assert report["all_expected_properties_met"]
     assert all("independent_expected_property_met" in row for row in report["cases"])
 

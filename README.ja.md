@@ -9,10 +9,15 @@
 
 Python **3.12 以上** · Apache-2.0 · [English](README.md)
 
+[ローカルOllama実験](experiments/ollama/README.md)には、実際の構造化出力を使う
+文書callback、追記する費用記録、実行後の独立採点を用意しています。実験スクリプトは
+wheel外のソース例です。[新規監査](docs/audit-022.md)と
+[モデル実験結果](docs/ollama-experiment.ja.md)に検証範囲と限界を記録します。
+
 ## インストールと手元のファイル
 
 ```sh
-python -m pip install evidence-gap-router==0.2.2
+python -m pip install evidence-gap-router==0.2.3
 egr --version
 egr check-data --data ./orders.csv --dictionary ./rules.json --json
 egr demo --json
@@ -72,7 +77,7 @@ print(report.callback_calls)
 snapshot 保存・再読込、新しい検証まで進みます。原履歴と支出は保持します。
 
 ```python
-from evidence_gap_router import run_continuation_example
+from evidence_gap_router.sdk_example import run_continuation_example
 
 report = run_continuation_example("continuation.json")
 assert report.decision.stop_reason == "satisfied"

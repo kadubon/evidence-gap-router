@@ -229,6 +229,9 @@ def test_common_whole_worker_deadline_retains_unknown_outcomes_for_all_arms(tmp_
 def test_version_pairs_keep_compatible_failed_arm_and_separate_unknown_false_satisfied():
     task = next(t for t in generate("development") if t.family == "F6" and t.index == 1)
     new = trial(task, "original", "egr", 0, {})
+    # This classifier is intentionally frozen to the historical 0.2.2/0.2.1 pair.
+    # The fixture exercises classification labels, not a new live version comparison.
+    new["environment"]["package"] = "0.2.2"
     old = json.loads(json.dumps(new))
     old["environment"]["package"] = "0.2.1"
     old.update(status="timeout", timeout=True, oracle=None, false_satisfied=None, callbacks=None)

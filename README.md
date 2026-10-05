@@ -9,10 +9,16 @@ Use it from ordinary Python callbacks or inspect recommendations with an offline
 
 Python **3.12 or newer** · Apache-2.0 · [日本語](README.ja.md)
 
+The optional [local Ollama experiment](experiments/ollama/README.md) shows document
+callbacks with actual structured model outputs, durable usage records and
+independent post-trial scoring. Its scripts are source-level examples outside
+the wheel. See the [fresh v0.2.2 audit](docs/audit-022.md) and the separate
+[model experiment report](docs/ollama-experiment.md) for measured scope and limits.
+
 ## Install and use your own files
 
 ```sh
-python -m pip install evidence-gap-router==0.2.2
+python -m pip install evidence-gap-router==0.2.3
 egr --version
 egr check-data --data ./orders.csv --dictionary ./rules.json --json
 egr demo --json
@@ -173,7 +179,7 @@ invalidates the issued check, saves and reloads the snapshot, and performs a new
 check without rewriting the paid history:
 
 ```python
-from evidence_gap_router import run_continuation_example
+from evidence_gap_router.sdk_example import run_continuation_example
 
 report = run_continuation_example("continuation.json")
 assert report.decision.stop_reason == "satisfied"
