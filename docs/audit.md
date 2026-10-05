@@ -15,12 +15,14 @@ All twelve observations reproduced; the existing 72 tests also passed. The
 preserve the environment and observations. Run that script only with v0.1.0;
 it is not a schema-2 regression suite.
 
-The changes below belong to the **v0.2.0 tag commit**. The exact commit SHA and
-executed run IDs are recorded in its GitHub Release; embedding a commit's own
-hash in its source would change that hash. These are mixed implementation bugs,
-contract deficiencies and former simplifications, not twelve security vulnerabilities.
+All twelve mechanisms and their regressions below were implemented in
+[192da3bb942c71dde2f02d22e15a9e28f899b2c0](https://github.com/kadubon/evidence-gap-router/commit/192da3bb942c71dde2f02d22e15a9e28f899b2c0).
+The final documentation commit, exact tagged SHA and executed run IDs are recorded
+in the GitHub Release after successful publication. These are mixed implementation
+bugs, contract deficiencies and former simplifications, not twelve security
+vulnerabilities.
 
-| ID | Reproduced v0.1 observation | v0.2 mechanism | Regression test | Remaining boundary |
+| ID | Reproduced v0.1 observation | v0.2 mechanism (fix commit `192da3b`) | Regression test | Remaining boundary |
 | --- | --- | --- | --- | --- |
 | A01 | Changed, checked dictionary left old dataset PASS accepted | Finite pinned dependency bindings; changed/inactive references invalidate related checks | `test_v2_core.test_A01_used_dependency_change_invalidates_only_relevant_pass`; `test_dependency_recheck.test_changed_real_dictionary_gets_pass_but_rechecked_dataset_fails` | Host/checker honestly declares and uses dependencies |
 | A02 | Acquisition reused old PASS to erase FAIL at zero verification cost | Issued role/checker/purpose permissions and specific check-resolution basis | `test_v2_core.test_A02_acquisition_cannot_reuse_old_pass_to_erase_failure`; `test_A02_dedicated_authorized_resolution_preserves_failure_and_reuses_basis` | Host registration is trusted; raw snapshots are not authenticated |
