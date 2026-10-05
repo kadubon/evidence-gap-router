@@ -1,0 +1,3162 @@
+[
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L1-1:A:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L1-1:A:dc35e8d9c606:seed-23031017:host-attempt-3",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L1-1:A:dc35e8d9c606:seed-23031017:host-attempt-5",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L1-1:A:dc35e8d9c606:seed-23031017:host-attempt-6",
+        "stage": "review",
+        "status": "ok"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 54.28199999999924,
+    "domain_stop": "escalation_required",
+    "errors": [
+      "current_negative_check",
+      "missing_witness:document-1",
+      "no_grounded_semantic_review_receipt",
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L1",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L1-1-A-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [
+      "FAIL"
+    ],
+    "runner_stop": "router_stopped",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L1-1",
+    "trial_wall_seconds": 54.28199999999924
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": 0.0,
+    "domain_stop": null,
+    "errors": [
+      "not_eligible_for_auxiliary"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "not_eligible_for_auxiliary",
+    "false_acceptance": false,
+    "family": "L1",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L1-1-A-23031017-aux",
+    "known_attempt_termination": false,
+    "model": "gemma4:e4b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "auxiliary",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L1-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L1-1:B:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L1-1:B:dc35e8d9c606:seed-23031017:host-attempt-3",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L1-1:B:dc35e8d9c606:seed-23031017:host-attempt-5",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "confirmation-L1-1:B:dc35e8d9c606:seed-23031017:host-attempt-6",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 67.54699999999866,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt",
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L1",
+    "fault": "length",
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L1-1-B-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": "router_stopped",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L1-1",
+    "trial_wall_seconds": 67.54699999999866
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": 0.0,
+    "domain_stop": null,
+    "errors": [
+      "not_eligible_for_auxiliary"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "not_eligible_for_auxiliary",
+    "false_acceptance": false,
+    "family": "L1",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L1-1-B-23031017-aux",
+    "known_attempt_termination": false,
+    "model": "gemma4:e4b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "auxiliary",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L1-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L1-2:A:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L1-2:A:dc35e8d9c606:seed-23031017:host-attempt-3",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "confirmation-L1-2:A:dc35e8d9c606:seed-23031017:host-attempt-4",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 64.6710000000021,
+    "domain_stop": "blocked",
+    "errors": [
+      "missing_witness:document-2",
+      "no_grounded_semantic_review_receipt",
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L1",
+    "fault": "length",
+    "gold_decision": "no",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L1-2-A-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": "no_progress",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L1-2",
+    "trial_wall_seconds": 64.6710000000021
+  },
+  {
+    "answer_correct": true,
+    "arm": "C",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L1-2:C:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "confirmation-L1-2:C:dc35e8d9c606:seed-23031017:host-attempt-2",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 46.75,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L1",
+    "fault": "length",
+    "gold_decision": "no",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L1-2-C-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": "router_stopped",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L1-2",
+    "trial_wall_seconds": 46.75
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-1:A:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-1:A:dc35e8d9c606:seed-23031017:host-attempt-3",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-1:A:dc35e8d9c606:seed-23031017:host-attempt-4",
+        "stage": "review",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-1:A:dc35e8d9c606:seed-23031017:host-attempt-6",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-1:A:dc35e8d9c606:seed-23031017:host-attempt-8",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-1:A:dc35e8d9c606:seed-23031017:host-attempt-10",
+        "stage": "integrate",
+        "status": "ok"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 81.88999999999942,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt",
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L2-1-A-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [
+      "FAIL"
+    ],
+    "runner_stop": "router_stopped",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L2-1",
+    "trial_wall_seconds": 81.88999999999942
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": 0.0,
+    "domain_stop": null,
+    "errors": [
+      "not_eligible_for_auxiliary"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "not_eligible_for_auxiliary",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L2-1-A-23031017-aux",
+    "known_attempt_termination": false,
+    "model": "gemma4:e4b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "auxiliary",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L2-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-1:B:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-1:B:dc35e8d9c606:seed-23031017:host-attempt-3",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-1:B:dc35e8d9c606:seed-23031017:host-attempt-5",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-1:B:dc35e8d9c606:seed-23031017:host-attempt-7",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "confirmation-L2-1:B:dc35e8d9c606:seed-23031017:host-attempt-8",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 80.29699999999866,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt",
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": "length",
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L2-1-B-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": "router_stopped",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L2-1",
+    "trial_wall_seconds": 80.29699999999866
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": 0.0,
+    "domain_stop": null,
+    "errors": [
+      "not_eligible_for_auxiliary"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "not_eligible_for_auxiliary",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L2-1-B-23031017-aux",
+    "known_attempt_termination": false,
+    "model": "gemma4:e4b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "auxiliary",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L2-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "C",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-1:C:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-1:C:dc35e8d9c606:seed-23031017:host-attempt-2",
+        "stage": "review",
+        "status": "ok"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 34.93800000000192,
+    "domain_stop": "satisfied",
+    "errors": [
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": true,
+    "family": "L2",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L2-1-C-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [
+      "PASS"
+    ],
+    "runner_stop": "router_stopped",
+    "seed": 23031017,
+    "system_claimed_complete": true,
+    "task_id": "confirmation-L2-1",
+    "trial_wall_seconds": 34.93800000000192
+  },
+  {
+    "answer_correct": true,
+    "arm": "A",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-5:A:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-5:A:dc35e8d9c606:seed-23031017:host-attempt-3",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-5:A:dc35e8d9c606:seed-23031017:host-attempt-4",
+        "stage": "review",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-5:A:dc35e8d9c606:seed-23031017:host-attempt-6",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "confirmation-L2-5:A:dc35e8d9c606:seed-23031017:host-attempt-7",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 102.13999999999942,
+    "domain_stop": "blocked",
+    "errors": [
+      "missing_witness:document-2",
+      "no_grounded_semantic_review_receipt"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": "length",
+    "gold_decision": "unknown",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L2-5-A-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [
+      "UNKNOWN"
+    ],
+    "runner_stop": "no_progress",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L2-5",
+    "trial_wall_seconds": 102.13999999999942
+  },
+  {
+    "answer_correct": true,
+    "arm": "B",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-5:B:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-5:B:dc35e8d9c606:seed-23031017:host-attempt-3",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-5:B:dc35e8d9c606:seed-23031017:host-attempt-5",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-5:B:dc35e8d9c606:seed-23031017:host-attempt-6",
+        "stage": "review",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-5:B:dc35e8d9c606:seed-23031017:host-attempt-8",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-5:B:dc35e8d9c606:seed-23031017:host-attempt-9",
+        "stage": "review",
+        "status": "ok"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 67.51499999999942,
+    "domain_stop": "blocked",
+    "errors": [
+      "current_negative_check",
+      "no_grounded_semantic_review_receipt"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": null,
+    "gold_decision": "unknown",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L2-5-B-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    "runner_stop": "router_stopped",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L2-5",
+    "trial_wall_seconds": 67.51499999999942
+  },
+  {
+    "answer_correct": true,
+    "arm": "C",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-5:C:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-5:C:dc35e8d9c606:seed-23031017:host-attempt-2",
+        "stage": "review",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-5:C:dc35e8d9c606:seed-23031017:host-attempt-4",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-5:C:dc35e8d9c606:seed-23031017:host-attempt-5",
+        "stage": "review",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L2-5:C:dc35e8d9c606:seed-23031017:host-attempt-7",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "confirmation-L2-5:C:dc35e8d9c606:seed-23031017:host-attempt-8",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 114.98500000000058,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": "length",
+    "gold_decision": "unknown",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L2-5-C-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    "runner_stop": "router_stopped",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L2-5",
+    "trial_wall_seconds": 114.98500000000058
+  },
+  {
+    "answer_correct": true,
+    "arm": "A",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L3-1:A:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L3-1:A:dc35e8d9c606:seed-23031017:host-attempt-3",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "confirmation-L3-1:A:dc35e8d9c606:seed-23031017:host-attempt-4",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 52.5309999999954,
+    "domain_stop": "blocked",
+    "errors": [
+      "missing_witness:document-2",
+      "missing_witness:document-3",
+      "no_grounded_semantic_review_receipt"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L3",
+    "fault": "length",
+    "gold_decision": "no",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L3-1-A-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": "no_progress",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L3-1",
+    "trial_wall_seconds": 52.5309999999954
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": 0.0,
+    "domain_stop": null,
+    "errors": [
+      "not_eligible_for_auxiliary"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "not_eligible_for_auxiliary",
+    "false_acceptance": false,
+    "family": "L3",
+    "fault": null,
+    "gold_decision": "no",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L3-1-A-23031017-aux",
+    "known_attempt_termination": false,
+    "model": "gemma4:e4b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "auxiliary",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L3-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L3-1:B:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L3-1:B:dc35e8d9c606:seed-23031017:host-attempt-3",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L3-1:B:dc35e8d9c606:seed-23031017:host-attempt-5",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L3-1:B:dc35e8d9c606:seed-23031017:host-attempt-7",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "confirmation-L3-1:B:dc35e8d9c606:seed-23031017:host-attempt-8",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 84.28100000000268,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt",
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L3",
+    "fault": "length",
+    "gold_decision": "no",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L3-1-B-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": "router_stopped",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L3-1",
+    "trial_wall_seconds": 84.28100000000268
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": 0.0,
+    "domain_stop": null,
+    "errors": [
+      "not_eligible_for_auxiliary"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "not_eligible_for_auxiliary",
+    "false_acceptance": false,
+    "family": "L3",
+    "fault": null,
+    "gold_decision": "no",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L3-1-B-23031017-aux",
+    "known_attempt_termination": false,
+    "model": "gemma4:e4b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "auxiliary",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L3-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L3-2:A:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L3-2:A:dc35e8d9c606:seed-23031017:host-attempt-3",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "confirmation-L3-2:A:dc35e8d9c606:seed-23031017:host-attempt-4",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 60.328999999997905,
+    "domain_stop": "blocked",
+    "errors": [
+      "missing_witness:document-2",
+      "no_grounded_semantic_review_receipt",
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L3",
+    "fault": "length",
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L3-2-A-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": "no_progress",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L3-2",
+    "trial_wall_seconds": 60.328999999997905
+  },
+  {
+    "answer_correct": true,
+    "arm": "B",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L3-2:B:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L3-2:B:dc35e8d9c606:seed-23031017:host-attempt-3",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L3-2:B:dc35e8d9c606:seed-23031017:host-attempt-5",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "confirmation-L3-2:B:dc35e8d9c606:seed-23031017:host-attempt-6",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 76.23500000000058,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L3",
+    "fault": "length",
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L3-2-B-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": "router_stopped",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L3-2",
+    "trial_wall_seconds": 76.23500000000058
+  },
+  {
+    "answer_correct": true,
+    "arm": "C",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L3-2:C:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "confirmation-L3-2:C:dc35e8d9c606:seed-23031017:host-attempt-2",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 45.562999999994645,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L3",
+    "fault": "length",
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L3-2-C-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": "router_stopped",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L3-2",
+    "trial_wall_seconds": 45.562999999994645
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": 0.0,
+    "domain_stop": null,
+    "errors": [
+      "not_eligible_for_auxiliary"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "not_eligible_for_auxiliary",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L4-1-A-23031017-aux",
+    "known_attempt_termination": false,
+    "model": "gemma4:e4b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "auxiliary",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L4-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": true,
+    "arm": "B",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L4-1:B:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L4-1:B:dc35e8d9c606:seed-23031017:host-attempt-3",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L4-1:B:dc35e8d9c606:seed-23031017:host-attempt-5",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "confirmation-L4-1:B:dc35e8d9c606:seed-23031017:host-attempt-6",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 56.61000000000058,
+    "domain_stop": "escalation_required",
+    "errors": [
+      "no_grounded_semantic_review_receipt"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": "length",
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L4-1-B-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": "router_stopped",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L4-1",
+    "trial_wall_seconds": 56.61000000000058
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": 0.0,
+    "domain_stop": null,
+    "errors": [
+      "not_eligible_for_auxiliary"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "not_eligible_for_auxiliary",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L4-1-B-23031017-aux",
+    "known_attempt_termination": false,
+    "model": "gemma4:e4b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "auxiliary",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L4-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": true,
+    "arm": "C",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L4-1:C:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "confirmation-L4-1:C:dc35e8d9c606:seed-23031017:host-attempt-2",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 39.29699999999866,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": "length",
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L4-1-C-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": "router_stopped",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L4-1",
+    "trial_wall_seconds": 39.29699999999866
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L4-6:A:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L4-6:A:dc35e8d9c606:seed-23031017:host-attempt-3",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "confirmation-L4-6:A:dc35e8d9c606:seed-23031017:host-attempt-4",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 52.09399999999732,
+    "domain_stop": "blocked",
+    "errors": [
+      "missing_witness:document-2",
+      "no_grounded_semantic_review_receipt",
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": "length",
+    "gold_decision": "unknown",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L4-6-A-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": "no_progress",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L4-6",
+    "trial_wall_seconds": 52.09399999999732
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L4-6:B:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L4-6:B:dc35e8d9c606:seed-23031017:host-attempt-3",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "confirmation-L4-6:B:dc35e8d9c606:seed-23031017:host-attempt-5",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "confirmation-L4-6:B:dc35e8d9c606:seed-23031017:host-attempt-6",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 64.2809999999954,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt",
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": "length",
+    "gold_decision": "unknown",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L4-6-B-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": "router_stopped",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L4-6",
+    "trial_wall_seconds": 64.2809999999954
+  },
+  {
+    "answer_correct": true,
+    "arm": "C",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "confirmation-L4-6:C:dc35e8d9c606:seed-23031017:host-attempt-1",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "confirmation-L4-6:C:dc35e8d9c606:seed-23031017:host-attempt-2",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 59.70299999999406,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": "length",
+    "gold_decision": "unknown",
+    "grounded_abstention": false,
+    "key": "confirmation-gemma-confirmation-L4-6-C-23031017",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": "router_stopped",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L4-6",
+    "trial_wall_seconds": 59.70299999999406
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L1",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L1-1-A-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L1-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": 0.0,
+    "domain_stop": null,
+    "errors": [
+      "not_eligible_for_auxiliary"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "not_eligible_for_auxiliary",
+    "false_acceptance": false,
+    "family": "L1",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L1-1-A-23031017-aux",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "auxiliary",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L1-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L1",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L1-1-B-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L1-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": 0.0,
+    "domain_stop": null,
+    "errors": [
+      "not_eligible_for_auxiliary"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "not_eligible_for_auxiliary",
+    "false_acceptance": false,
+    "family": "L1",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L1-1-B-23031017-aux",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "auxiliary",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L1-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "C",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L1",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L1-1-C-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L1-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L1",
+    "fault": null,
+    "gold_decision": "no",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L1-2-A-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L1-2",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L1",
+    "fault": null,
+    "gold_decision": "no",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L1-2-B-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L1-2",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "C",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L1",
+    "fault": null,
+    "gold_decision": "no",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L1-2-C-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L1-2",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L2-1-A-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L2-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": 0.0,
+    "domain_stop": null,
+    "errors": [
+      "not_eligible_for_auxiliary"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "not_eligible_for_auxiliary",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L2-1-A-23031017-aux",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "auxiliary",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L2-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L2-1-B-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L2-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": 0.0,
+    "domain_stop": null,
+    "errors": [
+      "not_eligible_for_auxiliary"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "not_eligible_for_auxiliary",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L2-1-B-23031017-aux",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "auxiliary",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L2-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "C",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L2-1-C-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L2-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [
+      {
+        "issues": [
+          "timeout",
+          "response_json_error",
+          "http_error",
+          "missing_usage"
+        ],
+        "request_id": "confirmation-L2-5:A:07d35212591f:seed-23031017:host-attempt-1",
+        "stage": "read",
+        "status": "timeout"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 122.21800000000076,
+    "domain_stop": "escalation_required",
+    "errors": [
+      "no_structured_answer"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": "unknown_consumption",
+    "gold_decision": "unknown",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L2-5-A-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": "router_stopped",
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L2-5",
+    "trial_wall_seconds": 122.21800000000076
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": null,
+    "gold_decision": "unknown",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L2-5-B-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L2-5",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "C",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": null,
+    "gold_decision": "unknown",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L2-5-C-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L2-5",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L3",
+    "fault": null,
+    "gold_decision": "no",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L3-1-A-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L3-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": 0.0,
+    "domain_stop": null,
+    "errors": [
+      "not_eligible_for_auxiliary"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "not_eligible_for_auxiliary",
+    "false_acceptance": false,
+    "family": "L3",
+    "fault": null,
+    "gold_decision": "no",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L3-1-A-23031017-aux",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "auxiliary",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L3-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L3",
+    "fault": null,
+    "gold_decision": "no",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L3-1-B-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L3-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": 0.0,
+    "domain_stop": null,
+    "errors": [
+      "not_eligible_for_auxiliary"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "not_eligible_for_auxiliary",
+    "false_acceptance": false,
+    "family": "L3",
+    "fault": null,
+    "gold_decision": "no",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L3-1-B-23031017-aux",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "auxiliary",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L3-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "C",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L3",
+    "fault": null,
+    "gold_decision": "no",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L3-1-C-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L3-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L3",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L3-2-A-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L3-2",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L3",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L3-2-B-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L3-2",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "C",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L3",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L3-2-C-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L3-2",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L4-1-A-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L4-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": 0.0,
+    "domain_stop": null,
+    "errors": [
+      "not_eligible_for_auxiliary"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "not_eligible_for_auxiliary",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L4-1-A-23031017-aux",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "auxiliary",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L4-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L4-1-B-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L4-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": 0.0,
+    "domain_stop": null,
+    "errors": [
+      "not_eligible_for_auxiliary"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "not_eligible_for_auxiliary",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L4-1-B-23031017-aux",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "auxiliary",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L4-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "C",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L4-1-C-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L4-1",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": null,
+    "gold_decision": "unknown",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L4-6-A-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L4-6",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": null,
+    "gold_decision": "unknown",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L4-6-B-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L4-6",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "C",
+    "call_stages": [],
+    "current_controller_segment_wall_seconds": null,
+    "domain_stop": null,
+    "errors": [
+      "unexecuted_due_to_budget"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "unexecuted_due_to_budget",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": null,
+    "gold_decision": "unknown",
+    "grounded_abstention": false,
+    "key": "confirmation-qwen-confirmation-L4-6-C-23031017",
+    "known_attempt_termination": false,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": false,
+    "pending": false,
+    "phase": "confirmation",
+    "review_statuses": [],
+    "runner_stop": null,
+    "seed": 23031017,
+    "system_claimed_complete": false,
+    "task_id": "confirmation-L4-6",
+    "trial_wall_seconds": null
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "development-L1-1:A:dc35e8d9c606:seed-23031003:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L1-1:A:dc35e8d9c606:seed-23031003:host-attempt-3",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "development-L1-1:A:dc35e8d9c606:seed-23031003:host-attempt-4",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 42.95300000000134,
+    "domain_stop": "blocked",
+    "errors": [
+      "missing_witness:document-2",
+      "no_grounded_semantic_review_receipt",
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L1",
+    "fault": "length",
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "pilot-gemma-development-L1-1-A-23031003",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "pilot",
+    "review_statuses": [],
+    "runner_stop": "no_progress",
+    "seed": 23031003,
+    "system_claimed_complete": false,
+    "task_id": "development-L1-1",
+    "trial_wall_seconds": 42.95300000000134
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "development-L1-1:B:dc35e8d9c606:seed-23031003:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L1-1:B:dc35e8d9c606:seed-23031003:host-attempt-3",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L1-1:B:dc35e8d9c606:seed-23031003:host-attempt-5",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "development-L1-1:B:dc35e8d9c606:seed-23031003:host-attempt-6",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 62.375,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt",
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L1",
+    "fault": "length",
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "pilot-gemma-development-L1-1-B-23031003",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "pilot",
+    "review_statuses": [],
+    "runner_stop": "router_stopped",
+    "seed": 23031003,
+    "system_claimed_complete": false,
+    "task_id": "development-L1-1",
+    "trial_wall_seconds": 62.375
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "development-L2-1:A:dc35e8d9c606:seed-23031003:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L2-1:A:dc35e8d9c606:seed-23031003:host-attempt-3",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L2-1:A:dc35e8d9c606:seed-23031003:host-attempt-4",
+        "stage": "review",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L2-1:A:dc35e8d9c606:seed-23031003:host-attempt-6",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L2-1:A:dc35e8d9c606:seed-23031003:host-attempt-8",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L2-1:A:dc35e8d9c606:seed-23031003:host-attempt-9",
+        "stage": "review",
+        "status": "ok"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 85.54699999999866,
+    "domain_stop": "blocked",
+    "errors": [
+      "current_negative_check",
+      "no_grounded_semantic_review_receipt",
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "pilot-gemma-development-L2-1-A-23031003",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "pilot",
+    "review_statuses": [
+      "UNKNOWN",
+      "UNKNOWN"
+    ],
+    "runner_stop": "router_stopped",
+    "seed": 23031003,
+    "system_claimed_complete": false,
+    "task_id": "development-L2-1",
+    "trial_wall_seconds": 85.54699999999866
+  },
+  {
+    "answer_correct": true,
+    "arm": "B",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "development-L2-1:B:dc35e8d9c606:seed-23031003:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L2-1:B:dc35e8d9c606:seed-23031003:host-attempt-3",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L2-1:B:dc35e8d9c606:seed-23031003:host-attempt-5",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "development-L2-1:B:dc35e8d9c606:seed-23031003:host-attempt-6",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 51.35899999999674,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": "length",
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "pilot-gemma-development-L2-1-B-23031003",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "pilot",
+    "review_statuses": [],
+    "runner_stop": "router_stopped",
+    "seed": 23031003,
+    "system_claimed_complete": false,
+    "task_id": "development-L2-1",
+    "trial_wall_seconds": 51.35899999999674
+  },
+  {
+    "answer_correct": true,
+    "arm": "A",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "development-L3-1:A:dc35e8d9c606:seed-23031003:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L3-1:A:dc35e8d9c606:seed-23031003:host-attempt-3",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L3-1:A:dc35e8d9c606:seed-23031003:host-attempt-4",
+        "stage": "review",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L3-1:A:dc35e8d9c606:seed-23031003:host-attempt-6",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L3-1:A:dc35e8d9c606:seed-23031003:host-attempt-8",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "development-L3-1:A:dc35e8d9c606:seed-23031003:host-attempt-9",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 81.46800000000076,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L3",
+    "fault": "length",
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "pilot-gemma-development-L3-1-A-23031003",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "pilot",
+    "review_statuses": [
+      "UNKNOWN"
+    ],
+    "runner_stop": "router_stopped",
+    "seed": 23031003,
+    "system_claimed_complete": false,
+    "task_id": "development-L3-1",
+    "trial_wall_seconds": 81.46800000000076
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "development-L4-1:A:dc35e8d9c606:seed-23031003:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L4-1:A:dc35e8d9c606:seed-23031003:host-attempt-3",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L4-1:A:dc35e8d9c606:seed-23031003:host-attempt-4",
+        "stage": "review",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L4-1:A:dc35e8d9c606:seed-23031003:host-attempt-6",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "development-L4-1:A:dc35e8d9c606:seed-23031003:host-attempt-7",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 74.51600000000326,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt",
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": "length",
+    "gold_decision": "unknown",
+    "grounded_abstention": false,
+    "key": "pilot-gemma-development-L4-1-A-23031003",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "pilot",
+    "review_statuses": [
+      "UNKNOWN"
+    ],
+    "runner_stop": "no_progress",
+    "seed": 23031003,
+    "system_claimed_complete": false,
+    "task_id": "development-L4-1",
+    "trial_wall_seconds": 74.51600000000326
+  },
+  {
+    "answer_correct": true,
+    "arm": "B",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "development-L4-1:B:dc35e8d9c606:seed-23031003:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L4-1:B:dc35e8d9c606:seed-23031003:host-attempt-3",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L4-1:B:dc35e8d9c606:seed-23031003:host-attempt-5",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L4-1:B:dc35e8d9c606:seed-23031003:host-attempt-6",
+        "stage": "review",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L4-1:B:dc35e8d9c606:seed-23031003:host-attempt-8",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L4-1:B:dc35e8d9c606:seed-23031003:host-attempt-9",
+        "stage": "review",
+        "status": "ok"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 73.125,
+    "domain_stop": "escalation_required",
+    "errors": [
+      "current_negative_check",
+      "no_grounded_semantic_review_receipt"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": null,
+    "gold_decision": "unknown",
+    "grounded_abstention": false,
+    "key": "pilot-gemma-development-L4-1-B-23031003",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "pilot",
+    "review_statuses": [
+      "FAIL",
+      "UNKNOWN"
+    ],
+    "runner_stop": "router_stopped",
+    "seed": 23031003,
+    "system_claimed_complete": false,
+    "task_id": "development-L4-1",
+    "trial_wall_seconds": 73.125
+  },
+  {
+    "answer_correct": true,
+    "arm": "C",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "development-L4-1:C:dc35e8d9c606:seed-23031003:host-attempt-1",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "development-L4-1:C:dc35e8d9c606:seed-23031003:host-attempt-2",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 37.90600000000268,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": "length",
+    "gold_decision": "unknown",
+    "grounded_abstention": false,
+    "key": "pilot-gemma-development-L4-1-C-23031003",
+    "known_attempt_termination": true,
+    "model": "gemma4:e4b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "pilot",
+    "review_statuses": [],
+    "runner_stop": "router_stopped",
+    "seed": 23031003,
+    "system_claimed_complete": false,
+    "task_id": "development-L4-1",
+    "trial_wall_seconds": 37.90600000000268
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "development-L1-1:A:07d35212591f:seed-23031003:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L1-1:A:07d35212591f:seed-23031003:host-attempt-3",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L1-1:A:07d35212591f:seed-23031003:host-attempt-4",
+        "stage": "review",
+        "status": "ok"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 49.062999999994645,
+    "domain_stop": "satisfied",
+    "errors": [
+      "missing_witness:document-2",
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": true,
+    "family": "L1",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "pilot-qwen-development-L1-1-A-23031003",
+    "known_attempt_termination": true,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "pilot",
+    "review_statuses": [
+      "PASS"
+    ],
+    "runner_stop": "router_stopped",
+    "seed": 23031003,
+    "system_claimed_complete": true,
+    "task_id": "development-L1-1",
+    "trial_wall_seconds": 49.062999999994645
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "development-L1-1:B:07d35212591f:seed-23031003:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L1-1:B:07d35212591f:seed-23031003:host-attempt-3",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L1-1:B:07d35212591f:seed-23031003:host-attempt-5",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "development-L1-1:B:07d35212591f:seed-23031003:host-attempt-6",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 132.125,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt",
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L1",
+    "fault": "length",
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "pilot-qwen-development-L1-1-B-23031003",
+    "known_attempt_termination": true,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "pilot",
+    "review_statuses": [],
+    "runner_stop": "router_stopped",
+    "seed": 23031003,
+    "system_claimed_complete": false,
+    "task_id": "development-L1-1",
+    "trial_wall_seconds": 132.125
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "development-L2-1:A:07d35212591f:seed-23031003:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L2-1:A:07d35212591f:seed-23031003:host-attempt-3",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L2-1:A:07d35212591f:seed-23031003:host-attempt-4",
+        "stage": "review",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L2-1:A:07d35212591f:seed-23031003:host-attempt-6",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L2-1:A:07d35212591f:seed-23031003:host-attempt-8",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L2-1:A:07d35212591f:seed-23031003:host-attempt-9",
+        "stage": "review",
+        "status": "ok"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 202.82800000000134,
+    "domain_stop": "escalation_required",
+    "errors": [
+      "current_negative_check",
+      "insufficient_independent_origins",
+      "missing_witness:document-2",
+      "no_grounded_semantic_review_receipt",
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L2",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "pilot-qwen-development-L2-1-A-23031003",
+    "known_attempt_termination": true,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "pilot",
+    "review_statuses": [
+      "FAIL",
+      "FAIL"
+    ],
+    "runner_stop": "router_stopped",
+    "seed": 23031003,
+    "system_claimed_complete": false,
+    "task_id": "development-L2-1",
+    "trial_wall_seconds": 202.82800000000134
+  },
+  {
+    "answer_correct": false,
+    "arm": "A",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "development-L3-1:A:07d35212591f:seed-23031003:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L3-1:A:07d35212591f:seed-23031003:host-attempt-3",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L3-1:A:07d35212591f:seed-23031003:host-attempt-4",
+        "stage": "review",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L3-1:A:07d35212591f:seed-23031003:host-attempt-6",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L3-1:A:07d35212591f:seed-23031003:host-attempt-8",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L3-1:A:07d35212591f:seed-23031003:host-attempt-9",
+        "stage": "review",
+        "status": "ok"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 115.48399999999674,
+    "domain_stop": "satisfied",
+    "errors": [
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": true,
+    "family": "L3",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "pilot-qwen-development-L3-1-A-23031003",
+    "known_attempt_termination": true,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "pilot",
+    "review_statuses": [
+      "FAIL",
+      "PASS"
+    ],
+    "runner_stop": "router_stopped",
+    "seed": 23031003,
+    "system_claimed_complete": true,
+    "task_id": "development-L3-1",
+    "trial_wall_seconds": 115.48399999999674
+  },
+  {
+    "answer_correct": false,
+    "arm": "B",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "development-L3-1:B:07d35212591f:seed-23031003:host-attempt-1",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L3-1:B:07d35212591f:seed-23031003:host-attempt-3",
+        "stage": "read",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L3-1:B:07d35212591f:seed-23031003:host-attempt-5",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L3-1:B:07d35212591f:seed-23031003:host-attempt-6",
+        "stage": "review",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L3-1:B:07d35212591f:seed-23031003:host-attempt-8",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [],
+        "request_id": "development-L3-1:B:07d35212591f:seed-23031003:host-attempt-9",
+        "stage": "review",
+        "status": "ok"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 126.84300000000076,
+    "domain_stop": "escalation_required",
+    "errors": [
+      "current_negative_check",
+      "no_grounded_semantic_review_receipt",
+      "wrong_canonical_decision"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L3",
+    "fault": null,
+    "gold_decision": "yes",
+    "grounded_abstention": false,
+    "key": "pilot-qwen-development-L3-1-B-23031003",
+    "known_attempt_termination": true,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "pilot",
+    "review_statuses": [
+      "FAIL",
+      "FAIL"
+    ],
+    "runner_stop": "router_stopped",
+    "seed": 23031003,
+    "system_claimed_complete": false,
+    "task_id": "development-L3-1",
+    "trial_wall_seconds": 126.84300000000076
+  },
+  {
+    "answer_correct": true,
+    "arm": "C",
+    "call_stages": [
+      {
+        "issues": [],
+        "request_id": "development-L4-1:C:07d35212591f:seed-23031003:host-attempt-1",
+        "stage": "integrate",
+        "status": "ok"
+      },
+      {
+        "issues": [
+          "length",
+          "final_json_error"
+        ],
+        "request_id": "development-L4-1:C:07d35212591f:seed-23031003:host-attempt-2",
+        "stage": "review",
+        "status": "length"
+      }
+    ],
+    "current_controller_segment_wall_seconds": 70.29699999999866,
+    "domain_stop": "blocked",
+    "errors": [
+      "no_grounded_semantic_review_receipt"
+    ],
+    "evidence_supported_completion": false,
+    "execution": "completed",
+    "false_acceptance": false,
+    "family": "L4",
+    "fault": "length",
+    "gold_decision": "unknown",
+    "grounded_abstention": false,
+    "key": "pilot-qwen-development-L4-1-C-23031003",
+    "known_attempt_termination": true,
+    "model": "qwen3.6:35b-a3b",
+    "oracle_assessed": true,
+    "pending": false,
+    "phase": "pilot",
+    "review_statuses": [],
+    "runner_stop": "router_stopped",
+    "seed": 23031003,
+    "system_claimed_complete": false,
+    "task_id": "development-L4-1",
+    "trial_wall_seconds": 70.29699999999866
+  }
+]

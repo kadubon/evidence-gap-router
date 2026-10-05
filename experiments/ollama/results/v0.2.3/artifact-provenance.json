@@ -1,0 +1,148 @@
+{
+  "actual_execution": {
+    "actual_generated_tokens": null,
+    "actual_total_tokens": null,
+    "auxiliary_dispatches": 0,
+    "auxiliary_scheduled_records": 16,
+    "callback_example_dispatches": 0,
+    "known_usage_responses": 181,
+    "main_known_terminated_trials": 24,
+    "main_scheduled_trials": 48,
+    "main_uncertain_trials": 1,
+    "main_unexecuted_trials": 23,
+    "new_calls_blocked": true,
+    "observed_known_generated_tokens": 31344,
+    "observed_known_total_tokens": 113783,
+    "pending_request_ids": [
+      "confirmation-qwen-confirmation-L2-5-A-23031017/confirmation-L2-5:A:07d35212591f:seed-23031017:host-attempt-1"
+    ],
+    "pilot_terminal_trials": 24,
+    "reserved_unknown_generated_tokens": 512,
+    "reserved_unknown_total_tokens": 4608,
+    "total_generation_reservations": 182,
+    "unknown_consumption_not_settled_by_process_termination": true,
+    "unknown_usage_responses": 1
+  },
+  "budget_transition": {
+    "amendments": 1,
+    "current_ledger_sha256": "99c53cebeb3f87683330bd1d12dcf455757502642c9d370d33b8abb68ba83a5c",
+    "history_and_costs_retained": true,
+    "initial_journal_bytes": 1221476,
+    "initial_journal_is_exact_current_prefix": true,
+    "initial_journal_sha256": "6237c35be61d4a77ed6104989f1194d14d6180cf4d1cc9c5512ad924b6ab6707",
+    "original_first_reservation_epoch": 1791200089.2157648,
+    "total_wall_seconds": 28800
+  },
+  "measurement": {
+    "candidate_wheel_sha256": "8227a37be95b615f1608619592298b401bfc73cc412b90857e07ccada8215bc5",
+    "candidate_wheel_source_commit": "1ed12f13c4d5b1a78fc39f9d1fb476da78f3449a",
+    "freeze_sha256": "a9677a9a1cecd75259fc841c2ab588cc66094b354fe3276e6e7a2bf84b148f77",
+    "harness_sha256": "2edd5334dfefa7dc16d4c4327cd9109834300bb779532cb15b269424b0abb7b9",
+    "implementation_commit": "481419e252d233d712de237e96af2ae6184b9b33",
+    "installed_package_sha256": "dca4042a019b0af214b6f9e39fa1aaef2d9547c091e828020929be323d9cdd6b",
+    "protocol_sha256": "5775bc0f540bb60df81631645229bb2ba51aadc81d5ba0de1b00fae68d74a68f",
+    "runtime_bytes_unchanged_between_candidate_build_and_v2_freeze": true
+  },
+  "packed_analysis_members": {
+    "answerable-recount.json": {
+      "bytes": 60611,
+      "sha256": "c9c9cdeca5920a8efca6181d7424a18a7d937aeabb433e3a01144d08b7e2e008"
+    },
+    "failure-analysis.json": {
+      "bytes": 89828,
+      "sha256": "992239021470c4b049fbc1f85cc6c472b9a7317e0c033e9976dae22ea6f81042"
+    },
+    "resource-summary.json": {
+      "bytes": 32056,
+      "sha256": "b2b085b70093b36105a8913ccf0fbef4df239ccb14c2985349e9ece5d1ce0c34"
+    },
+    "scored-trials.csv": {
+      "bytes": 22122,
+      "sha256": "44dfcab164eec471888b53a6208ecaf4fe89ef263765e5db726e2ae23b8b4bef"
+    },
+    "scored-trials.json": {
+      "bytes": 69934,
+      "sha256": "3aa2a8f1509198b0400a24164e20d846a5ae2bfd9d4d874eb3498eb44d07785b"
+    },
+    "stage-failure-review.json": {
+      "bytes": 470986,
+      "sha256": "85c2452e28b13812c38fab5818f134370ac996832384c1de3442d249c00b2696"
+    },
+    "summary.json": {
+      "bytes": 15512,
+      "sha256": "913d551ed549e905f87c33ea2918b8803d26270f48a2df3224fd03b7f9bbd85b"
+    }
+  },
+  "postrun_server_state": {
+    "observed_after_utc": "2026-10-05T12:54:48.1758553Z",
+    "observed_before_utc": "2026-10-05T12:54:48.0119207Z",
+    "owned_remaining_pids": [],
+    "owned_server_pid": 12912,
+    "owned_server_start_utc": "2026-10-05T10:28:24.9013892Z",
+    "owned_stopped": true,
+    "owned_tree_before": [
+      {
+        "created_utc": "2026-10-05T10:28:24.9013890Z",
+        "name": "ollama.exe",
+        "parent_pid": 15284,
+        "pid": 12912
+      },
+      {
+        "created_utc": "2026-10-05T10:28:24.9094210Z",
+        "name": "conhost.exe",
+        "parent_pid": 12912,
+        "pid": 27024
+      },
+      {
+        "created_utc": "2026-10-05T12:50:09.3376600Z",
+        "name": "llama-server.exe",
+        "parent_pid": 12912,
+        "pid": 19552
+      },
+      {
+        "created_utc": "2026-10-05T12:50:09.3517310Z",
+        "name": "conhost.exe",
+        "parent_pid": 19552,
+        "pid": 28756
+      }
+    ],
+    "scope": "Only the server process owned for this experiment and its descendants were terminated; no request replay or unknown-usage settlement",
+    "shared_api_version": "0.35.0",
+    "shared_preserved": true,
+    "shared_server_pid": 9536,
+    "shared_server_start_utc": "2026-10-05T10:07:16.1331826Z",
+    "unknown_request_remains_unsettled": true
+  },
+  "publication": {
+    "final_release_commit_and_publication_outcomes": "Recorded separately in the later publication-verification-v0.2.3.json Release asset",
+    "manual_native_ci": "pending",
+    "official_pypi_download_and_clean_install": "pending",
+    "state_at_snapshot": "Not yet published; local implementation/experiment evidence complete",
+    "tag_oidc_upload": "pending"
+  },
+  "raw_archive": {
+    "all_member_hashes_and_zip_integrity_verified": true,
+    "bytes": 1822461,
+    "explicitly_excluded_sources": {
+      "raw/calls.jsonl.lock": "Private server log or operational lock, not a request/receipt event"
+    },
+    "filename": "ollama-raw-v0.2.3.zip",
+    "manifest_members": 198,
+    "manifest_sha256": "540de0ecb333a4d29894b0a6aeaf610f2b2be1ce1265e076c249bb94325a4486",
+    "planned_release_asset_url": "https://github.com/kadubon/evidence-gap-router/releases/download/v0.2.3/ollama-raw-v0.2.3.zip",
+    "privacy_scan": "Strict textual/JSON/nested-response/base64 scan plus explicit raw allowlist; no weights or full private server logs",
+    "sha256": "c4a1ca613a70b61fb3ac3bc035537e439f962a330816bc9fe5a2fdf8288392a5",
+    "uncompressed_source_bytes": 18626914,
+    "uploaded_at_this_snapshot": false,
+    "zip_entries": 200
+  },
+  "recorded_utc": "2026-10-05T13:15:11.365022+00:00",
+  "schema": "egr-023-ollama-artifact-provenance-v1",
+  "scope": "Actual local model attempts and posthoc records; synthetic Japanese tasks; partial confirmation, not general agent superiority",
+  "self_hash_boundary": "This provenance is written after the immutable ZIP and is a separate Release asset; it is not inside the ZIP whose hash it records",
+  "supplemental_recount_script": {
+    "bytes": 17847,
+    "sha256": "a1fa61f52d7554a417240c959c953a5181a2afe1188e5317e1ce506bf10292e9"
+  },
+  "version": "0.2.3"
+}

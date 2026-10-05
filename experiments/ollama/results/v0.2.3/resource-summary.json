@@ -1,0 +1,729 @@
+{
+  "consistency_checks": {
+    "actual_aggregate_usage_is_unknown": true,
+    "all_auxiliary_ineligible_no_dispatch": true,
+    "all_backend_size_vram_observations_zero": true,
+    "all_reservations_have_response_records": true,
+    "all_scored_terminal_keys_unique_and_equal": true,
+    "all_unexecuted_main_stopped_for_pending_or_unknown": true,
+    "amendment_canonical_predecessor_hash": true,
+    "amendment_config_hashes": true,
+    "answerable_and_composite_support_denominators": true,
+    "answerable_interval_matches_supplemental_recount": true,
+    "composite_interval_matches_frozen_analysis": true,
+    "gemma_main_known_termination": true,
+    "global_eight_hour_wall_not_exhausted_at_last_response": true,
+    "initial_ledger_prefix_preserved": true,
+    "installed_memory_floor_met_in_every_sample": true,
+    "known_and_unknown_receipt_counts": true,
+    "known_token_sums_and_retained_reservations": true,
+    "ledger_summary_matches_events": true,
+    "only_wall_and_run_freeze_identities_changed": true,
+    "original_first_reservation_epoch_retained": true,
+    "owned_server_stopped_and_shared_server_preserved": true,
+    "phase_and_execution_denominators": true,
+    "phase_costs_match_frozen_gemma4:e4b/backend-smoke": true,
+    "phase_costs_match_frozen_gemma4:e4b/confirmation": true,
+    "phase_costs_match_frozen_gemma4:e4b/pilot": true,
+    "phase_costs_match_frozen_qwen3.6:35b-a3b/backend-smoke": true,
+    "phase_costs_match_frozen_qwen3.6:35b-a3b/confirmation": true,
+    "phase_costs_match_frozen_qwen3.6:35b-a3b/pilot": true,
+    "qwen_main_unknown_not_assessed_as_known_termination": true,
+    "qwen_sdk_pending_and_http_pending_have_distinct_meanings": true,
+    "resource_rows_cover_every_actual_request": true,
+    "server_alive_observed_during_requests": true,
+    "summary_ledger_hash_matches_actual_bytes": true,
+    "unique_reservation_and_response_ids": true,
+    "unknown_response_remains_pending": true
+  },
+  "execution": {
+    "auxiliary_model_dispatches": 0,
+    "auxiliary_records": 16,
+    "auxiliary_stop_detail": {
+      "main_not_known_no_progress": 16
+    },
+    "frozen_label_caveats": [
+      "unexecuted_due_to_budget is a generic persisted execution label. All 23 remaining main arms actually have stop_detail=pending_or_unknown_consumption, not an exhausted eight-hour wall budget.",
+      "The Qwen timeout has a response record and trial execution=completed, but HTTP pending=true and actual usage is unknown. A completed controller record does not mean a completed known model attempt.",
+      "The Qwen saved SDK result has pending=false because observe recorded an unknown-cost result; the HTTP request remains pending=true. known_attempt_termination=false prevents paired use. Its oracle_assessed=true is a content assessment, not known safe execution or abstention.",
+      "Frozen both-success cost fields are empty sums at N=0. No success cost comparison is defined; supplemental recount correctly emits null costs for the empty subset."
+    ],
+    "global_wall_exhausted_at_last_response": false,
+    "global_wall_limit_seconds": 28800,
+    "known_terminated_main": 24,
+    "last_http_response_minus_first_reservation_seconds": 4639.803651332855,
+    "phase_rows": {
+      "auxiliary": 16,
+      "confirmation": 48,
+      "pilot": 24
+    },
+    "scheduled_main": 48,
+    "scored_rows": 88,
+    "started_main": 25,
+    "unexecuted_main": 23,
+    "unexecuted_stop_detail": {
+      "pending_or_unknown_consumption": 23
+    }
+  },
+  "kind": "independent-post-experiment-resource-and-execution-reconciliation",
+  "ledger": {
+    "actual_aggregate_generated_tokens": null,
+    "actual_aggregate_total_tokens": null,
+    "amendment": {
+      "all_nonwall_caps_preserved": true,
+      "authorization": "総上限時間は8時間に緩和してください",
+      "events": 1,
+      "from_wall_seconds": 14400,
+      "initial_epoch_and_costs_preserved": true,
+      "initial_ledger_prefix_sha256": "6237c35be61d4a77ed6104989f1194d14d6180cf4d1cc9c5512ad924b6ab6707",
+      "to_wall_seconds": 28800
+    },
+    "blocked": true,
+    "known_usage": 181,
+    "observed_generated_tokens": 31344,
+    "observed_total_tokens": 113783,
+    "original_first_reservation_epoch": 1791200089.2157648,
+    "pending_request_ids": [
+      "confirmation-qwen-confirmation-L2-5-A-23031017/confirmation-L2-5:A:07d35212591f:seed-23031017:host-attempt-1"
+    ],
+    "phase_costs": {
+      "gemma4:e4b/backend-smoke": {
+        "actual_generated_tokens": 6,
+        "actual_total_tokens": 32,
+        "known_usage_calls": 1,
+        "observed_client_wall_seconds": 17.26600000000326,
+        "observed_generated_tokens": 6,
+        "observed_total_tokens": 32,
+        "reserved_calls": 1,
+        "reserved_unknown_generated_tokens": 0,
+        "reserved_unknown_total_tokens": 0,
+        "statuses": {
+          "ok": 1
+        },
+        "unknown_usage_calls": 0
+      },
+      "gemma4:e4b/confirmation": {
+        "actual_generated_tokens": 16616,
+        "actual_total_tokens": 56981,
+        "known_usage_calls": 87,
+        "observed_client_wall_seconds": 1300.207999999977,
+        "observed_generated_tokens": 16616,
+        "observed_total_tokens": 56981,
+        "reserved_calls": 87,
+        "reserved_unknown_generated_tokens": 0,
+        "reserved_unknown_total_tokens": 0,
+        "statuses": {
+          "length": 16,
+          "ok": 71
+        },
+        "unknown_usage_calls": 0
+      },
+      "gemma4:e4b/pilot": {
+        "actual_generated_tokens": 6644,
+        "actual_total_tokens": 26438,
+        "known_usage_calls": 46,
+        "observed_client_wall_seconds": 546.7849999999962,
+        "observed_generated_tokens": 6644,
+        "observed_total_tokens": 26438,
+        "reserved_calls": 46,
+        "reserved_unknown_generated_tokens": 0,
+        "reserved_unknown_total_tokens": 0,
+        "statuses": {
+          "length": 6,
+          "ok": 40
+        },
+        "unknown_usage_calls": 0
+      },
+      "qwen3.6:35b-a3b/backend-smoke": {
+        "actual_generated_tokens": 10,
+        "actual_total_tokens": 39,
+        "known_usage_calls": 1,
+        "observed_client_wall_seconds": 111.4539999999979,
+        "observed_generated_tokens": 10,
+        "observed_total_tokens": 39,
+        "reserved_calls": 1,
+        "reserved_unknown_generated_tokens": 0,
+        "reserved_unknown_total_tokens": 0,
+        "statuses": {
+          "ok": 1
+        },
+        "unknown_usage_calls": 0
+      },
+      "qwen3.6:35b-a3b/confirmation": {
+        "actual_generated_tokens": null,
+        "actual_total_tokens": null,
+        "known_usage_calls": 0,
+        "observed_client_wall_seconds": 119.98500000000058,
+        "observed_generated_tokens": 0,
+        "observed_total_tokens": 0,
+        "reserved_calls": 1,
+        "reserved_unknown_generated_tokens": 512,
+        "reserved_unknown_total_tokens": 4608,
+        "statuses": {
+          "timeout": 1
+        },
+        "unknown_usage_calls": 1
+      },
+      "qwen3.6:35b-a3b/pilot": {
+        "actual_generated_tokens": 8068,
+        "actual_total_tokens": 30293,
+        "known_usage_calls": 46,
+        "observed_client_wall_seconds": 1049.8759999999747,
+        "observed_generated_tokens": 8068,
+        "observed_total_tokens": 30293,
+        "reserved_calls": 46,
+        "reserved_unknown_generated_tokens": 0,
+        "reserved_unknown_total_tokens": 0,
+        "statuses": {
+          "length": 2,
+          "ok": 44
+        },
+        "unknown_usage_calls": 0
+      }
+    },
+    "reservations": 182,
+    "response_records": 182,
+    "unknown_usage": 1,
+    "unsettled_reserved_generated_tokens": 512,
+    "unsettled_reserved_total_tokens": 4608
+  },
+  "method": "Read-only standard-library calculation from original HTTP events, scored rows and before/after resource samples; no inference or settlement; frozen summaries preserved.",
+  "outcome_crosscheck": {
+    "endpoint_scope": "Answerable yes/no parents are separated posthoc for reporting from the frozen eight-parent composite including two unknown decisions. C initially sees pooled documents; its information arrival differs from A/B.",
+    "gemma": {
+      "answerable": {
+        "A_minus_B": {
+          "known_assessed_pairs": 6,
+          "losses": 1,
+          "mean": 0.0,
+          "parent_bootstrap_95_interval": [
+            -0.5,
+            0.5
+          ],
+          "replicates": 2000,
+          "seed": 23031041,
+          "ties": 4,
+          "wins": 1
+        },
+        "arms": {
+          "A": {
+            "answer_correct": 2,
+            "false_acceptances": 0,
+            "supported_completions": 1
+          },
+          "B": {
+            "answer_correct": 3,
+            "false_acceptances": 0,
+            "supported_completions": 1
+          },
+          "C": {
+            "answer_correct": 5,
+            "false_acceptances": 1,
+            "supported_completions": 2
+          }
+        },
+        "both_supported_success_parents": 0,
+        "scheduled_parents_per_arm": 6
+      },
+      "composite": {
+        "A_minus_B": {
+          "known_assessed_pairs": 8,
+          "losses": 1,
+          "mean": 0.0,
+          "parent_bootstrap_95_interval": [
+            -0.375,
+            0.375
+          ],
+          "replicates": 2000,
+          "seed": 23031041,
+          "ties": 6,
+          "wins": 1
+        },
+        "arms": {
+          "A": {
+            "answer_correct": 3,
+            "false_acceptances": 0,
+            "supported_completions": 1
+          },
+          "B": {
+            "answer_correct": 4,
+            "false_acceptances": 0,
+            "supported_completions": 1
+          },
+          "C": {
+            "answer_correct": 7,
+            "false_acceptances": 1,
+            "supported_completions": 2
+          }
+        },
+        "both_supported_success_parents": 0,
+        "scheduled_parents_per_arm": 8
+      }
+    },
+    "qwen": {
+      "known_assessed_A_B_pairs": 0,
+      "known_terminated_main": 0,
+      "oracle_assessed_main_rows": 1,
+      "paired_difference": null,
+      "paired_interval": null,
+      "scheduled_parents_per_arm": 8,
+      "scope": "Scheduled denominators retained; unknown and unexecuted arms cannot form observed pairs or known failures."
+    }
+  },
+  "provenance": {
+    "raw/backend-log-observations.json": {
+      "bytes": 5213,
+      "sha256": "28e8ff797f81f6e46cd17bb1c4afdc805eb9f31b14de12c923d066251b525302"
+    },
+    "raw/calls.jsonl": {
+      "bytes": 2389447,
+      "sha256": "99c53cebeb3f87683330bd1d12dcf455757502642c9d370d33b8abb68ba83a5c"
+    },
+    "raw/hardware-identity.json": {
+      "bytes": 1111,
+      "sha256": "5aa089bc8ab8f109b1ac5907d2bc2c95958dc4e031e9d8927e4375fce1f74676"
+    },
+    "raw/ledger-summary.json": {
+      "bytes": 88112,
+      "sha256": "a99710b50c4745a95c741a54f4d8e38756b870e55885eb200ea6c5f59f40f3fa"
+    },
+    "raw/resources.jsonl": {
+      "bytes": 751774,
+      "sha256": "ed6fd75eedb1c15e08afda996e8a207e5f908da527047032fffe816b6158d314"
+    },
+    "raw/segments/initial-4h/calls.jsonl": {
+      "bytes": 1221476,
+      "sha256": "6237c35be61d4a77ed6104989f1194d14d6180cf4d1cc9c5512ad924b6ab6707"
+    },
+    "raw/server-final-state.json": {
+      "bytes": 1241,
+      "sha256": "737270ed620c77e3dd2ea8a5b057966498d8ba22e3d6204a761c1d0fe1f1178a"
+    },
+    "source/freeze-v0.2.3.json": {
+      "bytes": 13861,
+      "sha256": "a9677a9a1cecd75259fc841c2ab588cc66094b354fe3276e6e7a2bf84b148f77"
+    },
+    "summary/answerable-recount.json": {
+      "bytes": 60611,
+      "sha256": "c9c9cdeca5920a8efca6181d7424a18a7d937aeabb433e3a01144d08b7e2e008"
+    },
+    "summary/scored-trials.json": {
+      "bytes": 69934,
+      "sha256": "3aa2a8f1509198b0400a24164e20d846a5ae2bfd9d4d874eb3498eb44d07785b"
+    },
+    "summary/summary.json": {
+      "bytes": 15512,
+      "sha256": "913d551ed549e905f87c33ea2918b8803d26270f48a2df3224fd03b7f9bbd85b"
+    }
+  },
+  "resources": {
+    "actual_gpu_offload_layers": null,
+    "backend_models": {
+      "gemma4:e4b": {
+        "context_lengths": [
+          4096
+        ],
+        "digests": [
+          "dc35e8d9c6061baa6f0fa870975ab6932e2542b579b13ea0f199fa4bb7300c9c"
+        ],
+        "observations": 134,
+        "size_vram_observed_max_bytes": 0,
+        "size_vram_observed_min_bytes": 0
+      },
+      "qwen3.6:35b-a3b": {
+        "context_lengths": [
+          4096
+        ],
+        "digests": [
+          "07d35212591fc27746f0a317c975a6d68754fb38e9053d82e25f06057af28522"
+        ],
+        "observations": 48,
+        "size_vram_observed_max_bytes": 0,
+        "size_vram_observed_min_bytes": 0
+      }
+    },
+    "backend_scope": "Read-only /ps reports size_vram=0 in all 182 model observations. Historical owned log explicitly observes CPU library and individual CPU buffers. Hardware AdapterRAM is device metadata. Actual GPU offload layers, model-associated backend and continuous VRAM peak remain unassessed.",
+    "before_after_samples": 364,
+    "continuous_vram_peak_bytes": null,
+    "cpu_scope": "Per-PID cumulative readings and observed first-to-last differences are reported, never summed repeatedly. No exact aggregate server CPU, energy or monetary cost is inferred. First-seen/last-seen gaps and PID identity ambiguity remain.",
+    "disk_before_request_samples": 182,
+    "free_memory_floor_bytes": 6871947674,
+    "hardware": {
+      "cpu": [
+        {
+          "Manufacturer": "AuthenticAMD",
+          "Name": "AMD Ryzen 7 8840HS w/ Radeon 780M Graphics     ",
+          "NumberOfCores": 8,
+          "NumberOfLogicalProcessors": 16
+        }
+      ],
+      "disk_capacity": {
+        "FreeSpace": 642895974400,
+        "Size": 1001048240128
+      },
+      "gpu_device_metadata": [
+        {
+          "AdapterRAM": 2147483648,
+          "DriverVersion": "32.0.21010.10",
+          "Name": "AMD Radeon 780M Graphics"
+        }
+      ],
+      "gpu_scope": "AdapterRAM is WMI device metadata, not an inference VRAM allocation, hard limit or peak; owned server log observes CPU backend",
+      "os": {
+        "BuildNumber": "26300",
+        "Caption": "Microsoft Windows 11 Home",
+        "OSArchitecture": "64-bit",
+        "Version": "10.0.26300"
+      },
+      "physical_memory_bank_capacity_bytes": [
+        34359738368,
+        34359738368
+      ],
+      "private_identifiers": "Computer name, serial numbers, processor IDs and private paths omitted",
+      "sampled_at": "2026-10-05T12:30:46.3530634Z",
+      "scope": "Hardware identity snapshot during confirmation; no configuration changes or continuous peak measurement"
+    },
+    "installed_memory_bytes": [
+      68719476736
+    ],
+    "limitations": [
+      "No operating-system hard memory cap was applied to the existing server; sampled RAM floors and cooperative request/disk budgets are guards, not a hard process allocation bound.",
+      "Process private commitment and working set differ; separately observed process peaks are not added as a coincident system peak.",
+      "Ordinary desktop background load, scheduler, power and thermals were not experimentally controlled; no cross-model absolute timing superiority is inferred."
+    ],
+    "maximum_observed_raw_directory_bytes_before_request": 17457739,
+    "memory_status_counts": {
+      "okay": 364
+    },
+    "minimum_available_memory_bytes": 11561979904,
+    "minimum_available_minus_floor_bytes": 4690032230,
+    "minimum_disk_free_bytes": 642574450688,
+    "os_visible_total_memory_bytes": [
+      66363183104
+    ],
+    "owned_server_final_state": {
+      "observed_after_utc": "2026-10-05T12:54:48.1758553Z",
+      "observed_before_utc": "2026-10-05T12:54:48.0119207Z",
+      "owned_remaining_pids": [],
+      "owned_server_pid": 12912,
+      "owned_server_start_utc": "2026-10-05T10:28:24.9013892Z",
+      "owned_stopped": true,
+      "owned_tree_before": [
+        {
+          "created_utc": "2026-10-05T10:28:24.9013890Z",
+          "name": "ollama.exe",
+          "parent_pid": 15284,
+          "pid": 12912
+        },
+        {
+          "created_utc": "2026-10-05T10:28:24.9094210Z",
+          "name": "conhost.exe",
+          "parent_pid": 12912,
+          "pid": 27024
+        },
+        {
+          "created_utc": "2026-10-05T12:50:09.3376600Z",
+          "name": "llama-server.exe",
+          "parent_pid": 12912,
+          "pid": 19552
+        },
+        {
+          "created_utc": "2026-10-05T12:50:09.3517310Z",
+          "name": "conhost.exe",
+          "parent_pid": 19552,
+          "pid": 28756
+        }
+      ],
+      "scope": "Only the server process owned for this experiment and its descendants were terminated; no request replay or unknown-usage settlement",
+      "shared_api_version": "0.35.0",
+      "shared_preserved": true,
+      "shared_server_pid": 9536,
+      "shared_server_start_utc": "2026-10-05T10:07:16.1331826Z",
+      "unknown_request_remains_unsettled": true
+    },
+    "process_scope": "Selected experiment client plus owned server and observed descendants, sampled before/after HTTP calls. Shared server is not part of this selected scope. Samples are not continuous peaks or a hard server memory ceiling.",
+    "processes": [
+      {
+        "cpu_cumulative_observed_max_seconds": 0,
+        "cpu_cumulative_observed_min_seconds": 0,
+        "cpu_delta_scope": "Observed interval only; excludes use before first/after last sample. PID reuse is not ruled out; not exact trial or server cost.",
+        "cpu_first_to_last_observed_delta_seconds": 0,
+        "cpu_sequence_nondecreasing": true,
+        "first_sample": "2026-10-05T12:26:31.009526+00:00",
+        "identity": "PID and process name only; creation time unavailable in resource samples",
+        "last_sample": "2026-10-05T12:50:08.960995+00:00",
+        "name": "conhost",
+        "pid": 4456,
+        "private_committed_observed_max_bytes": 1323008,
+        "process_reported_peak_working_set_max_bytes": 7843840,
+        "samples": 174,
+        "working_set_observed_max_bytes": 7843840
+      },
+      {
+        "cpu_cumulative_observed_max_seconds": 0.015625,
+        "cpu_cumulative_observed_min_seconds": 0.015625,
+        "cpu_delta_scope": "Observed interval only; excludes use before first/after last sample. PID reuse is not ruled out; not exact trial or server cost.",
+        "cpu_first_to_last_observed_delta_seconds": 0.0,
+        "cpu_sequence_nondecreasing": true,
+        "first_sample": "2026-10-05T11:37:43.192999+00:00",
+        "identity": "PID and process name only; creation time unavailable in resource samples",
+        "last_sample": "2026-10-05T11:47:32.591166+00:00",
+        "name": "conhost",
+        "pid": 7892,
+        "private_committed_observed_max_bytes": 1314816,
+        "process_reported_peak_working_set_max_bytes": 7839744,
+        "samples": 92,
+        "working_set_observed_max_bytes": 7839744
+      },
+      {
+        "cpu_cumulative_observed_max_seconds": 8.59375,
+        "cpu_cumulative_observed_min_seconds": 0.375,
+        "cpu_delta_scope": "Observed interval only; excludes use before first/after last sample. PID reuse is not ruled out; not exact trial or server cost.",
+        "cpu_first_to_last_observed_delta_seconds": 8.21875,
+        "cpu_sequence_nondecreasing": true,
+        "first_sample": "2026-10-05T11:37:19.181494+00:00",
+        "identity": "PID and process name only; creation time unavailable in resource samples",
+        "last_sample": "2026-10-05T12:06:13.065919+00:00",
+        "name": "python",
+        "pid": 9560,
+        "private_committed_observed_max_bytes": 35803136,
+        "process_reported_peak_working_set_max_bytes": 56115200,
+        "samples": 184,
+        "working_set_observed_max_bytes": 52039680
+      },
+      {
+        "cpu_cumulative_observed_max_seconds": 0.03125,
+        "cpu_cumulative_observed_min_seconds": 0.03125,
+        "cpu_delta_scope": "Observed interval only; excludes use before first/after last sample. PID reuse is not ruled out; not exact trial or server cost.",
+        "cpu_first_to_last_observed_delta_seconds": 0.0,
+        "cpu_sequence_nondecreasing": true,
+        "first_sample": "2026-10-05T11:37:00.339581+00:00",
+        "identity": "PID and process name only; creation time unavailable in resource samples",
+        "last_sample": "2026-10-05T11:37:19.181494+00:00",
+        "name": "conhost",
+        "pid": 9680,
+        "private_committed_observed_max_bytes": 1236992,
+        "process_reported_peak_working_set_max_bytes": 7737344,
+        "samples": 2,
+        "working_set_observed_max_bytes": 7716864
+      },
+      {
+        "cpu_cumulative_observed_max_seconds": 0.4375,
+        "cpu_cumulative_observed_min_seconds": 0.359375,
+        "cpu_delta_scope": "Observed interval only; excludes use before first/after last sample. PID reuse is not ruled out; not exact trial or server cost.",
+        "cpu_first_to_last_observed_delta_seconds": 0.078125,
+        "cpu_sequence_nondecreasing": true,
+        "first_sample": "2026-10-05T11:34:49.180541+00:00",
+        "identity": "PID and process name only; creation time unavailable in resource samples",
+        "last_sample": "2026-10-05T11:37:00.339581+00:00",
+        "name": "python",
+        "pid": 12108,
+        "private_committed_observed_max_bytes": 28979200,
+        "process_reported_peak_working_set_max_bytes": 49344512,
+        "samples": 4,
+        "working_set_observed_max_bytes": 45268992
+      },
+      {
+        "cpu_cumulative_observed_max_seconds": 11.09375,
+        "cpu_cumulative_observed_min_seconds": 0.5,
+        "cpu_delta_scope": "Observed interval only; excludes use before first/after last sample. PID reuse is not ruled out; not exact trial or server cost.",
+        "cpu_first_to_last_observed_delta_seconds": 10.59375,
+        "cpu_sequence_nondecreasing": true,
+        "first_sample": "2026-10-05T11:34:49.180541+00:00",
+        "identity": "PID and process name only; creation time unavailable in resource samples",
+        "last_sample": "2026-10-05T12:52:10.445311+00:00",
+        "name": "ollama",
+        "pid": 12912,
+        "private_committed_observed_max_bytes": 68001792,
+        "process_reported_peak_working_set_max_bytes": 68964352,
+        "samples": 364,
+        "working_set_observed_max_bytes": 58744832
+      },
+      {
+        "cpu_cumulative_observed_max_seconds": 34.09375,
+        "cpu_cumulative_observed_min_seconds": 33.96875,
+        "cpu_delta_scope": "Observed interval only; excludes use before first/after last sample. PID reuse is not ruled out; not exact trial or server cost.",
+        "cpu_first_to_last_observed_delta_seconds": 0.125,
+        "cpu_sequence_nondecreasing": true,
+        "first_sample": "2026-10-05T11:37:00.339581+00:00",
+        "identity": "PID and process name only; creation time unavailable in resource samples",
+        "last_sample": "2026-10-05T11:37:19.181494+00:00",
+        "name": "llama-server",
+        "pid": 13188,
+        "private_committed_observed_max_bytes": 24921845760,
+        "process_reported_peak_working_set_max_bytes": 23890960384,
+        "samples": 2,
+        "working_set_observed_max_bytes": 23890960384
+      },
+      {
+        "cpu_cumulative_observed_max_seconds": 0.015625,
+        "cpu_cumulative_observed_min_seconds": 0.015625,
+        "cpu_delta_scope": "Observed interval only; excludes use before first/after last sample. PID reuse is not ruled out; not exact trial or server cost.",
+        "cpu_first_to_last_observed_delta_seconds": 0.0,
+        "cpu_sequence_nondecreasing": true,
+        "first_sample": "2026-10-05T11:49:06.837368+00:00",
+        "identity": "PID and process name only; creation time unavailable in resource samples",
+        "last_sample": "2026-10-05T12:06:13.065919+00:00",
+        "name": "conhost",
+        "pid": 16752,
+        "private_committed_observed_max_bytes": 1314816,
+        "process_reported_peak_working_set_max_bytes": 7839744,
+        "samples": 91,
+        "working_set_observed_max_bytes": 7839744
+      },
+      {
+        "cpu_cumulative_observed_max_seconds": 101.390625,
+        "cpu_cumulative_observed_min_seconds": 101.390625,
+        "cpu_delta_scope": "Observed interval only; excludes use before first/after last sample. PID reuse is not ruled out; not exact trial or server cost.",
+        "cpu_first_to_last_observed_delta_seconds": 0.0,
+        "cpu_sequence_nondecreasing": true,
+        "first_sample": "2026-10-05T12:52:10.445311+00:00",
+        "identity": "PID and process name only; creation time unavailable in resource samples",
+        "last_sample": "2026-10-05T12:52:10.445311+00:00",
+        "name": "llama-server",
+        "pid": 19552,
+        "private_committed_observed_max_bytes": 24926650368,
+        "process_reported_peak_working_set_max_bytes": 23970930688,
+        "samples": 1,
+        "working_set_observed_max_bytes": 23928664064
+      },
+      {
+        "cpu_cumulative_observed_max_seconds": 0,
+        "cpu_cumulative_observed_min_seconds": 0,
+        "cpu_delta_scope": "Observed interval only; excludes use before first/after last sample. PID reuse is not ruled out; not exact trial or server cost.",
+        "cpu_first_to_last_observed_delta_seconds": 0,
+        "cpu_sequence_nondecreasing": true,
+        "first_sample": "2026-10-05T11:35:07.245348+00:00",
+        "identity": "PID and process name only; creation time unavailable in resource samples",
+        "last_sample": "2026-10-05T11:35:07.862347+00:00",
+        "name": "conhost",
+        "pid": 24952,
+        "private_committed_observed_max_bytes": 1269760,
+        "process_reported_peak_working_set_max_bytes": 7733248,
+        "samples": 2,
+        "working_set_observed_max_bytes": 7733248
+      },
+      {
+        "cpu_cumulative_observed_max_seconds": 7697.625,
+        "cpu_cumulative_observed_min_seconds": 77.96875,
+        "cpu_delta_scope": "Observed interval only; excludes use before first/after last sample. PID reuse is not ruled out; not exact trial or server cost.",
+        "cpu_first_to_last_observed_delta_seconds": 7619.65625,
+        "cpu_sequence_nondecreasing": true,
+        "first_sample": "2026-10-05T11:49:06.837368+00:00",
+        "identity": "PID and process name only; creation time unavailable in resource samples",
+        "last_sample": "2026-10-05T12:06:13.065919+00:00",
+        "name": "llama-server",
+        "pid": 26064,
+        "private_committed_observed_max_bytes": 31341150208,
+        "process_reported_peak_working_set_max_bytes": 30377381888,
+        "samples": 91,
+        "working_set_observed_max_bytes": 30353391616
+      },
+      {
+        "cpu_cumulative_observed_max_seconds": 0.03125,
+        "cpu_cumulative_observed_min_seconds": 0.03125,
+        "cpu_delta_scope": "Observed interval only; excludes use before first/after last sample. PID reuse is not ruled out; not exact trial or server cost.",
+        "cpu_first_to_last_observed_delta_seconds": 0.0,
+        "cpu_sequence_nondecreasing": true,
+        "first_sample": "2026-10-05T11:34:49.180541+00:00",
+        "identity": "PID and process name only; creation time unavailable in resource samples",
+        "last_sample": "2026-10-05T12:52:10.445311+00:00",
+        "name": "conhost",
+        "pid": 27024,
+        "private_committed_observed_max_bytes": 1671168,
+        "process_reported_peak_working_set_max_bytes": 10649600,
+        "samples": 364,
+        "working_set_observed_max_bytes": 10579968
+      },
+      {
+        "cpu_cumulative_observed_max_seconds": 10277.78125,
+        "cpu_cumulative_observed_min_seconds": 73.984375,
+        "cpu_delta_scope": "Observed interval only; excludes use before first/after last sample. PID reuse is not ruled out; not exact trial or server cost.",
+        "cpu_first_to_last_observed_delta_seconds": 10203.796875,
+        "cpu_sequence_nondecreasing": true,
+        "first_sample": "2026-10-05T12:26:31.009526+00:00",
+        "identity": "PID and process name only; creation time unavailable in resource samples",
+        "last_sample": "2026-10-05T12:50:08.960995+00:00",
+        "name": "llama-server",
+        "pid": 27644,
+        "private_committed_observed_max_bytes": 11143651328,
+        "process_reported_peak_working_set_max_bytes": 10491801600,
+        "samples": 174,
+        "working_set_observed_max_bytes": 10378784768
+      },
+      {
+        "cpu_cumulative_observed_max_seconds": 4266.203125,
+        "cpu_cumulative_observed_min_seconds": 58.765625,
+        "cpu_delta_scope": "Observed interval only; excludes use before first/after last sample. PID reuse is not ruled out; not exact trial or server cost.",
+        "cpu_first_to_last_observed_delta_seconds": 4207.4375,
+        "cpu_sequence_nondecreasing": true,
+        "first_sample": "2026-10-05T11:37:43.192999+00:00",
+        "identity": "PID and process name only; creation time unavailable in resource samples",
+        "last_sample": "2026-10-05T11:47:32.591166+00:00",
+        "name": "llama-server",
+        "pid": 27856,
+        "private_committed_observed_max_bytes": 9760702464,
+        "process_reported_peak_working_set_max_bytes": 9112514560,
+        "samples": 92,
+        "working_set_observed_max_bytes": 8999575552
+      },
+      {
+        "cpu_cumulative_observed_max_seconds": 18.546875,
+        "cpu_cumulative_observed_min_seconds": 0.484375,
+        "cpu_delta_scope": "Observed interval only; excludes use before first/after last sample. PID reuse is not ruled out; not exact trial or server cost.",
+        "cpu_first_to_last_observed_delta_seconds": 18.0625,
+        "cpu_sequence_nondecreasing": true,
+        "first_sample": "2026-10-05T12:26:03.575399+00:00",
+        "identity": "PID and process name only; creation time unavailable in resource samples",
+        "last_sample": "2026-10-05T12:52:10.445311+00:00",
+        "name": "python",
+        "pid": 28360,
+        "private_committed_observed_max_bytes": 43417600,
+        "process_reported_peak_working_set_max_bytes": 67371008,
+        "samples": 176,
+        "working_set_observed_max_bytes": 60973056
+      },
+      {
+        "cpu_cumulative_observed_max_seconds": 0,
+        "cpu_cumulative_observed_min_seconds": 0,
+        "cpu_delta_scope": "Observed interval only; excludes use before first/after last sample. PID reuse is not ruled out; not exact trial or server cost.",
+        "cpu_first_to_last_observed_delta_seconds": 0,
+        "cpu_sequence_nondecreasing": true,
+        "first_sample": "2026-10-05T12:52:10.445311+00:00",
+        "identity": "PID and process name only; creation time unavailable in resource samples",
+        "last_sample": "2026-10-05T12:52:10.445311+00:00",
+        "name": "conhost",
+        "pid": 28756,
+        "private_committed_observed_max_bytes": 1224704,
+        "process_reported_peak_working_set_max_bytes": 7798784,
+        "samples": 1,
+        "working_set_observed_max_bytes": 7778304
+      },
+      {
+        "cpu_cumulative_observed_max_seconds": 18.203125,
+        "cpu_cumulative_observed_min_seconds": 18.203125,
+        "cpu_delta_scope": "Observed interval only; excludes use before first/after last sample. PID reuse is not ruled out; not exact trial or server cost.",
+        "cpu_first_to_last_observed_delta_seconds": 0.0,
+        "cpu_sequence_nondecreasing": true,
+        "first_sample": "2026-10-05T11:35:07.245348+00:00",
+        "identity": "PID and process name only; creation time unavailable in resource samples",
+        "last_sample": "2026-10-05T11:35:07.862347+00:00",
+        "name": "llama-server",
+        "pid": 28888,
+        "private_committed_observed_max_bytes": 8324468736,
+        "process_reported_peak_working_set_max_bytes": 7495479296,
+        "samples": 2,
+        "working_set_observed_max_bytes": 7467978752
+      }
+    ],
+    "raw_directory_limit_bytes": 536870912,
+    "request_observation_rows": 182,
+    "sampling_interval": {
+      "first": "2026-10-05T11:34:49.180541+00:00",
+      "last": "2026-10-05T12:52:10.445311+00:00"
+    },
+    "selected_process_private_committed_simultaneous_sample_sum_max_bytes": 31444402176,
+    "selected_process_working_set_simultaneous_sample_sum_max_bytes": 30479630336
+  },
+  "schema_version": "1"
+}

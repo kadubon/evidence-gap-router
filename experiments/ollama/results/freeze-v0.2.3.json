@@ -1,0 +1,450 @@
+{
+  "candidate_package_sha256": "dca4042a019b0af214b6f9e39fa1aaef2d9547c091e828020929be323d9cdd6b",
+  "candidate_wheel_sha256": "8227a37be95b615f1608619592298b401bfc73cc412b90857e07ccada8215bc5",
+  "evaluation_only_gold_sha256": "02451ac000778de029b1f377a2d972e56a86b22c17d06a1da8a554c4a6e157ce",
+  "excluded_parent_ids": [
+    "confirmation-L1-3",
+    "confirmation-L1-4",
+    "confirmation-L1-5",
+    "confirmation-L1-6",
+    "confirmation-L2-2",
+    "confirmation-L2-3",
+    "confirmation-L2-4",
+    "confirmation-L2-6",
+    "confirmation-L3-3",
+    "confirmation-L3-4",
+    "confirmation-L3-5",
+    "confirmation-L3-6",
+    "confirmation-L4-2",
+    "confirmation-L4-3",
+    "confirmation-L4-4",
+    "confirmation-L4-5"
+  ],
+  "exclusion_reason": "Predeclared balanced profile chosen from speed/resource budgets",
+  "harness_files": {
+    "__init__.py": "0df1f307e9326e624e0b18cccbc15ab7fec0b76ef1e3d06cbca0cc89b94d3298",
+    "analysis.py": "2208ce6afb1a2cec873ed799a063857717f56f7182cb3637d3c0f43a20ef0c1e",
+    "cli.py": "6b7e697483acb5b34afb50cefe22b47948c568bb9294b4df1dd06948ea47dd45",
+    "client.py": "d00e7bb8b70ee856847328bc65675273e7fbfd2d1d313ff10d3c98378f62555b",
+    "environment.py": "85ce6d08e2a8e1c3e1e0974367d391018b83fc6a70cd45cecb80475b5be6cfa6",
+    "harness.py": "4007da29e96f30f6a2efa7f23b249a06b1afc0fb42e80f5600d27d8d6dd392ca",
+    "oracle.py": "b501bc2ff2c692543d42c8ccbf452724806859f095dc5c7c2378c87854f563d9",
+    "prompts.py": "7f7b675f763847965cb3902efeba46628c2c9b4d36f82d473611b128268ad4f0",
+    "tasks.py": "82c1d8be0b5ced1cc6e553ad4b98bfa3e4f4c47a5707290a86b2fc71bdd5d742"
+  },
+  "harness_sha256": "2edd5334dfefa7dc16d4c4327cd9109834300bb779532cb15b269424b0abb7b9",
+  "implementation_commit": "481419e252d233d712de237e96af2ae6184b9b33",
+  "input_provenance": "new artificial parents, distinct from the older model-free regression",
+  "installed_runtime": {
+    "package_sha256": "dca4042a019b0af214b6f9e39fa1aaef2d9547c091e828020929be323d9cdd6b",
+    "pydantic": "2.13.5",
+    "pydantic_core": "2.46.5",
+    "python": "3.12.14",
+    "sdk_import_scope": "outside-repository/site-packages",
+    "sdk_version": "0.2.3"
+  },
+  "ledger_sha256_at_freeze": "7291033bd92b85e4376b064b4d1dafe7fa87248bc1cbbc2b2698b28d4060f3d3",
+  "limits": {
+    "calls": 1200,
+    "disk_bytes": 536870912,
+    "generated_tokens": 600000,
+    "total_tokens": 5000000,
+    "wall_seconds": 28800
+  },
+  "manifest_sha256": "5775bc0f540bb60df81631645229bb2ba51aadc81d5ba0de1b00fae68d74a68f",
+  "no_result_based_profile_choice": true,
+  "original_first_reservation_epoch": 1791200089.2157648,
+  "planned_auxiliary_source_keys": [
+    "confirmation-gemma-confirmation-L2-1-A-23031017",
+    "confirmation-gemma-confirmation-L2-1-B-23031017",
+    "confirmation-gemma-confirmation-L1-1-A-23031017",
+    "confirmation-gemma-confirmation-L1-1-B-23031017",
+    "confirmation-gemma-confirmation-L3-1-B-23031017",
+    "confirmation-gemma-confirmation-L3-1-A-23031017",
+    "confirmation-gemma-confirmation-L4-1-A-23031017",
+    "confirmation-gemma-confirmation-L4-1-B-23031017",
+    "confirmation-qwen-confirmation-L2-1-A-23031017",
+    "confirmation-qwen-confirmation-L2-1-B-23031017",
+    "confirmation-qwen-confirmation-L1-1-A-23031017",
+    "confirmation-qwen-confirmation-L1-1-B-23031017",
+    "confirmation-qwen-confirmation-L3-1-B-23031017",
+    "confirmation-qwen-confirmation-L3-1-A-23031017",
+    "confirmation-qwen-confirmation-L4-1-A-23031017",
+    "confirmation-qwen-confirmation-L4-1-B-23031017"
+  ],
+  "planned_trial_keys": [
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation-L2-5-A-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L2-5"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation-L2-5-B-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L2-5"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation-L2-5-C-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L2-5"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation-L1-1-B-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L1-1"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation-L1-1-C-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L1-1"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation-L1-1-A-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L1-1"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation-L2-1-C-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L2-1"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation-L2-1-A-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L2-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation-L2-1-B-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L2-1"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation-L1-2-A-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L1-2"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation-L1-2-C-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L1-2"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation-L1-2-B-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L1-2"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation-L4-1-C-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L4-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation-L4-1-B-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L4-1"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation-L4-1-A-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L4-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation-L3-2-B-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L3-2"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation-L3-2-A-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L3-2"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation-L3-2-C-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L3-2"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation-L3-1-A-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L3-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation-L3-1-B-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L3-1"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation-L3-1-C-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L3-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation-L4-6-B-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L4-6"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation-L4-6-C-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L4-6"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation-L4-6-A-23031017",
+      "model": "gemma4:e4b",
+      "seed": 23031017,
+      "task_id": "confirmation-L4-6"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation-L2-5-A-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L2-5"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation-L2-5-B-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L2-5"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation-L2-5-C-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L2-5"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation-L1-1-B-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L1-1"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation-L1-1-C-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L1-1"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation-L1-1-A-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L1-1"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation-L2-1-C-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L2-1"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation-L2-1-A-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L2-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation-L2-1-B-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L2-1"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation-L1-2-A-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L1-2"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation-L1-2-C-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L1-2"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation-L1-2-B-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L1-2"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation-L4-1-C-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L4-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation-L4-1-B-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L4-1"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation-L4-1-A-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L4-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation-L3-2-B-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L3-2"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation-L3-2-A-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L3-2"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation-L3-2-C-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L3-2"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation-L3-1-A-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L3-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation-L3-1-B-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L3-1"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation-L3-1-C-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L3-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation-L4-6-B-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L4-6"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation-L4-6-C-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L4-6"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation-L4-6-A-23031017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 23031017,
+      "task_id": "confirmation-L4-6"
+    }
+  ],
+  "preflight_sha256": "691a0c369dc0f3756565e893a63a151d60c361ae6feb0e08c3fee8bcc886a176",
+  "protocol_id": "egr-023-local-ollama-v2",
+  "public_tasks_sha256": "6a26b3237b303551776b1cca9d6fcade0cdf2ff13c6d2ef83e8dcdf9c14ba5d2",
+  "remaining_calls_at_freeze": 1106,
+  "remaining_generated_tokens_at_freeze": 585272,
+  "remaining_total_tokens_at_freeze": 4943198,
+  "remaining_wall_at_freeze_seconds": 25834.91378593445,
+  "runtime_decode": {
+    "first_backend_cold_wall_seconds": 180,
+    "keep_alive": "5m",
+    "num_ctx": 4096,
+    "num_predict": 512,
+    "shift": false,
+    "socket_timeout_seconds": 180,
+    "stream": false,
+    "temperature": 0.0,
+    "think": false,
+    "truncate": false,
+    "wall_seconds": 120
+  },
+  "selected_parent_count": 8,
+  "speed_only_profile_forecast_request_seconds": {
+    "gemma4:e4b": {
+      "missing_per_request_overhead_records": 0,
+      "observed_overhead_max_seconds": 1.485000000000582,
+      "once_per_model_load_seconds": 17.1960329,
+      "per_request_seconds": 30.261527099992144,
+      "unknown_load_records": 0
+    },
+    "qwen3.6:35b-a3b": {
+      "missing_per_request_overhead_records": 0,
+      "observed_overhead_max_seconds": 1.5940000000045984,
+      "once_per_model_load_seconds": 110.5334937,
+      "per_request_seconds": 57.85706690000058,
+      "unknown_load_records": 0
+    }
+  }
+}

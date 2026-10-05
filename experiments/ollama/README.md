@@ -75,6 +75,11 @@ use the same script, installed interpreter, owned-server PID and log. Windows us
 the equivalent `Scripts/python.exe` and absolute paths; all CLI arguments are the
 same.
 
+When redirecting Japanese command output in Windows PowerShell, set
+`$env:PYTHONIOENCODING = 'utf-8'` for that shell before running these commands.
+The persisted experiment files already use UTF-8; this setting controls native
+stdout encoding and does not change model requests or the saved ledger.
+
 ```sh
 /tmp/egr-ollama-env/bin/python -I /absolute/path/evidence-gap-router/experiments/ollama/cli.py preflight --directory /tmp/egr-ollama-run --url http://127.0.0.1:11435 --server-pid 12345 --server-log /tmp/egr-ollama-server.log
 /tmp/egr-ollama-env/bin/python -I /absolute/path/evidence-gap-router/experiments/ollama/cli.py backend-smoke --directory /tmp/egr-ollama-run --url http://127.0.0.1:11435 --server-pid 12345

@@ -1,0 +1,1706 @@
+{
+  "all_attempt_costs_from_frozen_summary": {
+    "gemma4:e4b/backend-smoke": {
+      "attempted_calls": 1,
+      "client_wall_seconds": 17.26600000000326,
+      "generated_tokens": 6,
+      "generation_seconds": 0.219495,
+      "known_duration_calls": {
+        "client_wall_seconds": 1,
+        "generation_seconds": 1,
+        "load_seconds": 1,
+        "prefill_seconds": 1
+      },
+      "known_usage_calls": 1,
+      "load_seconds": 16.5683585,
+      "observed_client_wall_seconds": 17.26600000000326,
+      "observed_generated_tokens": 6,
+      "observed_generation_seconds": 0.219495,
+      "observed_load_seconds": 16.5683585,
+      "observed_prefill_seconds": 0.45053,
+      "observed_total_tokens": 32,
+      "prefill_seconds": 0.45053,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 1
+      },
+      "total_tokens": 32,
+      "unknown_usage_calls": 0
+    },
+    "gemma4:e4b/confirmation": {
+      "attempted_calls": 87,
+      "client_wall_seconds": 1300.207999999977,
+      "generated_tokens": 16616,
+      "generation_seconds": 787.6129459990001,
+      "known_duration_calls": {
+        "client_wall_seconds": 87,
+        "generation_seconds": 87,
+        "load_seconds": 87,
+        "prefill_seconds": 87
+      },
+      "known_usage_calls": 87,
+      "load_seconds": 18.84427020000001,
+      "observed_client_wall_seconds": 1300.207999999977,
+      "observed_generated_tokens": 16616,
+      "observed_generation_seconds": 787.6129459990001,
+      "observed_load_seconds": 18.84427020000001,
+      "observed_prefill_seconds": 490.27795199999986,
+      "observed_total_tokens": 56981,
+      "prefill_seconds": 490.27795199999986,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "length": 16,
+        "ok": 71
+      },
+      "total_tokens": 56981,
+      "unknown_usage_calls": 0
+    },
+    "gemma4:e4b/pilot": {
+      "attempted_calls": 46,
+      "client_wall_seconds": 546.7849999999962,
+      "generated_tokens": 6644,
+      "generation_seconds": 282.4017019990001,
+      "known_duration_calls": {
+        "client_wall_seconds": 46,
+        "generation_seconds": 46,
+        "load_seconds": 46,
+        "prefill_seconds": 46
+      },
+      "known_usage_calls": 46,
+      "load_seconds": 17.330988899999998,
+      "observed_client_wall_seconds": 546.7849999999962,
+      "observed_generated_tokens": 6644,
+      "observed_generation_seconds": 282.4017019990001,
+      "observed_load_seconds": 17.330988899999998,
+      "observed_prefill_seconds": 245.30564799999996,
+      "observed_total_tokens": 26438,
+      "prefill_seconds": 245.30564799999996,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "length": 6,
+        "ok": 40
+      },
+      "total_tokens": 26438,
+      "unknown_usage_calls": 0
+    },
+    "qwen3.6:35b-a3b/backend-smoke": {
+      "attempted_calls": 1,
+      "client_wall_seconds": 111.4539999999979,
+      "generated_tokens": 10,
+      "generation_seconds": 0.467349,
+      "known_duration_calls": {
+        "client_wall_seconds": 1,
+        "generation_seconds": 1,
+        "load_seconds": 1,
+        "prefill_seconds": 1
+      },
+      "known_usage_calls": 1,
+      "load_seconds": 110.5334937,
+      "observed_client_wall_seconds": 111.4539999999979,
+      "observed_generated_tokens": 10,
+      "observed_generation_seconds": 0.467349,
+      "observed_load_seconds": 110.5334937,
+      "observed_prefill_seconds": 0.433399,
+      "observed_total_tokens": 39,
+      "prefill_seconds": 0.433399,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 1
+      },
+      "total_tokens": 39,
+      "unknown_usage_calls": 0
+    },
+    "qwen3.6:35b-a3b/confirmation": {
+      "attempted_calls": 1,
+      "client_wall_seconds": 119.98500000000058,
+      "generated_tokens": null,
+      "generation_seconds": null,
+      "known_duration_calls": {
+        "client_wall_seconds": 1,
+        "generation_seconds": 0,
+        "load_seconds": 0,
+        "prefill_seconds": 0
+      },
+      "known_usage_calls": 0,
+      "load_seconds": null,
+      "observed_client_wall_seconds": 119.98500000000058,
+      "observed_generated_tokens": 0,
+      "observed_generation_seconds": 0.0,
+      "observed_load_seconds": 0.0,
+      "observed_prefill_seconds": 0.0,
+      "observed_total_tokens": 0,
+      "prefill_seconds": null,
+      "reserved_unknown_total_tokens": 4608,
+      "status_counts": {
+        "timeout": 1
+      },
+      "total_tokens": null,
+      "unknown_usage_calls": 1
+    },
+    "qwen3.6:35b-a3b/pilot": {
+      "attempted_calls": 46,
+      "client_wall_seconds": 1049.8759999999747,
+      "generated_tokens": 8068,
+      "generation_seconds": 671.0309579979998,
+      "known_duration_calls": {
+        "client_wall_seconds": 46,
+        "generation_seconds": 46,
+        "load_seconds": 46,
+        "prefill_seconds": 46
+      },
+      "known_usage_calls": 46,
+      "load_seconds": 86.77825540000003,
+      "observed_client_wall_seconds": 1049.8759999999747,
+      "observed_generated_tokens": 8068,
+      "observed_generation_seconds": 671.0309579979998,
+      "observed_load_seconds": 86.77825540000003,
+      "observed_prefill_seconds": 288.46206199899996,
+      "observed_total_tokens": 30293,
+      "prefill_seconds": 288.46206199899996,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "length": 2,
+        "ok": 44
+      },
+      "total_tokens": 30293,
+      "unknown_usage_calls": 0
+    }
+  },
+  "all_attempt_costs_independent_phase_ledger": {
+    "gemma4:e4b": {
+      "attempted_calls": 87,
+      "client_wall_seconds": 1300.207999999977,
+      "generated_tokens": 16616,
+      "generation_seconds": 787.6129459990001,
+      "known_duration_calls": {
+        "client_wall_seconds": 87,
+        "generation_seconds": 87,
+        "load_seconds": 87,
+        "prefill_seconds": 87
+      },
+      "known_usage_calls": 87,
+      "load_seconds": 18.84427020000001,
+      "observed_client_wall_seconds": 1300.207999999977,
+      "observed_generated_tokens": 16616,
+      "observed_generation_seconds": 787.6129459990001,
+      "observed_load_seconds": 18.84427020000001,
+      "observed_prefill_seconds": 490.27795199999986,
+      "observed_total_tokens": 56981,
+      "prefill_seconds": 490.27795199999986,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "length": 16,
+        "ok": 71
+      },
+      "total_tokens": 56981,
+      "unknown_usage_calls": 0
+    },
+    "qwen3.6:35b-a3b": {
+      "attempted_calls": 1,
+      "client_wall_seconds": 119.98500000000058,
+      "generated_tokens": null,
+      "generation_seconds": null,
+      "known_duration_calls": {
+        "client_wall_seconds": 1,
+        "generation_seconds": 0,
+        "load_seconds": 0,
+        "prefill_seconds": 0
+      },
+      "known_usage_calls": 0,
+      "load_seconds": null,
+      "observed_client_wall_seconds": 119.98500000000058,
+      "observed_generated_tokens": 0,
+      "observed_generation_seconds": 0.0,
+      "observed_load_seconds": 0.0,
+      "observed_prefill_seconds": 0.0,
+      "observed_total_tokens": 0,
+      "prefill_seconds": null,
+      "reserved_unknown_total_tokens": 4608,
+      "status_counts": {
+        "timeout": 1
+      },
+      "total_tokens": null,
+      "unknown_usage_calls": 1
+    }
+  },
+  "analysis": "Independent posthoc reporting separation; frozen oracle and composite analysis unchanged.",
+  "bootstrap_replicates": 2000,
+  "bootstrap_seed": 23031041,
+  "frozen_composite_comparisons_preserved": {
+    "gemma4:e4b": {
+      "A_minus_B_completion": 0.0,
+      "C_interpretation": "pooled-information reference; different information arrival",
+      "both_successful_costs": {
+        "A": {
+          "attempted_calls": 0,
+          "client_wall_seconds": 0.0,
+          "generated_tokens": 0,
+          "generation_seconds": 0.0,
+          "known_duration_calls": {
+            "client_wall_seconds": 0,
+            "generation_seconds": 0,
+            "load_seconds": 0,
+            "prefill_seconds": 0
+          },
+          "known_usage_calls": 0,
+          "load_seconds": 0.0,
+          "observed_client_wall_seconds": 0.0,
+          "observed_generated_tokens": 0,
+          "observed_generation_seconds": 0.0,
+          "observed_load_seconds": 0.0,
+          "observed_prefill_seconds": 0.0,
+          "observed_total_tokens": 0,
+          "parents": 0,
+          "parents_with_cost_records": 0,
+          "prefill_seconds": 0.0,
+          "reserved_unknown_total_tokens": 0,
+          "status_counts": {},
+          "total_tokens": 0,
+          "unknown_usage_calls": 0
+        },
+        "B": {
+          "attempted_calls": 0,
+          "client_wall_seconds": 0.0,
+          "generated_tokens": 0,
+          "generation_seconds": 0.0,
+          "known_duration_calls": {
+            "client_wall_seconds": 0,
+            "generation_seconds": 0,
+            "load_seconds": 0,
+            "prefill_seconds": 0
+          },
+          "known_usage_calls": 0,
+          "load_seconds": 0.0,
+          "observed_client_wall_seconds": 0.0,
+          "observed_generated_tokens": 0,
+          "observed_generation_seconds": 0.0,
+          "observed_load_seconds": 0.0,
+          "observed_prefill_seconds": 0.0,
+          "observed_total_tokens": 0,
+          "parents": 0,
+          "parents_with_cost_records": 0,
+          "prefill_seconds": 0.0,
+          "reserved_unknown_total_tokens": 0,
+          "status_counts": {},
+          "total_tokens": 0,
+          "unknown_usage_calls": 0
+        }
+      },
+      "both_successful_parents": 0,
+      "losses": 1,
+      "paired_assessed_parents": 8,
+      "parent_bootstrap_95_interval": [
+        -0.375,
+        0.375
+      ],
+      "scheduled_parents": 8,
+      "success_subset_selection_bias": true,
+      "ties": 6,
+      "wins": 1
+    },
+    "qwen3.6:35b-a3b": {
+      "A_minus_B_completion": null,
+      "C_interpretation": "pooled-information reference; different information arrival",
+      "both_successful_costs": {
+        "A": {
+          "attempted_calls": 0,
+          "client_wall_seconds": 0.0,
+          "generated_tokens": 0,
+          "generation_seconds": 0.0,
+          "known_duration_calls": {
+            "client_wall_seconds": 0,
+            "generation_seconds": 0,
+            "load_seconds": 0,
+            "prefill_seconds": 0
+          },
+          "known_usage_calls": 0,
+          "load_seconds": 0.0,
+          "observed_client_wall_seconds": 0.0,
+          "observed_generated_tokens": 0,
+          "observed_generation_seconds": 0.0,
+          "observed_load_seconds": 0.0,
+          "observed_prefill_seconds": 0.0,
+          "observed_total_tokens": 0,
+          "parents": 0,
+          "parents_with_cost_records": 0,
+          "prefill_seconds": 0.0,
+          "reserved_unknown_total_tokens": 0,
+          "status_counts": {},
+          "total_tokens": 0,
+          "unknown_usage_calls": 0
+        },
+        "B": {
+          "attempted_calls": 0,
+          "client_wall_seconds": 0.0,
+          "generated_tokens": 0,
+          "generation_seconds": 0.0,
+          "known_duration_calls": {
+            "client_wall_seconds": 0,
+            "generation_seconds": 0,
+            "load_seconds": 0,
+            "prefill_seconds": 0
+          },
+          "known_usage_calls": 0,
+          "load_seconds": 0.0,
+          "observed_client_wall_seconds": 0.0,
+          "observed_generated_tokens": 0,
+          "observed_generation_seconds": 0.0,
+          "observed_load_seconds": 0.0,
+          "observed_prefill_seconds": 0.0,
+          "observed_total_tokens": 0,
+          "parents": 0,
+          "parents_with_cost_records": 0,
+          "prefill_seconds": 0.0,
+          "reserved_unknown_total_tokens": 0,
+          "status_counts": {},
+          "total_tokens": 0,
+          "unknown_usage_calls": 0
+        }
+      },
+      "both_successful_parents": 0,
+      "losses": 0,
+      "paired_assessed_parents": 0,
+      "parent_bootstrap_95_interval": null,
+      "scheduled_parents": 8,
+      "success_subset_selection_bias": true,
+      "ties": 0,
+      "wins": 0
+    }
+  },
+  "inputs_sha256": {
+    "freeze": "a9677a9a1cecd75259fc841c2ab588cc66094b354fe3276e6e7a2bf84b148f77",
+    "ledger": "99c53cebeb3f87683330bd1d12dcf455757502642c9d370d33b8abb68ba83a5c",
+    "scored": "3aa2a8f1509198b0400a24164e20d846a5ae2bfd9d4d874eb3498eb44d07785b",
+    "summary": "913d551ed549e905f87c33ea2918b8803d26270f48a2df3224fd03b7f9bbd85b"
+  },
+  "limitations": [
+    "Posthoc endpoint separation, not a new preregistered experiment.",
+    "Bootstrap is descriptive for these few artificial parents; no population or causal superiority claim.",
+    "Unresolved/unassessed rows remain visible and are not known failures or safe abstention.",
+    "Both-success costs condition on success and cannot establish total method efficiency.",
+    "No cross-model timing, energy, or price inference; observed duration components remain separate."
+  ],
+  "models": {
+    "gemma4:e4b": {
+      "answerable": {
+        "A_minus_B": {
+          "all_scheduled_identification_bounds": [
+            0.0,
+            0.0
+          ],
+          "known_assessed_pairs": 6,
+          "losses": 1,
+          "mean_on_known_pairs": 0.0,
+          "pairs": [
+            {
+              "A_minus_B": 0,
+              "A_supported": 0,
+              "B_supported": 0,
+              "task_id": "confirmation-L1-1"
+            },
+            {
+              "A_minus_B": -1,
+              "A_supported": 0,
+              "B_supported": 1,
+              "task_id": "confirmation-L1-2"
+            },
+            {
+              "A_minus_B": 0,
+              "A_supported": 0,
+              "B_supported": 0,
+              "task_id": "confirmation-L2-1"
+            },
+            {
+              "A_minus_B": 0,
+              "A_supported": 0,
+              "B_supported": 0,
+              "task_id": "confirmation-L3-1"
+            },
+            {
+              "A_minus_B": 0,
+              "A_supported": 0,
+              "B_supported": 0,
+              "task_id": "confirmation-L3-2"
+            },
+            {
+              "A_minus_B": 1,
+              "A_supported": 1,
+              "B_supported": 0,
+              "task_id": "confirmation-L4-1"
+            }
+          ],
+          "parent_bootstrap_95_interval": [
+            -0.5,
+            0.5
+          ],
+          "ties": 4,
+          "unresolved_pairs": 0,
+          "wins": 1
+        },
+        "C_interpretation": "All public documents initially available; pooled reference, different information arrival.",
+        "all_attempt_costs_by_arm": {
+          "A": {
+            "costs": {
+              "attempted_calls": 22,
+              "client_wall_seconds": 302.32900000001246,
+              "generated_tokens": 3845,
+              "generation_seconds": 182.713351999,
+              "known_duration_calls": {
+                "client_wall_seconds": 22,
+                "generation_seconds": 22,
+                "load_seconds": 22,
+                "prefill_seconds": 22
+              },
+              "known_usage_calls": 22,
+              "load_seconds": 0.06265659999999999,
+              "observed_client_wall_seconds": 302.32900000001246,
+              "observed_generated_tokens": 3845,
+              "observed_generation_seconds": 182.713351999,
+              "observed_load_seconds": 0.06265659999999999,
+              "observed_prefill_seconds": 118.743322,
+              "observed_total_tokens": 13408,
+              "prefill_seconds": 118.743322,
+              "reserved_unknown_total_tokens": 0,
+              "status_counts": {
+                "length": 3,
+                "ok": 19
+              },
+              "total_tokens": 13408,
+              "unknown_usage_calls": 0
+            },
+            "parents": 6,
+            "parents_with_model_reservations": 6
+          },
+          "B": {
+            "costs": {
+              "attempted_calls": 27,
+              "client_wall_seconds": 376.751999999964,
+              "generated_tokens": 4705,
+              "generation_seconds": 228.580146,
+              "known_duration_calls": {
+                "client_wall_seconds": 27,
+                "generation_seconds": 27,
+                "load_seconds": 27,
+                "prefill_seconds": 27
+              },
+              "known_usage_calls": 27,
+              "load_seconds": 0.0811173,
+              "observed_client_wall_seconds": 376.751999999964,
+              "observed_generated_tokens": 4705,
+              "observed_generation_seconds": 228.580146,
+              "observed_load_seconds": 0.0811173,
+              "observed_prefill_seconds": 146.900383,
+              "observed_total_tokens": 16620,
+              "prefill_seconds": 146.900383,
+              "reserved_unknown_total_tokens": 0,
+              "status_counts": {
+                "length": 5,
+                "ok": 22
+              },
+              "total_tokens": 16620,
+              "unknown_usage_calls": 0
+            },
+            "parents": 6,
+            "parents_with_model_reservations": 6
+          },
+          "C": {
+            "costs": {
+              "attempted_calls": 12,
+              "client_wall_seconds": 201.31400000000576,
+              "generated_tokens": 2753,
+              "generation_seconds": 125.732478,
+              "known_duration_calls": {
+                "client_wall_seconds": 12,
+                "generation_seconds": 12,
+                "load_seconds": 12,
+                "prefill_seconds": 12
+              },
+              "known_usage_calls": 12,
+              "load_seconds": 0.034270300000000004,
+              "observed_client_wall_seconds": 201.31400000000576,
+              "observed_generated_tokens": 2753,
+              "observed_generation_seconds": 125.732478,
+              "observed_load_seconds": 0.034270300000000004,
+              "observed_prefill_seconds": 75.059929,
+              "observed_total_tokens": 8716,
+              "prefill_seconds": 75.059929,
+              "reserved_unknown_total_tokens": 0,
+              "status_counts": {
+                "length": 3,
+                "ok": 9
+              },
+              "total_tokens": 8716,
+              "unknown_usage_calls": 0
+            },
+            "parents": 6,
+            "parents_with_model_reservations": 6
+          }
+        },
+        "arms": {
+          "A": {
+            "answer_correct": 2,
+            "completion_identification_bounds": [
+              0.16666666666666666,
+              0.16666666666666666
+            ],
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {
+              "blocked": 4,
+              "escalation_required": 1,
+              "satisfied": 1
+            },
+            "evidence_supported_completion": 1,
+            "execution_counts": {
+              "completed": 6
+            },
+            "false_acceptance": 0,
+            "false_acceptance_over_all_scheduled": 0.0,
+            "faults": {
+              "length": 3
+            },
+            "grounded_abstention": 0,
+            "known_attempt_termination": 6,
+            "known_not_supported": 5,
+            "known_supported_completion": 1,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": 0.16666666666666666,
+            "oracle_assessed": 6,
+            "pending": 0,
+            "retained_rows": 6,
+            "runner_stops": {
+              "no_progress": 3,
+              "router_stopped": 3
+            },
+            "scheduled_denominator": 6,
+            "system_claimed_complete": 1,
+            "uncertain_execution_rows": 0,
+            "unexecuted_rows": 0,
+            "unresolved_or_unassessed": 0
+          },
+          "B": {
+            "answer_correct": 3,
+            "completion_identification_bounds": [
+              0.16666666666666666,
+              0.16666666666666666
+            ],
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {
+              "blocked": 4,
+              "escalation_required": 1,
+              "satisfied": 1
+            },
+            "evidence_supported_completion": 1,
+            "execution_counts": {
+              "completed": 6
+            },
+            "false_acceptance": 0,
+            "false_acceptance_over_all_scheduled": 0.0,
+            "faults": {
+              "length": 5
+            },
+            "grounded_abstention": 0,
+            "known_attempt_termination": 6,
+            "known_not_supported": 5,
+            "known_supported_completion": 1,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": 0.16666666666666666,
+            "oracle_assessed": 6,
+            "pending": 0,
+            "retained_rows": 6,
+            "runner_stops": {
+              "router_stopped": 6
+            },
+            "scheduled_denominator": 6,
+            "system_claimed_complete": 1,
+            "uncertain_execution_rows": 0,
+            "unexecuted_rows": 0,
+            "unresolved_or_unassessed": 0
+          },
+          "C": {
+            "answer_correct": 5,
+            "completion_identification_bounds": [
+              0.3333333333333333,
+              0.3333333333333333
+            ],
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {
+              "blocked": 3,
+              "satisfied": 3
+            },
+            "evidence_supported_completion": 2,
+            "execution_counts": {
+              "completed": 6
+            },
+            "false_acceptance": 1,
+            "false_acceptance_over_all_scheduled": 0.16666666666666666,
+            "faults": {
+              "length": 3
+            },
+            "grounded_abstention": 0,
+            "known_attempt_termination": 6,
+            "known_not_supported": 4,
+            "known_supported_completion": 2,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": 0.3333333333333333,
+            "oracle_assessed": 6,
+            "pending": 0,
+            "retained_rows": 6,
+            "runner_stops": {
+              "router_stopped": 6
+            },
+            "scheduled_denominator": 6,
+            "system_claimed_complete": 3,
+            "uncertain_execution_rows": 0,
+            "unexecuted_rows": 0,
+            "unresolved_or_unassessed": 0
+          }
+        },
+        "both_A_B_supported_success_subset": {
+          "A": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          },
+          "B": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          },
+          "parents": 0,
+          "selection_bias": true
+        },
+        "scheduled_parents": 6
+      },
+      "gold_unclassified": {
+        "A_minus_B": {
+          "all_scheduled_identification_bounds": null,
+          "known_assessed_pairs": 0,
+          "losses": 0,
+          "mean_on_known_pairs": null,
+          "pairs": [],
+          "parent_bootstrap_95_interval": null,
+          "ties": 0,
+          "unresolved_pairs": 0,
+          "wins": 0
+        },
+        "C_interpretation": "All public documents initially available; pooled reference, different information arrival.",
+        "all_attempt_costs_by_arm": {
+          "A": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          },
+          "B": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          },
+          "C": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          }
+        },
+        "arms": {
+          "A": {
+            "answer_correct": 0,
+            "completion_identification_bounds": null,
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {},
+            "evidence_supported_completion": 0,
+            "execution_counts": {},
+            "false_acceptance": 0,
+            "false_acceptance_over_all_scheduled": null,
+            "faults": {},
+            "grounded_abstention": 0,
+            "known_attempt_termination": 0,
+            "known_not_supported": 0,
+            "known_supported_completion": 0,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": null,
+            "oracle_assessed": 0,
+            "pending": 0,
+            "retained_rows": 0,
+            "runner_stops": {},
+            "scheduled_denominator": 0,
+            "system_claimed_complete": 0,
+            "uncertain_execution_rows": 0,
+            "unexecuted_rows": 0,
+            "unresolved_or_unassessed": 0
+          },
+          "B": {
+            "answer_correct": 0,
+            "completion_identification_bounds": null,
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {},
+            "evidence_supported_completion": 0,
+            "execution_counts": {},
+            "false_acceptance": 0,
+            "false_acceptance_over_all_scheduled": null,
+            "faults": {},
+            "grounded_abstention": 0,
+            "known_attempt_termination": 0,
+            "known_not_supported": 0,
+            "known_supported_completion": 0,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": null,
+            "oracle_assessed": 0,
+            "pending": 0,
+            "retained_rows": 0,
+            "runner_stops": {},
+            "scheduled_denominator": 0,
+            "system_claimed_complete": 0,
+            "uncertain_execution_rows": 0,
+            "unexecuted_rows": 0,
+            "unresolved_or_unassessed": 0
+          },
+          "C": {
+            "answer_correct": 0,
+            "completion_identification_bounds": null,
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {},
+            "evidence_supported_completion": 0,
+            "execution_counts": {},
+            "false_acceptance": 0,
+            "false_acceptance_over_all_scheduled": null,
+            "faults": {},
+            "grounded_abstention": 0,
+            "known_attempt_termination": 0,
+            "known_not_supported": 0,
+            "known_supported_completion": 0,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": null,
+            "oracle_assessed": 0,
+            "pending": 0,
+            "retained_rows": 0,
+            "runner_stops": {},
+            "scheduled_denominator": 0,
+            "system_claimed_complete": 0,
+            "uncertain_execution_rows": 0,
+            "unexecuted_rows": 0,
+            "unresolved_or_unassessed": 0
+          }
+        },
+        "both_A_B_supported_success_subset": {
+          "A": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          },
+          "B": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          },
+          "parents": 0,
+          "selection_bias": true
+        },
+        "scheduled_parents": 0
+      },
+      "underdetermined": {
+        "A_minus_B": {
+          "all_scheduled_identification_bounds": [
+            0.0,
+            0.0
+          ],
+          "known_assessed_pairs": 2,
+          "losses": 0,
+          "mean_on_known_pairs": 0.0,
+          "pairs": [
+            {
+              "A_minus_B": 0,
+              "A_supported": 0,
+              "B_supported": 0,
+              "task_id": "confirmation-L2-5"
+            },
+            {
+              "A_minus_B": 0,
+              "A_supported": 0,
+              "B_supported": 0,
+              "task_id": "confirmation-L4-6"
+            }
+          ],
+          "parent_bootstrap_95_interval": [
+            0.0,
+            0.0
+          ],
+          "ties": 2,
+          "unresolved_pairs": 0,
+          "wins": 0
+        },
+        "C_interpretation": "All public documents initially available; pooled reference, different information arrival.",
+        "all_attempt_costs_by_arm": {
+          "A": {
+            "costs": {
+              "attempted_calls": 8,
+              "client_wall_seconds": 141.72099999999773,
+              "generated_tokens": 1666,
+              "generation_seconds": 75.736561,
+              "known_duration_calls": {
+                "client_wall_seconds": 8,
+                "generation_seconds": 8,
+                "load_seconds": 8,
+                "prefill_seconds": 8
+              },
+              "known_usage_calls": 8,
+              "load_seconds": 18.6148537,
+              "observed_client_wall_seconds": 141.72099999999773,
+              "observed_generated_tokens": 1666,
+              "observed_generation_seconds": 75.736561,
+              "observed_load_seconds": 18.6148537,
+              "observed_prefill_seconds": 47.061066,
+              "observed_total_tokens": 5298,
+              "prefill_seconds": 47.061066,
+              "reserved_unknown_total_tokens": 0,
+              "status_counts": {
+                "length": 2,
+                "ok": 6
+              },
+              "total_tokens": 5298,
+              "unknown_usage_calls": 0
+            },
+            "parents": 2,
+            "parents_with_model_reservations": 2
+          },
+          "B": {
+            "costs": {
+              "attempted_calls": 10,
+              "client_wall_seconds": 116.153999999995,
+              "generated_tokens": 1387,
+              "generation_seconds": 65.926034,
+              "known_duration_calls": {
+                "client_wall_seconds": 10,
+                "generation_seconds": 10,
+                "load_seconds": 10,
+                "prefill_seconds": 10
+              },
+              "known_usage_calls": 10,
+              "load_seconds": 0.0294248,
+              "observed_client_wall_seconds": 116.153999999995,
+              "observed_generated_tokens": 1387,
+              "observed_generation_seconds": 65.926034,
+              "observed_load_seconds": 0.0294248,
+              "observed_prefill_seconds": 49.838280999999995,
+              "observed_total_tokens": 6032,
+              "prefill_seconds": 49.838280999999995,
+              "reserved_unknown_total_tokens": 0,
+              "status_counts": {
+                "length": 1,
+                "ok": 9
+              },
+              "total_tokens": 6032,
+              "unknown_usage_calls": 0
+            },
+            "parents": 2,
+            "parents_with_model_reservations": 2
+          },
+          "C": {
+            "costs": {
+              "attempted_calls": 8,
+              "client_wall_seconds": 161.93800000000192,
+              "generated_tokens": 2260,
+              "generation_seconds": 108.924375,
+              "known_duration_calls": {
+                "client_wall_seconds": 8,
+                "generation_seconds": 8,
+                "load_seconds": 8,
+                "prefill_seconds": 8
+              },
+              "known_usage_calls": 8,
+              "load_seconds": 0.0219475,
+              "observed_client_wall_seconds": 161.93800000000192,
+              "observed_generated_tokens": 2260,
+              "observed_generation_seconds": 108.924375,
+              "observed_load_seconds": 0.0219475,
+              "observed_prefill_seconds": 52.674971,
+              "observed_total_tokens": 6907,
+              "prefill_seconds": 52.674971,
+              "reserved_unknown_total_tokens": 0,
+              "status_counts": {
+                "length": 2,
+                "ok": 6
+              },
+              "total_tokens": 6907,
+              "unknown_usage_calls": 0
+            },
+            "parents": 2,
+            "parents_with_model_reservations": 2
+          }
+        },
+        "arms": {
+          "A": {
+            "answer_correct": 1,
+            "completion_identification_bounds": [
+              0.0,
+              0.0
+            ],
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {
+              "blocked": 2
+            },
+            "evidence_supported_completion": 0,
+            "execution_counts": {
+              "completed": 2
+            },
+            "false_acceptance": 0,
+            "false_acceptance_over_all_scheduled": 0.0,
+            "faults": {
+              "length": 2
+            },
+            "grounded_abstention": 0,
+            "known_attempt_termination": 2,
+            "known_not_supported": 2,
+            "known_supported_completion": 0,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": 0.0,
+            "oracle_assessed": 2,
+            "pending": 0,
+            "retained_rows": 2,
+            "runner_stops": {
+              "no_progress": 2
+            },
+            "scheduled_denominator": 2,
+            "system_claimed_complete": 0,
+            "uncertain_execution_rows": 0,
+            "unexecuted_rows": 0,
+            "unresolved_or_unassessed": 0
+          },
+          "B": {
+            "answer_correct": 1,
+            "completion_identification_bounds": [
+              0.0,
+              0.0
+            ],
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {
+              "blocked": 2
+            },
+            "evidence_supported_completion": 0,
+            "execution_counts": {
+              "completed": 2
+            },
+            "false_acceptance": 0,
+            "false_acceptance_over_all_scheduled": 0.0,
+            "faults": {
+              "length": 1
+            },
+            "grounded_abstention": 0,
+            "known_attempt_termination": 2,
+            "known_not_supported": 2,
+            "known_supported_completion": 0,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": 0.0,
+            "oracle_assessed": 2,
+            "pending": 0,
+            "retained_rows": 2,
+            "runner_stops": {
+              "router_stopped": 2
+            },
+            "scheduled_denominator": 2,
+            "system_claimed_complete": 0,
+            "uncertain_execution_rows": 0,
+            "unexecuted_rows": 0,
+            "unresolved_or_unassessed": 0
+          },
+          "C": {
+            "answer_correct": 2,
+            "completion_identification_bounds": [
+              0.0,
+              0.0
+            ],
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {
+              "blocked": 2
+            },
+            "evidence_supported_completion": 0,
+            "execution_counts": {
+              "completed": 2
+            },
+            "false_acceptance": 0,
+            "false_acceptance_over_all_scheduled": 0.0,
+            "faults": {
+              "length": 2
+            },
+            "grounded_abstention": 0,
+            "known_attempt_termination": 2,
+            "known_not_supported": 2,
+            "known_supported_completion": 0,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": 0.0,
+            "oracle_assessed": 2,
+            "pending": 0,
+            "retained_rows": 2,
+            "runner_stops": {
+              "router_stopped": 2
+            },
+            "scheduled_denominator": 2,
+            "system_claimed_complete": 0,
+            "uncertain_execution_rows": 0,
+            "unexecuted_rows": 0,
+            "unresolved_or_unassessed": 0
+          }
+        },
+        "both_A_B_supported_success_subset": {
+          "A": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          },
+          "B": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          },
+          "parents": 0,
+          "selection_bias": true
+        },
+        "scheduled_parents": 2
+      }
+    },
+    "qwen3.6:35b-a3b": {
+      "answerable": {
+        "A_minus_B": {
+          "all_scheduled_identification_bounds": [
+            -1.0,
+            1.0
+          ],
+          "known_assessed_pairs": 0,
+          "losses": 0,
+          "mean_on_known_pairs": null,
+          "pairs": [
+            {
+              "A_minus_B": null,
+              "A_supported": null,
+              "B_supported": null,
+              "task_id": "confirmation-L1-1"
+            },
+            {
+              "A_minus_B": null,
+              "A_supported": null,
+              "B_supported": null,
+              "task_id": "confirmation-L1-2"
+            },
+            {
+              "A_minus_B": null,
+              "A_supported": null,
+              "B_supported": null,
+              "task_id": "confirmation-L2-1"
+            },
+            {
+              "A_minus_B": null,
+              "A_supported": null,
+              "B_supported": null,
+              "task_id": "confirmation-L3-1"
+            },
+            {
+              "A_minus_B": null,
+              "A_supported": null,
+              "B_supported": null,
+              "task_id": "confirmation-L3-2"
+            },
+            {
+              "A_minus_B": null,
+              "A_supported": null,
+              "B_supported": null,
+              "task_id": "confirmation-L4-1"
+            }
+          ],
+          "parent_bootstrap_95_interval": null,
+          "ties": 0,
+          "unresolved_pairs": 6,
+          "wins": 0
+        },
+        "C_interpretation": "All public documents initially available; pooled reference, different information arrival.",
+        "all_attempt_costs_by_arm": {
+          "A": {
+            "costs": {
+              "attempted_calls": 0,
+              "client_wall_seconds": 0.0,
+              "generated_tokens": 0,
+              "generation_seconds": 0.0,
+              "known_duration_calls": {
+                "client_wall_seconds": 0,
+                "generation_seconds": 0,
+                "load_seconds": 0,
+                "prefill_seconds": 0
+              },
+              "known_usage_calls": 0,
+              "load_seconds": 0.0,
+              "observed_client_wall_seconds": 0.0,
+              "observed_generated_tokens": 0,
+              "observed_generation_seconds": 0.0,
+              "observed_load_seconds": 0.0,
+              "observed_prefill_seconds": 0.0,
+              "observed_total_tokens": 0,
+              "prefill_seconds": 0.0,
+              "reserved_unknown_total_tokens": 0,
+              "status_counts": {},
+              "total_tokens": 0,
+              "unknown_usage_calls": 0
+            },
+            "parents": 6,
+            "parents_with_model_reservations": 0
+          },
+          "B": {
+            "costs": {
+              "attempted_calls": 0,
+              "client_wall_seconds": 0.0,
+              "generated_tokens": 0,
+              "generation_seconds": 0.0,
+              "known_duration_calls": {
+                "client_wall_seconds": 0,
+                "generation_seconds": 0,
+                "load_seconds": 0,
+                "prefill_seconds": 0
+              },
+              "known_usage_calls": 0,
+              "load_seconds": 0.0,
+              "observed_client_wall_seconds": 0.0,
+              "observed_generated_tokens": 0,
+              "observed_generation_seconds": 0.0,
+              "observed_load_seconds": 0.0,
+              "observed_prefill_seconds": 0.0,
+              "observed_total_tokens": 0,
+              "prefill_seconds": 0.0,
+              "reserved_unknown_total_tokens": 0,
+              "status_counts": {},
+              "total_tokens": 0,
+              "unknown_usage_calls": 0
+            },
+            "parents": 6,
+            "parents_with_model_reservations": 0
+          },
+          "C": {
+            "costs": {
+              "attempted_calls": 0,
+              "client_wall_seconds": 0.0,
+              "generated_tokens": 0,
+              "generation_seconds": 0.0,
+              "known_duration_calls": {
+                "client_wall_seconds": 0,
+                "generation_seconds": 0,
+                "load_seconds": 0,
+                "prefill_seconds": 0
+              },
+              "known_usage_calls": 0,
+              "load_seconds": 0.0,
+              "observed_client_wall_seconds": 0.0,
+              "observed_generated_tokens": 0,
+              "observed_generation_seconds": 0.0,
+              "observed_load_seconds": 0.0,
+              "observed_prefill_seconds": 0.0,
+              "observed_total_tokens": 0,
+              "prefill_seconds": 0.0,
+              "reserved_unknown_total_tokens": 0,
+              "status_counts": {},
+              "total_tokens": 0,
+              "unknown_usage_calls": 0
+            },
+            "parents": 6,
+            "parents_with_model_reservations": 0
+          }
+        },
+        "arms": {
+          "A": {
+            "answer_correct": 0,
+            "completion_identification_bounds": [
+              0.0,
+              1.0
+            ],
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {
+              "None": 6
+            },
+            "evidence_supported_completion": 0,
+            "execution_counts": {
+              "unexecuted_due_to_budget": 6
+            },
+            "false_acceptance": 0,
+            "false_acceptance_over_all_scheduled": 0.0,
+            "faults": {},
+            "grounded_abstention": 0,
+            "known_attempt_termination": 0,
+            "known_not_supported": 0,
+            "known_supported_completion": 0,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": 0.0,
+            "oracle_assessed": 0,
+            "pending": 0,
+            "retained_rows": 6,
+            "runner_stops": {
+              "None": 6
+            },
+            "scheduled_denominator": 6,
+            "system_claimed_complete": 0,
+            "uncertain_execution_rows": 0,
+            "unexecuted_rows": 6,
+            "unresolved_or_unassessed": 6
+          },
+          "B": {
+            "answer_correct": 0,
+            "completion_identification_bounds": [
+              0.0,
+              1.0
+            ],
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {
+              "None": 6
+            },
+            "evidence_supported_completion": 0,
+            "execution_counts": {
+              "unexecuted_due_to_budget": 6
+            },
+            "false_acceptance": 0,
+            "false_acceptance_over_all_scheduled": 0.0,
+            "faults": {},
+            "grounded_abstention": 0,
+            "known_attempt_termination": 0,
+            "known_not_supported": 0,
+            "known_supported_completion": 0,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": 0.0,
+            "oracle_assessed": 0,
+            "pending": 0,
+            "retained_rows": 6,
+            "runner_stops": {
+              "None": 6
+            },
+            "scheduled_denominator": 6,
+            "system_claimed_complete": 0,
+            "uncertain_execution_rows": 0,
+            "unexecuted_rows": 6,
+            "unresolved_or_unassessed": 6
+          },
+          "C": {
+            "answer_correct": 0,
+            "completion_identification_bounds": [
+              0.0,
+              1.0
+            ],
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {
+              "None": 6
+            },
+            "evidence_supported_completion": 0,
+            "execution_counts": {
+              "unexecuted_due_to_budget": 6
+            },
+            "false_acceptance": 0,
+            "false_acceptance_over_all_scheduled": 0.0,
+            "faults": {},
+            "grounded_abstention": 0,
+            "known_attempt_termination": 0,
+            "known_not_supported": 0,
+            "known_supported_completion": 0,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": 0.0,
+            "oracle_assessed": 0,
+            "pending": 0,
+            "retained_rows": 6,
+            "runner_stops": {
+              "None": 6
+            },
+            "scheduled_denominator": 6,
+            "system_claimed_complete": 0,
+            "uncertain_execution_rows": 0,
+            "unexecuted_rows": 6,
+            "unresolved_or_unassessed": 6
+          }
+        },
+        "both_A_B_supported_success_subset": {
+          "A": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          },
+          "B": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          },
+          "parents": 0,
+          "selection_bias": true
+        },
+        "scheduled_parents": 6
+      },
+      "gold_unclassified": {
+        "A_minus_B": {
+          "all_scheduled_identification_bounds": null,
+          "known_assessed_pairs": 0,
+          "losses": 0,
+          "mean_on_known_pairs": null,
+          "pairs": [],
+          "parent_bootstrap_95_interval": null,
+          "ties": 0,
+          "unresolved_pairs": 0,
+          "wins": 0
+        },
+        "C_interpretation": "All public documents initially available; pooled reference, different information arrival.",
+        "all_attempt_costs_by_arm": {
+          "A": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          },
+          "B": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          },
+          "C": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          }
+        },
+        "arms": {
+          "A": {
+            "answer_correct": 0,
+            "completion_identification_bounds": null,
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {},
+            "evidence_supported_completion": 0,
+            "execution_counts": {},
+            "false_acceptance": 0,
+            "false_acceptance_over_all_scheduled": null,
+            "faults": {},
+            "grounded_abstention": 0,
+            "known_attempt_termination": 0,
+            "known_not_supported": 0,
+            "known_supported_completion": 0,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": null,
+            "oracle_assessed": 0,
+            "pending": 0,
+            "retained_rows": 0,
+            "runner_stops": {},
+            "scheduled_denominator": 0,
+            "system_claimed_complete": 0,
+            "uncertain_execution_rows": 0,
+            "unexecuted_rows": 0,
+            "unresolved_or_unassessed": 0
+          },
+          "B": {
+            "answer_correct": 0,
+            "completion_identification_bounds": null,
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {},
+            "evidence_supported_completion": 0,
+            "execution_counts": {},
+            "false_acceptance": 0,
+            "false_acceptance_over_all_scheduled": null,
+            "faults": {},
+            "grounded_abstention": 0,
+            "known_attempt_termination": 0,
+            "known_not_supported": 0,
+            "known_supported_completion": 0,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": null,
+            "oracle_assessed": 0,
+            "pending": 0,
+            "retained_rows": 0,
+            "runner_stops": {},
+            "scheduled_denominator": 0,
+            "system_claimed_complete": 0,
+            "uncertain_execution_rows": 0,
+            "unexecuted_rows": 0,
+            "unresolved_or_unassessed": 0
+          },
+          "C": {
+            "answer_correct": 0,
+            "completion_identification_bounds": null,
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {},
+            "evidence_supported_completion": 0,
+            "execution_counts": {},
+            "false_acceptance": 0,
+            "false_acceptance_over_all_scheduled": null,
+            "faults": {},
+            "grounded_abstention": 0,
+            "known_attempt_termination": 0,
+            "known_not_supported": 0,
+            "known_supported_completion": 0,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": null,
+            "oracle_assessed": 0,
+            "pending": 0,
+            "retained_rows": 0,
+            "runner_stops": {},
+            "scheduled_denominator": 0,
+            "system_claimed_complete": 0,
+            "uncertain_execution_rows": 0,
+            "unexecuted_rows": 0,
+            "unresolved_or_unassessed": 0
+          }
+        },
+        "both_A_B_supported_success_subset": {
+          "A": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          },
+          "B": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          },
+          "parents": 0,
+          "selection_bias": true
+        },
+        "scheduled_parents": 0
+      },
+      "underdetermined": {
+        "A_minus_B": {
+          "all_scheduled_identification_bounds": [
+            -1.0,
+            1.0
+          ],
+          "known_assessed_pairs": 0,
+          "losses": 0,
+          "mean_on_known_pairs": null,
+          "pairs": [
+            {
+              "A_minus_B": null,
+              "A_supported": null,
+              "B_supported": null,
+              "task_id": "confirmation-L2-5"
+            },
+            {
+              "A_minus_B": null,
+              "A_supported": null,
+              "B_supported": null,
+              "task_id": "confirmation-L4-6"
+            }
+          ],
+          "parent_bootstrap_95_interval": null,
+          "ties": 0,
+          "unresolved_pairs": 2,
+          "wins": 0
+        },
+        "C_interpretation": "All public documents initially available; pooled reference, different information arrival.",
+        "all_attempt_costs_by_arm": {
+          "A": {
+            "costs": {
+              "attempted_calls": 1,
+              "client_wall_seconds": 119.98500000000058,
+              "generated_tokens": null,
+              "generation_seconds": null,
+              "known_duration_calls": {
+                "client_wall_seconds": 1,
+                "generation_seconds": 0,
+                "load_seconds": 0,
+                "prefill_seconds": 0
+              },
+              "known_usage_calls": 0,
+              "load_seconds": null,
+              "observed_client_wall_seconds": 119.98500000000058,
+              "observed_generated_tokens": 0,
+              "observed_generation_seconds": 0.0,
+              "observed_load_seconds": 0.0,
+              "observed_prefill_seconds": 0.0,
+              "observed_total_tokens": 0,
+              "prefill_seconds": null,
+              "reserved_unknown_total_tokens": 4608,
+              "status_counts": {
+                "timeout": 1
+              },
+              "total_tokens": null,
+              "unknown_usage_calls": 1
+            },
+            "parents": 2,
+            "parents_with_model_reservations": 1
+          },
+          "B": {
+            "costs": {
+              "attempted_calls": 0,
+              "client_wall_seconds": 0.0,
+              "generated_tokens": 0,
+              "generation_seconds": 0.0,
+              "known_duration_calls": {
+                "client_wall_seconds": 0,
+                "generation_seconds": 0,
+                "load_seconds": 0,
+                "prefill_seconds": 0
+              },
+              "known_usage_calls": 0,
+              "load_seconds": 0.0,
+              "observed_client_wall_seconds": 0.0,
+              "observed_generated_tokens": 0,
+              "observed_generation_seconds": 0.0,
+              "observed_load_seconds": 0.0,
+              "observed_prefill_seconds": 0.0,
+              "observed_total_tokens": 0,
+              "prefill_seconds": 0.0,
+              "reserved_unknown_total_tokens": 0,
+              "status_counts": {},
+              "total_tokens": 0,
+              "unknown_usage_calls": 0
+            },
+            "parents": 2,
+            "parents_with_model_reservations": 0
+          },
+          "C": {
+            "costs": {
+              "attempted_calls": 0,
+              "client_wall_seconds": 0.0,
+              "generated_tokens": 0,
+              "generation_seconds": 0.0,
+              "known_duration_calls": {
+                "client_wall_seconds": 0,
+                "generation_seconds": 0,
+                "load_seconds": 0,
+                "prefill_seconds": 0
+              },
+              "known_usage_calls": 0,
+              "load_seconds": 0.0,
+              "observed_client_wall_seconds": 0.0,
+              "observed_generated_tokens": 0,
+              "observed_generation_seconds": 0.0,
+              "observed_load_seconds": 0.0,
+              "observed_prefill_seconds": 0.0,
+              "observed_total_tokens": 0,
+              "prefill_seconds": 0.0,
+              "reserved_unknown_total_tokens": 0,
+              "status_counts": {},
+              "total_tokens": 0,
+              "unknown_usage_calls": 0
+            },
+            "parents": 2,
+            "parents_with_model_reservations": 0
+          }
+        },
+        "arms": {
+          "A": {
+            "answer_correct": 0,
+            "completion_identification_bounds": [
+              0.0,
+              1.0
+            ],
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {
+              "None": 1,
+              "escalation_required": 1
+            },
+            "evidence_supported_completion": 0,
+            "execution_counts": {
+              "completed": 1,
+              "unexecuted_due_to_budget": 1
+            },
+            "false_acceptance": 0,
+            "false_acceptance_over_all_scheduled": 0.0,
+            "faults": {
+              "unknown_consumption": 1
+            },
+            "grounded_abstention": 0,
+            "known_attempt_termination": 0,
+            "known_not_supported": 0,
+            "known_supported_completion": 0,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": 0.0,
+            "oracle_assessed": 1,
+            "pending": 0,
+            "retained_rows": 2,
+            "runner_stops": {
+              "None": 1,
+              "router_stopped": 1
+            },
+            "scheduled_denominator": 2,
+            "system_claimed_complete": 0,
+            "uncertain_execution_rows": 1,
+            "unexecuted_rows": 1,
+            "unresolved_or_unassessed": 2
+          },
+          "B": {
+            "answer_correct": 0,
+            "completion_identification_bounds": [
+              0.0,
+              1.0
+            ],
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {
+              "None": 2
+            },
+            "evidence_supported_completion": 0,
+            "execution_counts": {
+              "unexecuted_due_to_budget": 2
+            },
+            "false_acceptance": 0,
+            "false_acceptance_over_all_scheduled": 0.0,
+            "faults": {},
+            "grounded_abstention": 0,
+            "known_attempt_termination": 0,
+            "known_not_supported": 0,
+            "known_supported_completion": 0,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": 0.0,
+            "oracle_assessed": 0,
+            "pending": 0,
+            "retained_rows": 2,
+            "runner_stops": {
+              "None": 2
+            },
+            "scheduled_denominator": 2,
+            "system_claimed_complete": 0,
+            "uncertain_execution_rows": 0,
+            "unexecuted_rows": 2,
+            "unresolved_or_unassessed": 2
+          },
+          "C": {
+            "answer_correct": 0,
+            "completion_identification_bounds": [
+              0.0,
+              1.0
+            ],
+            "denominator_policy": "All scheduled arms retained; unresolved use is not a known failure or safe abstention.",
+            "domain_stops": {
+              "None": 2
+            },
+            "evidence_supported_completion": 0,
+            "execution_counts": {
+              "unexecuted_due_to_budget": 2
+            },
+            "false_acceptance": 0,
+            "false_acceptance_over_all_scheduled": 0.0,
+            "faults": {},
+            "grounded_abstention": 0,
+            "known_attempt_termination": 0,
+            "known_not_supported": 0,
+            "known_supported_completion": 0,
+            "missing_rows": 0,
+            "observed_supported_over_all_scheduled": 0.0,
+            "oracle_assessed": 0,
+            "pending": 0,
+            "retained_rows": 2,
+            "runner_stops": {
+              "None": 2
+            },
+            "scheduled_denominator": 2,
+            "system_claimed_complete": 0,
+            "uncertain_execution_rows": 0,
+            "unexecuted_rows": 2,
+            "unresolved_or_unassessed": 2
+          }
+        },
+        "both_A_B_supported_success_subset": {
+          "A": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          },
+          "B": {
+            "costs": null,
+            "parents": 0,
+            "reason": "empty success subset; no cost comparison"
+          },
+          "parents": 0,
+          "selection_bias": true
+        },
+        "scheduled_parents": 2
+      }
+    }
+  },
+  "phase": "confirmation",
+  "primary_endpoint": "Answerable (gold yes/no) supported completion; underdetermined grounded abstention separate.",
+  "seed_filter": null,
+  "supplemental_helper_sha256": "a1fa61f52d7554a417240c959c953a5181a2afe1188e5317e1ce506bf10292e9"
+}

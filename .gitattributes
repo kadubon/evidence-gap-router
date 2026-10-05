@@ -6,3 +6,8 @@ experiments/ollama/*.py text eol=lf
 experiments/ollama/protocol.json text eol=lf
 experiments/ollama/results/**/*.json -text
 experiments/ollama/results/freeze-v0.2.3.json -text
+experiments/ollama/results/**/*.csv -text
+scripts/recount_ollama_023.py text eol=lf
+scripts/pack_ollama.py text eol=lf
+docs/ollama-experiment.md text eol=lf
+docs/ollama-experiment.ja.md text eol=lf
