@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+import csv
 import hashlib
 import json
+from decimal import Decimal
 from importlib.resources import files
 from pathlib import Path
 
 import pytest
 
+from evidence_gap_router import dump_json, load_json
 from evidence_gap_router.cli import main
-from evidence_gap_router.data_quality import DataInputError, parse_dataset, parse_rules
+from evidence_gap_router.data_quality import DataInputError, Rules, parse_dataset, parse_rules
 from evidence_gap_router.file_checks import check_data
 
 
@@ -187,3 +190,119 @@ def test_cli_real_files_json_and_exit_codes(
     output = capsys.readouterr()
     assert "input_error" in output.err
     assert json.loads(output.out)["outcome"] == "input_error"
+
+
+def precise_rules(number: str) -> bytes:
+    return (
+        '{"required_columns":["order_id","amount","currency"],"primary_key":"order_id",'
+        f'"minimum_amount":{number},"allowed_currencies":["USD"]}}'
+    ).encode()
+
+
+@pytest.mark.parametrize(
+    "minimum,amount,expected",
+    [
+        ("9007199254740993.0", "9007199254740992", "inspected_fail"),
+        ("9007199254740993.0", "9007199254740993", "satisfied"),
+        ("0.12345678901234567890123456789", "0.12345678901234567890123456788", "inspected_fail"),
+        ("0.12345678901234567890123456789", "0.12345678901234567890123456789", "satisfied"),
+        ("1e-128", "0", "inspected_fail"),
+        ("1e128", "1e128", "satisfied"),
+    ],
+)
+def test_EGR020_06_exact_file_numbers_before_float_conversion(
+    minimum: str, amount: str, expected: str, tmp_path: Path
+) -> None:
+    raw = precise_rules(minimum)
+    data, dictionary = local_files(
+        tmp_path, f"order_id,amount,currency\nA,{amount},USD\n".encode(), raw
+    )
+    report = check_data(data, dictionary)
+    assert report["outcome"] == expected
+    assert len(report["state"]["attempts"]) == len(report["state"]["results"]) == 4
+    retained = next(
+        record for record in report["state"]["evidence"] if record["id"] == "dictionary"
+    )
+    assert retained["digest"] == hashlib.sha256(raw).hexdigest()
+    assert json.loads(retained["content"], parse_float=Decimal)["minimum_amount"] == Decimal(
+        minimum
+    )
+    assert load_json(retained["content"], Rules).minimum_amount == Decimal(minimum)
+    assert dictionary.read_bytes() == raw
+    if expected == "inspected_fail":
+        orders_check = next(
+            c for c in report["state"]["checks"] if c["verifier_id"] == "orders-checker"
+        )
+        assert orders_check["status"] == "FAIL"
+        assert "amount is below minimum" in orders_check["reason"]
+
+
+def test_decimal_rules_roundtrip_all_supported_json_entrypoints() -> None:
+    raw = precise_rules("9007199254740993.0")
+    direct = Rules.model_validate_json(raw)
+    parsed = parse_rules(raw)
+    assert direct == parsed
+    assert parsed.minimum_amount == Decimal("9007199254740993.0")
+    for text in (dump_json(parsed), parsed.model_dump_json(), parsed.model_dump_json(indent=2)):
+        value = json.loads(text, parse_float=Decimal)
+        assert not isinstance(value["minimum_amount"], str)
+        assert value["minimum_amount"] == Decimal("9007199254740993.0")
+        assert load_json(text, Rules) == parsed
+        assert Rules.model_validate_json(text) == parsed
+
+
+@pytest.mark.parametrize("number", ["-0.001", "1e129", "1e-129", "9" * 65 + ".0", "9" * 129])
+def test_dictionary_numeric_contract_rejects_negative_or_unbounded_numbers(number: str) -> None:
+    with pytest.raises(DataInputError):
+        parse_rules(precise_rules(number))
+
+
+@pytest.mark.parametrize("amount", ["1e129", "1e-129", "9" * 65, "1e" + "0" * 300 + "1"])
+def test_csv_numbers_use_the_same_finite_decimal_bounds(amount: str) -> None:
+    with pytest.raises(DataInputError, match="invalid amount"):
+        parse_dataset(f"order_id,amount,currency\nA,{amount},USD\n".encode())
+
+
+def test_sdk_float_has_its_existing_representation_not_recovered_source_digits() -> None:
+    rounded = 9007199254740993.0
+    rules = Rules(
+        required_columns=("order_id", "amount", "currency"),
+        primary_key="order_id",
+        minimum_amount=rounded,
+        allowed_currencies=("USD",),
+    )
+    assert rules.minimum_amount == 9007199254740992.0
+    assert load_json(dump_json(rules), Rules).minimum_amount == Decimal("9007199254740992.0")
+    with pytest.raises(ValueError):
+        Rules.model_validate_json(precise_rules('"9007199254740993.0"'))
+
+
+def test_maximum_dictionary_file_does_not_grow_past_reader_limit_from_optional_defaults(
+    tmp_path: Path,
+) -> None:
+    from evidence_gap_router.data_quality import MAX_FILE_BYTES
+
+    value = json.loads(precise_rules("0"))
+    value["allowed_currencies"] = ["USD", *[str(i) + "U" * 60_000 for i in range(17)]]
+    initial = json.dumps(value, separators=(",", ":")).encode()
+    value["allowed_currencies"][-1] += "U" * (MAX_FILE_BYTES - len(initial))
+    raw = json.dumps(value, separators=(",", ":")).encode()
+    assert len(raw) == MAX_FILE_BYTES
+    data, dictionary = local_files(tmp_path, b"order_id,amount,currency\nA,0,USD\n", raw)
+    report = check_data(data, dictionary)
+    assert report["outcome"] == "satisfied"
+    retained = next(e for e in report["state"]["evidence"] if e["id"] == "dictionary")
+    assert len(retained["content"].encode()) <= MAX_FILE_BYTES
+    assert retained["content"].encode() == raw
+    assert "description" not in json.loads(retained["content"])
+    assert dictionary.read_bytes() == raw
+
+
+def test_csv_field_limit_is_explicit_and_does_not_modify_process_global_setting() -> None:
+    from evidence_gap_router.data_quality import MAX_CSV_FIELD_CHARACTERS
+
+    initial = csv.field_size_limit()
+    raw = b"order_id,amount,currency\nA,0," + b"U" * (MAX_CSV_FIELD_CHARACTERS + 1) + b"\n"
+    with pytest.raises(DataInputError, match="field.*(limit|exceeds)"):
+        parse_dataset(raw)
+    assert csv.field_size_limit() == initial

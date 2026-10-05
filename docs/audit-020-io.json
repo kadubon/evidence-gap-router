@@ -1,0 +1,40 @@
+{
+  "audit_target": {
+    "version": "0.2.0",
+    "commit": "e8d77f210d7579d6a367b7564b485b2586ffd074",
+    "wheel_sha256": "039594d7fc5e39ab7b600c71f54682bb2d46147ba4e69a05a55f255a1806f3bf"
+  },
+  "environment": {
+    "python": "3.12.14",
+    "pydantic": "2.13.5",
+    "pydantic_core": "2.46.5",
+    "platform": "Windows x64",
+    "installation": "isolated official v0.2.0 wheel, independently reproduced by release agent"
+  },
+  "probe": "scripts/probe_io_020.py",
+  "probe_semantics": "issue_reproduced means the old behavior occurred, not a corrected oracle",
+  "size_note": "This generated CSV has 128915 bytes; the supplied audit described a different 108915-byte fixture.",
+  "EGR020-06": {
+    "issue_reproduced": true,
+    "outcome": "satisfied",
+    "retained_content": "{\"allowed_currencies\":[\"USD\"],\"description\":\"\",\"minimum_amount\":9007199254740992.0,\"primary_key\":\"order_id\",\"required_columns\":[\"order_id\",\"amount\",\"currency\"]}",
+    "raw_dictionary_sha256": "982c7cd5af560731f4939f6ec72c24e699184f1b1aff95509404f3270ba61ea3"
+  },
+  "EGR020-07": {
+    "issue_reproduced": true,
+    "outcome": "satisfied",
+    "csv_bytes": 128915,
+    "snapshot_bytes": 1297960,
+    "reload_error": "JSON exceeds 1048576 byte limit",
+    "attempts": 4,
+    "results": 4
+  },
+  "EGR020-08": {
+    "issue_reproduced": true,
+    "runner_stop": "no_progress",
+    "next_action": "verify-target",
+    "calls": ["read"],
+    "before_attempts": 2,
+    "after_attempts": 3
+  }
+}

@@ -18,6 +18,12 @@ immutable records and validated APIs do not prevent a malicious trusted host
 from constructing or rewriting its own state. Do not describe host snapshots as
 cryptographically authenticated execution history.
 
+Host invalidation in 0.2.1 is append-only and exact-ID/obligation/scope bound.
+It changes current applicability while retaining original receipts, negative
+history and costs. Acquisition callbacks have no such event channel. Resolution
+must match the negative check's exact subject even when another ID has the same
+bytes. Preserved old inappropriate resolution history cannot establish acceptance.
+
 Callback views disclose only explicitly selected material. They do not prevent
 same-process Python code from reading globals, files or other data, and do not
 prove secrecy or statistical independence. The host must enforce real isolation,
@@ -30,6 +36,12 @@ and handler strings are not imported. A service receiving untrusted evidence mus
 supply host policy separately. `check-data` intentionally reads only selected local
 files, rejects ambiguous/bounded input and does not overwrite them. This is not a
 sandboxed filesystem service. Malformed or failed callbacks retain state and costs.
+
+Selected files/offline plan input are bounded to 1 MiB; SDK State snapshots have
+a separate 32 MiB bound, depth 64 and bounded numeric tokens. Exact rule decimals
+avoid float-rounding acceptance. A finite input-size bound does not promise a
+constant memory or CPU footprint, and an engineering benchmark is not a security
+proof or general business/LLM performance result.
 
 Review evidence, original files, exception messages and reports before publishing
 sensitive content. No telemetry, model/API key or network service is required by

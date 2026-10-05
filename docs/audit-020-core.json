@@ -1,0 +1,68 @@
+{
+  "version": "0.2.0",
+  "execution": "real start/observe receipts",
+  "EGR020-01": {
+    "issue_reproduced": true,
+    "attempts": 2,
+    "results": 2
+  },
+  "EGR020-02": {
+    "issue_reproduced": true,
+    "attempts": 5,
+    "results": 5
+  },
+  "EGR020-03": {
+    "issue_reproduced": true,
+    "wrong_subject_resolution_accepted": true,
+    "false_satisfied": true,
+    "attempts": 4
+  },
+  "EGR020-04": {
+    "issue_reproduced": true
+  },
+  "EGR020-05": {
+    "issue_reproduced": true,
+    "exclusions": [
+      {
+        "action_id": "get-extra",
+        "reasons": [
+          "obligation_satisfied"
+        ]
+      },
+      {
+        "action_id": "task-check",
+        "reasons": [
+          "dependency_missing:rules-extra",
+          "dependency_missing:rules-extra"
+        ]
+      }
+    ],
+    "attempts": 3
+  },
+  "EGR020-09": {
+    "issue_reproduced": true,
+    "diagnostic": [
+      {
+        "targets": 4,
+        "checks": 8,
+        "calls": 52,
+        "seconds": 0.0009609999979147688,
+        "stop": "satisfied"
+      },
+      {
+        "targets": 8,
+        "checks": 16,
+        "calls": 1004,
+        "seconds": 0.01750240000183112,
+        "stop": "satisfied"
+      },
+      {
+        "targets": 10,
+        "checks": 20,
+        "calls": 4072,
+        "seconds": 0.08834049999859417,
+        "stop": "satisfied"
+      }
+    ]
+  }
+}

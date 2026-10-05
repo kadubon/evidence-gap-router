@@ -1,4 +1,10 @@
-# Small matched comparison
+# Archived v0.2.0 limited comparison
+
+The nine conditions below and their raw records are retained from v0.2.0. Its
+fixed-order baseline deliberately permits redundant verification and is a
+limited demonstration. New routing or performance claims use the independent
+oracle, strong feasible baselines and parent-task holdout in the
+[v0.2.1 benchmark](benchmark.md), rather than this table alone.
 
 The [raw results](comparison-results.json) retain all nine runs, identical initial
 snapshots, evidence/bases, seed checker work, budgets, actual action trace,

@@ -12,7 +12,7 @@ Python **3.12 or newer** · Apache-2.0 · [日本語](README.ja.md)
 ## Install and use your own files
 
 ```sh
-python -m pip install evidence-gap-router==0.2.0
+python -m pip install evidence-gap-router==0.2.1
 egr --version
 egr check-data --data ./orders.csv --dictionary ./rules.json --json
 egr demo --json
@@ -42,11 +42,20 @@ minimum, and an allowed currency. The dictionary is the following fixed contract
 
 Unknown dictionary fields, duplicate JSON keys/CSV columns, blank column names,
 missing/extra row fields, nonfinite values, invalid types and invalid UTF-8 are
-rejected. Each input is limited to 1 MiB and CSV to 10,000 rows; exceeding a bound
+rejected. Each input is limited to 1 MiB, CSV to 10,000 rows and each CSV field to
+131,072 characters; exceeding a bound
 never turns a prefix into accepted whole-file evidence. UTF-8 BOM and LF/CRLF are
 accepted. Evidence digests hash the original bytes, including BOM and line endings.
 Space and Japanese characters in paths are supported with `pathlib`; shell commands
 are never assembled from those paths. See [the data-quality example](examples/data_quality.py).
+
+JSON decimal thresholds are read from their original numeric text and compared
+exactly, including `9007199254740993.0`. The small data contract permits at most
+64 decimal coefficient digits, exponent/adjusted exponent within ±128 and
+256 numeric characters. JSON integers have at most 128 digits and nesting at
+most 64 levels. A supplied Python `float` already contains its binary rounding;
+converting that value cannot recover an earlier JSON spelling. Use an integer
+or `Decimal` when that distinction matters.
 
 ## Connect a callback
 
@@ -152,6 +161,22 @@ spends no budget; explicit issuance pins the basis and registered permissions.
 current host policy. Host registrations authorize roles, checker revision and
 purpose; an ID written in result text grants no permission.
 
+An executable continuation example creates acquisition/check receipts, explicitly
+invalidates the issued check, saves and reloads the snapshot, and performs a new
+check without rewriting the paid history:
+
+```python
+from evidence_gap_router import run_continuation_example
+
+report = run_continuation_example("continuation.json")
+assert report.decision.stop_reason == "satisfied"
+assert len(report.state.invalidations) == 1
+assert len(report.state.attempts) == 3
+```
+
+See the [small public APIs](docs/api.md) and [measured benchmark](docs/benchmark.md)
+for the scope of these guarantees and where a fixed pipeline is sufficient.
+
 ## Inspect gaps without execution
 
 Save this as `INPUT.json` and run `egr plan INPUT.json --json`:
@@ -231,7 +256,22 @@ DB, distributed scheduler, cryptographic authentication or exactly-once recovery
 is provided. The [design](docs/design.md), [audit mapping](docs/audit.md),
 [migration guide](docs/migration.md) and [security policy](SECURITY.md) give the boundaries.
 
-## Small comparison and validation
+## Explicit invalidation and continued work
+
+`invalidate(state, Invalidation(...))` appends a host-owned event for an exact
+evidence/check ID, obligation and scope. It preserves the original record,
+receipt and charged work. Replaying the same event is idempotent; a conflicting
+ID, missing target or wrong scope is rejected. There is no background TTL.
+Acquisition receipts cannot carry these host invalidations.
+
+Use `write_json(state, path)` and `read_json(path, State)` to save and continue.
+State snapshots have a separate **32 MiB** bound; files and offline `PlanInput`
+remain **1 MiB**. Writes validate the entire readable snapshot before replacing
+the destination. History and negative/unknown records are retained. Legitimate
+old schema-2 states remain readable; older readers reject the new invalidation
+field. See [API details](docs/api.md) and [migration](docs/migration.md).
+
+## Comparison and validation
 
 `egr demo --example cause` is a separate multi-material investigation: acquisition views
 read records, specifications and exceptions separately; checks use disclosed raw

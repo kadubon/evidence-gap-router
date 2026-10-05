@@ -23,7 +23,7 @@ from evidence_gap_router import (
     start,
 )
 from evidence_gap_router.runner import CallbackView, run, step
-from evidence_gap_router.sdk_example import run_callback_example
+from evidence_gap_router.sdk_example import run_callback_example, run_continuation_example
 
 
 def foundation(min_evidence: int = 1) -> tuple[State, Budget, Policy]:
@@ -390,3 +390,258 @@ def test_needed_acquisition_only_mapping_keeps_other_obligation_pass_applicable(
     assert report.decision.coverage.required == 2
     assert report.receipt is not None
     assert report.state.checks == previous.state.checks
+
+
+def exact_dependency_history():
+    task = Obligation(
+        id="task",
+        scope="task",
+        description="Inspect target with material",
+        acceptance="target and correct material",
+        required_verifiers=("v",),
+    )
+    helper = Obligation(
+        id="helper",
+        scope="helper",
+        description="Supply material",
+        acceptance="material",
+        required=False,
+    )
+    state, budget, policy = foundation()
+    state = State(obligations=(task, helper))
+
+    def acquire(identifier: str, obligation: Obligation) -> ActionCandidate:
+        return ActionCandidate(
+            id=f"read-{identifier}",
+            obligation_id=obligation.id,
+            scope=obligation.scope,
+            kind="investigate",
+            handler_id="read",
+            produces_evidence_id=identifier,
+        )
+
+    def read(view: CallbackView):
+        identifier = view.action.produces_evidence_id
+        assert identifier is not None
+        target = identifier == "target"
+        evidence = Evidence(
+            id=identifier,
+            obligation_id=view.obligation.id,
+            scope=view.obligation.scope,
+            digest=("a" if target else "b") * 64,
+            producer="read",
+            content="target" if target else "material",
+            source="target source" if target else "same material source",
+            provenance_group="target group" if target else "same material group",
+        )
+        return view.result(
+            actual_resources=Resources(actions=1, verifications=0),
+            evidence=(evidence,),
+        )
+
+    for action in (acquire("target", task), acquire("old-alias", helper)):
+        record = step(state, (action,), budget, policy, {"read": read})
+        assert record.stop_reason == "step_completed"
+        state = record.state
+    verify = ActionCandidate(
+        id="verify-target",
+        obligation_id=task.id,
+        scope=task.scope,
+        kind="verify",
+        handler_id="verify",
+        checker_id="v",
+        target_evidence_id="target",
+        target_digest="a" * 64,
+        resources=Resources(actions=1, verifications=1),
+        dependencies=(
+            DependencyRequirement(
+                evidence_id="needed-exact", obligation_id=helper.id, scope=helper.scope
+            ),
+        ),
+    )
+
+    def checker(view: CallbackView):
+        records = {item.id: item for item in view.inputs}
+        accepted = (
+            records["target"].content == "target" and records["needed-exact"].content == "material"
+        )
+        return view.result(
+            actual_resources=Resources(actions=1, verifications=1),
+            checks=(
+                view.check(
+                    status="PASS" if accepted else "FAIL", reason="Compared disclosed material"
+                ),
+            ),
+        )
+
+    return state, budget, policy, acquire("needed-exact", helper), verify, read, checker
+
+
+def test_EGR020_08_duplicate_information_fulfills_needed_exact_binding_and_continues() -> None:
+    state, budget, policy, acquisition, verify, reader, checker = exact_dependency_history()
+    assert len(state.attempts) == len(state.results) == 2
+    state = load_json(dump_json(state), State)
+    before = plan(state, (acquisition, verify), budget, policy)
+    assert before.action == acquisition
+    report = run(state, (acquisition, verify), budget, policy, {"read": reader, "verify": checker})
+    assert report.decision.stop_reason == "satisfied"
+    assert report.callback_calls == ("read", "verify")
+    assert report.stop_reason == "router_stopped"
+    assert len(report.state.attempts) == len(report.state.results) == 4
+    assert sum(result.actual_resources.actions for result in report.state.results) == 4
+    check = report.state.checks[0]
+    assert check.basis is not None
+    assert check.basis.dependencies[0].evidence_id == "needed-exact"
+    assert {item.id for item in report.state.evidence} == {"target", "old-alias", "needed-exact"}
+    assert load_json(dump_json(report.state), State) == report.state
+
+
+def test_binding_progress_retains_original_pool_without_extra_factory_evaluation() -> None:
+    state, budget, policy, acquisition, verify, reader, checker = exact_dependency_history()
+    evaluated = []
+
+    def factory(current: State):
+        evaluated.append(current)
+        return (
+            (verify,)
+            if any(e.id == "needed-exact" for e in current.evidence)
+            else (acquisition, verify)
+        )
+
+    report = run(state, factory, budget, policy, {"read": reader, "verify": checker})
+    assert report.decision.stop_reason == "satisfied"
+    assert report.callback_calls == ("read", "verify")
+    assert len(evaluated) == 3
+    assert [len(item.results) for item in evaluated] == [2, 3, 4]
+
+
+def test_arbitrary_alias_ids_without_a_needed_binding_do_not_count_as_progress() -> None:
+    state, budget, policy = foundation(min_evidence=2)
+
+    def duplicate(view: CallbackView):
+        identifier = view.action.produces_evidence_id
+        assert identifier is not None
+        return view.result(
+            actual_resources=Resources(actions=1, verifications=0),
+            evidence=(
+                Evidence(
+                    id=identifier,
+                    obligation_id="o",
+                    scope="s",
+                    digest="a" * 64,
+                    producer="read",
+                    content="same",
+                    source="same",
+                    provenance_group="same",
+                ),
+            ),
+        )
+
+    state = step(state, (acquisition("original"),), budget, policy, {"read": duplicate}).state
+
+    def aliases(current: State):
+        return (acquisition(f"alias-{len(current.evidence)}"),)
+
+    report = run(state, aliases, budget, policy, {"read": duplicate}, max_steps=32)
+    assert report.stop_reason == "no_progress"
+    assert report.callback_calls == ("read",)
+    assert len(report.state.evidence) == 2
+    assert len(report.state.results) == 2
+    assert sum(result.actual_resources.actions for result in report.state.results) == 2
+
+
+def test_packaged_continuation_example_retains_real_receipts_after_check_withdrawal(
+    tmp_path,
+) -> None:
+    snapshot = tmp_path / "日本語 保存.json"
+    report = run_continuation_example(snapshot)
+    assert report.decision.stop_reason == "satisfied"
+    assert len(report.state.attempts) == len(report.state.results) == 3
+    assert len(report.state.evidence) == 1 and len(report.state.checks) == 2
+    assert sum(result.actual_resources.actions for result in report.state.results) == 3
+    assert sum(result.actual_resources.verifications for result in report.state.results) == 2
+    assert len(report.state.invalidations) == 1
+    assert report.state.invalidations[0].target_id == report.state.checks[0].id
+    assert report.state.checks[0] == report.state.results[1].checks[0]
+    assert report.state.evidence[0] == report.state.results[0].evidence[0]
+    restored = load_json(snapshot.read_bytes(), State)
+    assert restored.results == report.state.results[:2]
+    assert restored.checks == report.state.checks[:1]
+    assert restored.invalidations == report.state.invalidations
+    assert report.callback_calls == ("check",)
+
+
+def test_duplicate_needed_verified_binding_advances_through_dynamic_checker_factory() -> None:
+    state, budget, policy, acquisition, verify, reader, checker = exact_dependency_history()
+    helper = state.obligations[1].model_copy(update={"required_verifiers": ("v",)})
+    state = State(**{**state.model_dump(), "obligations": (state.obligations[0], helper)})
+    old_alias = next(item for item in state.evidence if item.id == "old-alias")
+    old_check = ActionCandidate(
+        id="verify-old-alias",
+        obligation_id=helper.id,
+        scope=helper.scope,
+        kind="verify",
+        handler_id="verify",
+        checker_id="v",
+        target_evidence_id=old_alias.id,
+        target_digest=old_alias.digest,
+        resources=Resources(actions=1, verifications=1),
+    )
+
+    def material_checker(view: CallbackView):
+        accepted = view.inputs[0].content == "material"
+        return view.result(
+            actual_resources=Resources(actions=1, verifications=1),
+            checks=(
+                view.check(status="PASS" if accepted else "FAIL", reason="Inspected material"),
+            ),
+        )
+
+    state = step(state, (old_check,), budget, policy, {"verify": material_checker}).state
+    assert len(state.results) == 3
+    assert plan(state, (), budget, policy).coverage.satisfied == 0
+    verify = verify.model_copy(
+        update={
+            "dependencies": (
+                DependencyRequirement(
+                    evidence_id="needed-exact",
+                    obligation_id=helper.id,
+                    scope=helper.scope,
+                    requirement="verified",
+                ),
+            )
+        }
+    )
+    evaluations = []
+
+    def factory(current: State):
+        evaluations.append(len(current.results))
+        declared = [acquisition, verify]
+        material = next((item for item in current.evidence if item.id == "needed-exact"), None)
+        if material is not None:
+            declared.append(
+                ActionCandidate(
+                    id="verify-needed-exact",
+                    obligation_id=helper.id,
+                    scope=helper.scope,
+                    kind="verify",
+                    handler_id="verify",
+                    checker_id="v",
+                    target_evidence_id=material.id,
+                    target_digest=material.digest,
+                    resources=Resources(actions=1, verifications=1),
+                )
+            )
+        return tuple(declared)
+
+    def selected_checker(view: CallbackView):
+        return material_checker(view) if view.obligation.id == "helper" else checker(view)
+
+    report = run(state, factory, budget, policy, {"read": reader, "verify": selected_checker})
+    assert report.decision.stop_reason == "satisfied"
+    assert report.callback_calls == ("read", "verify", "verify")
+    assert evaluations == [3, 4, 5, 6]
+    assert len(report.state.attempts) == len(report.state.results) == 6
+    assert report.state.checks[-1].basis.dependencies[0].evidence_id == "needed-exact"
+    assert report.state.checks[-1].basis.dependencies[0].requirement == "verified"
+    assert report.state.results[:3] == state.results

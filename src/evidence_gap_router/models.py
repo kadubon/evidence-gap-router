@@ -192,6 +192,16 @@ class Supersession(IdentifiedRecord):
         return self
 
 
+class Invalidation(IdentifiedRecord):
+    """Append-only host declaration; the original record and receipt stay unchanged."""
+
+    kind: Literal["evidence", "check"]
+    target_id: Text
+    obligation_id: Text
+    scope: Text
+    reason: Text
+
+
 class Resources(Record):
     """Separate integer dimensions; None means unknown, or unlimited in Budget."""
 
@@ -340,6 +350,7 @@ class State(Record):
     checks: tuple[CheckResult, ...] = ()
     contradictions: tuple[Contradiction, ...] = ()
     supersessions: tuple[Supersession, ...] = ()
+    invalidations: tuple[Invalidation, ...] = ()
     attempts: tuple[Attempt, ...] = ()
     results: tuple[Result, ...] = ()
     legacy_schema1: str | None = None
@@ -354,6 +365,7 @@ class State(Record):
             "checks",
             "contradictions",
             "supersessions",
+            "invalidations",
             "attempts",
             "results",
         ):
@@ -362,6 +374,15 @@ class State(Record):
         evidence = {e.id: e for e in self.evidence}
         checks = {c.id: c for c in self.checks}
         contradictions = {c.id: c for c in self.contradictions}
+        for invalidation in self.invalidations:
+            invalidated = (evidence if invalidation.kind == "evidence" else checks).get(
+                invalidation.target_id
+            )
+            if invalidated is None or (invalidated.obligation_id, invalidated.scope) != (
+                invalidation.obligation_id,
+                invalidation.scope,
+            ):
+                raise ValueError("invalidation requires an exact recorded ID/obligation/scope")
         entries: tuple[Evidence | CheckResult | Contradiction, ...] = (
             *self.evidence,
             *self.checks,
@@ -416,11 +437,13 @@ class State(Record):
                     contradiction.scope,
                 ):
                     raise ValueError("contradiction evidence target mismatch")
-        superseded: set[tuple[str, str, bool]] = set()
+        superseded: set[tuple[str, str, bool, str | None]] = set()
         for event in self.supersessions:
-            if (event.kind, event.target_id, event.legacy) in superseded:
-                raise ValueError("a record may be explicitly superseded only once")
-            superseded.add((event.kind, event.target_id, event.legacy))
+            grounds = None if event.kind == "evidence" else event.replacement_id or event.check_id
+            identity = (event.kind, event.target_id, event.legacy, grounds)
+            if identity in superseded:
+                raise ValueError("duplicate supersession grounds")
+            superseded.add(identity)
             if event.kind == "contradiction":
                 target = contradictions.get(event.target_id)
                 resolution_check = checks.get(event.check_id or "")
@@ -451,17 +474,25 @@ class State(Record):
                     raise ValueError("check supersession cannot cross target digest")
         # Cycles would make current applicability ambiguous.
         for kind in ("evidence", "check"):
-            links = {s.target_id: s.replacement_id for s in self.supersessions if s.kind == kind}
+            links: dict[str, set[str]] = {}
+            for event in self.supersessions:
+                if event.kind == kind and event.replacement_id is not None:
+                    links.setdefault(event.target_id, set()).add(event.replacement_id)
+            completed: set[str] = set()
             for first in links:
-                seen: set[str] = set()
-                current: str | None = first
-                while current in links:
-                    if current in seen:
+                stack = [(first, False)]
+                visiting: set[str] = set()
+                while stack:
+                    current, exiting = stack.pop()
+                    if exiting:
+                        visiting.remove(current)
+                        completed.add(current)
+                    elif current in visiting:
                         raise ValueError("supersession cycle")
-                    if current is None:
-                        break
-                    seen.add(current)
-                    current = links[current]
+                    elif current not in completed:
+                        visiting.add(current)
+                        stack.append((current, True))
+                        stack.extend((child, False) for child in links.get(current, ()))
         attempts = {a.id: a for a in self.attempts}
         observed: set[str] = set()
         prior_actions: dict[str, ActionCandidate] = {}

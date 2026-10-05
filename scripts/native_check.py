@@ -95,11 +95,17 @@ def main() -> None:
         )
         tests = clean / "tests"
         tests.mkdir()
-        # Release guards test source-side GitHub orchestration, not installed core behavior.
+        # These inspect repository orchestration/archives or experiment code.
+        # Runtime regressions still run against the installed release wheel;
+        # the portable benchmark smoke is exercised separately below.
+        source_tests = {
+            "test_release_guard.py",
+            "test_package_audit.py",
+            "test_publication_verification.py",
+            "test_benchmarks.py",
+        }
         selected = [
-            p
-            for p in sorted((root / "tests").glob("test_*.py"))
-            if p.name != "test_release_guard.py"
+            p for p in sorted((root / "tests").glob("test_*.py")) if p.name not in source_tests
         ]
         if not selected:
             raise ValueError("No installed regression tests selected")
@@ -116,12 +122,29 @@ def main() -> None:
             [str(python), "-I", str(root / "scripts/smoke.py"), "--expected-version", args.version],
             cwd=clean,
         )
+        benchmark_dir = clean / "benchmarks"
+        benchmark_dir.mkdir()
+        for source in sorted((root / "benchmarks").glob("*.py")):
+            shutil.copyfile(source, benchmark_dir / source.name)
+        shutil.copyfile(root / "benchmarks/protocol.json", benchmark_dir / "protocol.json")
+        outcome = subprocess.run(
+            [str(python), "-I", str(benchmark_dir / "smoke.py")],
+            cwd=clean,
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
+        benchmark = json.loads(outcome.stdout)
+        if benchmark.get("benchmark_smoke") != "passed" or benchmark.get("trials", 0) < 1:
+            raise ValueError("Installed benchmark smoke did not pass")
         report = json.loads(report_path.read_text(encoding="utf-8"))
         report.update(
             {
                 "installed_regression_tests": [test.name for test in selected],
                 "pytest_exit_code": 0,
                 "installed_smoke": "passed",
+                "benchmark": benchmark,
                 "dependency_constraints": "uv.lock runtime dependencies; locked pytest",
             }
         )

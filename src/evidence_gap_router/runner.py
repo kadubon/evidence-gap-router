@@ -22,7 +22,7 @@ from .models import (
     Supersession,
     VerificationBasis,
 )
-from .router import observe, plan, start
+from .router import _needed_helper_actions, feasible_actions, observe, plan, start
 
 
 class CallbackView(Record):
@@ -175,26 +175,15 @@ def _view(state: State, attempt_id: str) -> CallbackView:
     )
 
 
-def step(
+def _execute(
     state: State,
-    candidates: Candidates,
+    decision: Decision,
+    current_candidates: tuple[ActionCandidate, ...],
     budget: Budget,
     policy: Policy,
     handlers: Mapping[str, Handler],
 ) -> StepReport:
-    """Recommend and execute at most one registered callback, retaining all state.
-
-    ``decision`` is the recommendation that selected this invocation. Continue
-    with the returned state to obtain the next recommendation. A pending attempt
-    is never reissued. Factory/start failures happen before invocation and are
-    not charged as callback executions; callback uncertainty is recorded.
-    """
-    effective = _policy(policy, handlers)
-    decision, error_stop, error, current_candidates = _recommend(
-        state, candidates, budget, effective
-    )
-    if error_stop is not None:
-        return StepReport(state=state, decision=decision, stop_reason=error_stop, error=error)
+    effective = policy
     action = decision.action
     if action is None:
         return StepReport(state=state, decision=decision, stop_reason="router_stopped")
@@ -240,10 +229,31 @@ def step(
     return StepReport(state=state, decision=decision, receipt=receipt, stop_reason="step_completed")
 
 
+def step(
+    state: State,
+    candidates: Candidates,
+    budget: Budget,
+    policy: Policy,
+    handlers: Mapping[str, Handler],
+) -> StepReport:
+    """Recommend and execute at most one registered callback, retaining all state.
+
+    ``decision`` is the recommendation that selected this invocation. Continue
+    with the returned state to obtain the next recommendation. A pending attempt
+    is never reissued. Factory/start failures happen before invocation and are
+    not charged as callback executions; callback uncertainty is recorded.
+    """
+    effective = _policy(policy, handlers)
+    decision, error_stop, error, current = _recommend(state, candidates, budget, effective)
+    if error_stop is not None:
+        return StepReport(state=state, decision=decision, stop_reason=error_stop, error=error)
+    return _execute(state, decision, current, budget, effective, handlers)
+
+
 def _progress(state: State) -> str:
     """Compare evidence/check substance, not newly issued IDs or consumed cost."""
     values = {}
-    for name in ("evidence", "checks", "contradictions", "supersessions"):
+    for name in ("evidence", "checks", "contradictions", "supersessions", "invalidations"):
         records = []
         for item in getattr(state, name):
             value = item.model_dump(mode="json")
@@ -257,6 +267,56 @@ def _progress(state: State) -> str:
     return json.dumps(values, sort_keys=True, separators=(",", ":"))
 
 
+def _binding_progress(
+    before: State,
+    after: State,
+    candidates: tuple[ActionCandidate, ...],
+    budget: Budget,
+    policy: Policy,
+    selected: ActionCandidate | None,
+) -> bool:
+    """A needed exact-ID binding can unlock work despite duplicate information."""
+    new_ids = {item.id for item in after.evidence} - {item.id for item in before.evidence}
+    if not new_ids:
+        return False
+    # Verified dependencies may need a concrete verifier candidate derived only
+    # after acquisition reveals its digest. Core's original finite helper path
+    # approves that acquisition without granting every new alias progress.
+    if (
+        selected is not None
+        and selected.kind != "verify"
+        and selected.produces_evidence_id in new_ids
+        and selected.id in _needed_helper_actions(before, candidates, budget, policy)
+    ):
+        acquired = next(item for item in after.evidence if item.id == selected.produces_evidence_id)
+        obligation = next(item for item in after.obligations if item.id == acquired.obligation_id)
+        if not acquired.withdrawn and not acquired.expired:
+            for action in candidates:
+                for dependency in action.dependencies:
+                    if (
+                        dependency.evidence_id == acquired.id
+                        and dependency.obligation_id == acquired.obligation_id
+                        and dependency.scope == acquired.scope
+                        and (dependency.digest is None or dependency.digest == acquired.digest)
+                        and (
+                            dependency.contract_fingerprint is None
+                            or dependency.contract_fingerprint == obligation.contract_fingerprint
+                        )
+                    ):
+                        return True
+    previous = {item.id for item in feasible_actions(before, candidates, budget, policy)}
+    for action in feasible_actions(after, candidates, budget, policy):
+        if action.id in previous:
+            continue
+        bindings = {item.evidence_id for item in action.dependencies}
+        bindings.update(action.requires_evidence_ids)
+        if action.kind == "verify" and action.target_evidence_id is not None:
+            bindings.add(action.target_evidence_id)
+        if bindings & new_ids:
+            return True
+    return False
+
+
 def run(
     state: State,
     candidates: Candidates,
@@ -268,7 +328,7 @@ def run(
 ) -> RunReport:
     """Run at most ``max_steps`` callbacks; return current state on every stop.
 
-    New material or new check outcomes count as progress even before acceptance.
+    New material, check outcomes, or a needed exact input binding count as progress.
     New action/attempt IDs and costs alone do not. This explicit local host does
     not provide background work, forced timeouts, crash recovery or a sandbox.
     """
@@ -279,8 +339,14 @@ def run(
     calls: list[str] = []
     effective = _policy(policy, handlers)
     for _ in range(max_steps):
+        previous_state = state
         before = _progress(state)
-        report = step(state, candidates, budget, effective, handlers)
+        decision, error_stop, error, current = _recommend(state, candidates, budget, effective)
+        report = (
+            StepReport(state=state, decision=decision, stop_reason=error_stop, error=error)
+            if error_stop is not None
+            else _execute(state, decision, current, budget, effective, handlers)
+        )
         state = report.state
         decisions.append(report.decision)
         if report.receipt is not None:
@@ -302,7 +368,9 @@ def run(
                 stop_reason=report.stop_reason,
                 error=report.error,
             )
-        if _progress(state) == before:
+        if _progress(state) == before and not _binding_progress(
+            previous_state, state, current, budget, effective, report.decision.action
+        ):
             decision, stop, error, _ = _recommend(state, candidates, budget, effective)
             decisions.append(decision)
             return RunReport(

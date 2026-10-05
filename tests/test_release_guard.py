@@ -1,6 +1,8 @@
 """The release guard must keep manual and unvalidated commits from publishing."""
 
+import hashlib
 import importlib
+import json
 from pathlib import Path
 
 import pytest
@@ -140,3 +142,58 @@ def test_manual_run_api_requires_completed_native_jobs_for_exact_commit(guard, m
     namespace["github_json"] = responses
     assert namespace["validated_manual_run"]("verified") == 8
     assert not any("/runs/7/jobs" in url for url in requests)
+
+
+@pytest.mark.parametrize("defect", ["failed", "different"])
+def test_release_requires_matching_native_benchmark_outcomes(monkeypatch, tmp_path, defect):
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[1] / "scripts"))
+    module = importlib.import_module("release_notes")
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    (dist / "example.whl").write_bytes(b"release artifact")
+    profiles = tmp_path / "profiles"
+    profiles.mkdir()
+    for name, (system, architecture, python) in module.PROFILES.items():
+        value = {
+            "os": system,
+            "architecture": architecture,
+            "python": python + ".1",
+            "package_version": "0.2.1",
+            "wheel_sha256": hashlib.sha256(b"release artifact").hexdigest(),
+            "installed_smoke": "passed",
+            "pytest_exit_code": 0,
+            "rosetta_translated": False,
+            "pydantic_version": "locked",
+            "pydantic_core_version": "locked",
+            "benchmark": {"benchmark_smoke": "passed", "trials": 27, "outcome_sha256": "same"},
+        }
+        if name == "macos-intel-3.12.json":
+            if defect == "failed":
+                value["benchmark"]["benchmark_smoke"] = "failed"
+            else:
+                value["benchmark"]["outcome_sha256"] = "different"
+        (profiles / name).write_text(json.dumps(value), encoding="utf-8")
+    output = tmp_path / "notes.md"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "release_notes",
+            "--version",
+            "0.2.1",
+            "--commit",
+            "verified",
+            "--manual-run",
+            "1",
+            "--release-run",
+            "2",
+            "--profiles",
+            str(profiles),
+            "--dist",
+            str(dist),
+            "--output",
+            str(output),
+        ],
+    )
+    with pytest.raises(ValueError, match="passing native|outcomes differ"):
+        module.main()
+    assert not output.exists()

@@ -10,6 +10,8 @@ requirements, grant execution rights or implement a new agent framework.
 
 State remains strict, typed, frozen and single-writer. `plan` is pure; `start`
 pins an issued attempt; `observe` validates its receipt and host permissions.
+`invalidate` appends an explicit host event; `resolve` records checked current
+resolution grounds. Neither operation rewrites a callback's original receipt.
 `step`/`run` add a finite host loop and immutable input disclosure views without
 changing that separation. Factory and callback failures preserve the latest state.
 Snapshot continuation is explicit, with no crash-safe exactly-once claim.
@@ -27,7 +29,8 @@ purpose. Issuance fixes these values; the callback receives that material in its
 view and its receipt must echo the basis. Cross-obligation dependencies explicitly
 name the owner/scope and required condition (`exists`, `active`, `verified`).
 Presence does not imply active or checked. Finite cyclic verification dependencies
-are rejected/blocked rather than scheduled through a general graph runtime.
+cannot create authority from their own circular support. Applicability is evaluated
+as described below; this is not a general graph execution runtime.
 `exists` allows explicit historical inspection; a PASS used for current acceptance
 still requires every referenced target/dependency to be active and contract-matching.
 `verified` evaluates the referenced target's required checkers, rather than requiring
@@ -35,10 +38,42 @@ the whole dependency obligation to have complete evidence/provenance coverage.
 
 Only material actually declared and used is bound: unrelated additions leave
 applicable checks reusable. A changed contract, replaced target or inapplicable
-used dependency does not reuse the old PASS. Expiry/withdrawal are explicit host
-flags; there is no hidden wall-clock change. The raw record and history remain.
+used dependency does not reuse the old PASS. Initial expiry/withdrawal flags remain
+explicit input information; there is no hidden wall-clock change. After a record
+has appeared in a callback receipt, the host uses an append-only `Invalidation`
+for its exact evidence/check ID, obligation and scope. The event has its own ID
+and reason. Identical event replay is idempotent; unknown targets, mismatched
+scope and conflicting reuse of an event ID are rejected. Callback results cannot
+supply host invalidations. Original evidence, checks, attempts, receipts and
+resource observations remain intact, and diagnostics identify excluded records.
 The host/checker is trusted to use the declared material; hidden Python reads,
 external checker dishonesty and authenticity are not detected.
+
+## Current-state dependency evaluation
+
+Each planning/feasibility/start assessment builds indexes for that immutable
+state and host policy. There is no cache carried across calls, contracts,
+invalidations or changes to checker authority. The evaluator first assesses
+fixed identity, active material, contracts and checker permissions, then uses
+a finite worklist for `verified` dependencies.
+
+The worklist uses three-valued (strong-Kleene) logic: a check or target can be
+established, excluded, or unresolved. Information advances from unresolved to
+established/excluded. An independent currently authorized PASS on A can establish
+A, then a check on B depending on verified A, and finally an optional A check
+depending on B. A loop without such grounding cannot manufacture PASS. A
+potential negative whose applicability remains unresolved also prevents coverage
+from being reported as satisfied; it exposes a blocking `dependency_indeterminate`
+residual and dependency gap. Expired, invalidated or unauthorized historical
+checks with recorded bases do not poison a valid independent proof. Unassessed
+legacy negatives retain their explicit host-review boundary.
+
+Indexes and per-assessment memoization avoid recursively recomputing every
+checker combination along a chain or diamond. The regression fixtures compare
+against an independent small reference evaluator and bound worklist updates by
+the recorded nodes/dependency edges. Those diagnostic counts are not a general
+CPU speedup claim; uninstrumented timings and bounded process measurements are
+separate engineering evidence.
 
 ## Permission and historical resolution
 
@@ -53,8 +88,22 @@ contradiction resolution. A collected result cannot grant itself checker power,
 replace FAIL/UNKNOWN with an arbitrary old PASS or resolve a contradiction.
 Resolution binds the actual record fingerprint, involved evidence and current
 contract, and requires matching authorized basis. Generic content PASS is
-insufficient. Matching authorized resolution evidence may be reused; identical
-receipt replay charges no second cost. Earlier records are never silently erased.
+insufficient. Check resolution also requires the exact subject evidence ID from
+the original negative check's basis; equal bytes/digests under another ID do not
+substitute for that subject. Old inappropriate alias-resolution records remain
+readable history but are excluded from current acceptance. A basis-less legacy
+negative needs explicit host assessment rather than an inferred subject ID.
+
+Matching authorized resolution evidence may be reused. If earlier grounds become
+inapplicable because of a changed contract or used material/check invalidation,
+new dedicated current checks can support another append-only resolution event
+for the same historical target. Identical event replay is idempotent; conflicting
+reuse of its ID and an additional resolution while current grounds are already
+active are rejected. Evidence replacement remains single-target replacement;
+multiple historical check-resolution edges still undergo cycle validation.
+Receipt replay charges no second cost. Earlier records are never silently erased.
+Known producer/checker self-verification is excluded before issuance when host
+policy prohibits it. Previously recorded callback costs are still retained.
 
 Schema 2 expresses these meanings. Schema-1 migration preserves the strict old
 snapshot and historical records but leaves unsupported old check bases legacy/
@@ -68,6 +117,11 @@ previous attempt IDs and resource bounds before ranking. Required status and
 priority lead, followed by the specific missing target/checker/purpose or an
 explicit material prerequisite; stable IDs resolve otherwise comparable ties.
 Current satisfied content targets are excluded from redundant rechecks by default.
+`feasible_actions(state, candidates, budget, policy)` exposes the same safety
+gates in the original finite pool order. It adds no EGR ranking, provenance
+preference or randomized choice. A host may select any returned action and use
+`start(..., candidates=original_pool)`; start checks the same helper context,
+pending execution, resource bounds and required-satisfaction boundary.
 Provenance fit separates known repetition, unknown origin and declared new
 source/group material. Same-source/group bridges collapse transitively; source
 names and groups do not prove statistical independence.
@@ -77,14 +131,58 @@ gap for the exact alias target; a PASS on another alias does not silently erase 
 
 Pending capacity counts unfilled required target/checker work, including a
 partial required-verifier PASS and UNKNOWN, while retaining FAIL as a distinct
-negative result. Explicit prerequisite acquisition can unblock a pending check
-within the declared finite pool; arbitrary acquisition cannot bypass backpressure.
+negative result. A satisfied or optional helper obligation may still need a
+particular new evidence ID or its verification for an unresolved required check.
+Only finite declared dependency paths grant that helper an exception to ordinary
+obligation-satisfied/backpressure exclusions. The path must match exact IDs,
+obligation/scope, current contract and any declared/observed digest, use allowed
+handlers/checkers, and fit resource bounds. An unrelated acquisition, a wrong-scope
+future verifier, an impossible prerequisite or a dependency cycle gets no such
+exception. Multi-stage acquisition and verification use the same rules.
+
+An unknown digest may prevent the host from declaring a concrete verifier action
+before acquisition. Exact missing verified-dependency acquisition can bootstrap
+the next factory result if the contract-required checker is already authorized
+and available. This permits a bounded read, not an unissued verification or PASS.
+Once material exists, its helper verification needs a concrete compatible action.
+The runner evaluates a factory once for a callback's finite pool. New duplicate
+content can count as binding progress only when it fulfils a needed exact input
+binding; it does not increase deduplicated evidence/provenance counts. Fresh
+unneeded alias IDs, attempt IDs and costs alone do not count as progress.
 Decisions expose typed gaps, selected gap, pending count, residuals and exclusions.
 
 Action, verification and optional token counts remain separate nonnegative
 integers. Bounds/estimates are distinct from actual observations. Unknown demand
 in a constrained dimension is not zero. Unknown budgeted/bounded actual use,
 overrun or uncertain side effects prevents safe automatic continuation.
+
+## Bounded JSON and local numerical input
+
+Schema remains **2**. State snapshots (including strict schema-1 import/archive
+content) have a separate 32 MiB byte bound. Offline `PlanInput`, other JSON models
+and selected CSV/dictionary files retain their 1 MiB bounds. Writers enforce the
+matching reader's byte, structural-depth and number limits before reporting a
+successful save. `write_json` validates first and replaces a file through a
+temporary file; failed validation leaves an existing file intact. This does not
+claim crash-safe journaling or an unlimited history store. An expanded migration
+that exceeds the archive-inclusive snapshot limit is rejected without dropping
+history or overwriting its input.
+
+JSON rejects duplicate keys, non-finite numbers and nesting beyond 64 levels.
+Integers have at most 128 digits. Decimal numerical input has at most 64 coefficient
+digits, an exponent/adjusted exponent within +/-128, and a 256-character numeric
+text limit. Core integer resource fields remain strict: booleans, floating JSON
+numbers and exponent notation cannot impersonate integer action counts.
+
+The local data checker retains validated dictionary numeric text and parses
+decimal-sensitive JSON before a binary-float conversion. CSV amount comparison
+uses the same bounded decimal values. Small fractional boundaries and integers
+around `2**53` therefore retain the supplied numeric meaning. A Python float supplied
+by a caller has already lost any original digits; its existing representation is
+accepted as such rather than claimed to be recovered. CSV input is read completely
+or rejected, with a maximum 10,000 data rows and an explicit 131,072-character
+field limit. These limits and evidence digests do not establish financial or
+semantic correctness beyond the declared example contract.
 
 ## Neighbors and research
 
@@ -102,8 +200,11 @@ distinguishes interaction, checked reusable capability and stronger acceleration
 claims. Preserving residuals and authority boundaries follows those cautions.
 This implementation does not establish a complete theory, novelty, general cost
 reduction, collective-intelligence gain or causal capability growth. Numerical
-research claims are not used as product evidence. The small matched comparison
-records synthetic observed calls/outcomes, including equal-result cases.
+research claims are not used as product evidence. The earlier small matched
+comparison records synthetic observed calls/outcomes, including equal-result
+cases. A separate engineering protocol distinguishes correctness, matched method
+utility and controller CPU/memory costs; its [comparison record](comparison.md)
+must state the executed environment, bounds and remaining measurements.
 
 ## Not implemented
 

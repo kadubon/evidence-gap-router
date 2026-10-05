@@ -12,7 +12,7 @@ Python **3.12 以上** · Apache-2.0 · [English](README.md)
 ## インストールと手元のファイル
 
 ```sh
-python -m pip install evidence-gap-router==0.2.0
+python -m pip install evidence-gap-router==0.2.1
 egr --version
 egr check-data --data ./orders.csv --dictionary ./rules.json --json
 egr demo --json
@@ -39,10 +39,15 @@ ID、有限で下限以上の金額、許可された通貨が必要です。辞
 ```
 
 重複列名・空列名・余分/不足 field、JSON 重複 key、未知辞書 field、不正な型、
-非有限数、不正 UTF-8 を拒否します。各ファイルは 1 MiB、CSV は 10,000 行まで。
+非有限数、不正 UTF-8 を拒否します。各ファイルは 1 MiB、CSV は 10,000 行まで、
+CSV の各 field は 131,072 文字までです。
 上限を超えた入力の一部だけを全体合格にしません。UTF-8 BOM と LF/CRLF を受け付け、
 内容 digest は BOM・改行を含む元 byte を SHA-256 にかけます。
 空白・日本語 path は pathlib で扱い、path から shell コマンドを組み立てません。
+JSON の十進数閾値は元の数値文字列から読み、厳密に比較します。
+係数は 64 桁、指数と adjusted exponent は ±128、数値文字列は 256 文字までです。
+JSON 整数は 128 桁、入れ子は 64 階層まで。既に Python `float` へ変換した値の
+丸め前の情報は復元できないため、必要な場合は整数または `Decimal` を渡します。
 [ローカルファイル例](examples/data_quality.py)と
 [完全な callback コード](README.md#connect-a-callback)を参照してください。
 
@@ -62,6 +67,20 @@ print(report.callback_calls)
 `view.result(actual_resources=..., checks=(check,))` で実績とともに返します。
 ホスト登録は handler の役割、checker ID/revision、purpose を許可します。
 結果本文へ ID を書くことは権限取得ではありません。
+
+次の実行例は取得・検証の receipt を作り、ホストによる check の失効、
+snapshot 保存・再読込、新しい検証まで進みます。原履歴と支出は保持します。
+
+```python
+from evidence_gap_router import run_continuation_example
+
+report = run_continuation_example("continuation.json")
+assert report.decision.stop_reason == "satisfied"
+assert len(report.state.invalidations) == 1
+assert len(report.state.attempts) == 3
+```
+
+[公開 API](docs/api.md)と[効果・限界の測定](docs/benchmark.ja.md)も参照してください。
 
 `step` は最大 1 呼出し、`run(..., max_steps=32)` は既定で有限です。
 返る State・Decision・receipt を保存し、同じ公開 API から明示的に継続できます。
@@ -85,7 +104,9 @@ core の `plan` は読み取り専用で予算を消費しません。`start` �
 に保存すると、`egr plan INPUT.json --json` が不足に応じた候補を推薦します。
 URL/path の参照を自動取得せず、handler の文字列を import しません。
 新しい入出力の schema version は **"2"**。未知 field/version、重複 key、不正型を
-拒否し、CLI JSON は 1 MiB まで。`dump_json`/`load_json`/`read_json` で round-trip できます。
+拒否し、offline plan 入力は 1 MiB、State snapshot は別枠で 32 MiB までです。
+`dump_json`/`load_json`/`read_json` で round-trip でき、`write_json(state, path)` は
+全体の読込み検証を済ませてから保存先を置き換えます。履歴や否定的記録は削りません。
 schema 1 は黙って受理せず、[明示的な移行](docs/migration.md)を使います。
 
 Decision の `gaps`・`selected_gap`・`pending_verifications` は、どの対象・条件・
@@ -121,6 +142,15 @@ snapshot ファイルの encoding は引き続き明示的な UTF-8 です。
 exit 0 は推薦または満足、2 は有効な入力に対する未解決/検査済み不合格、1 は入力/実行失敗。
 argparse の使用法エラーも stderr/exit 2 です。`outcome` と業務/runner の停止を見て、
 入力不正、実行失敗、検証済み FAIL、資料不足、予算不足を区別してください。
+
+## 明示的な失効と継続
+
+`invalidate(state, Invalidation(...))` は、証拠/check の正確な ID、obligation、scope を
+指定するホスト操作です。元の record・receipt・費用を変えず、失効イベントを追記します。
+同じイベントの再入力は冪等で、ID 衝突・未知対象・scope 不一致は拒否します。
+取得 callback に他者の否定的記録を失効させる権限を与えず、背景 TTL も行いません。
+正当な旧 schema 2 は引き続き読めます。新 field を含む snapshot は旧 reader では
+拒否されます。[API](docs/api.md)と[移行手順](docs/migration.md)を参照してください。
 
 ## 監査・比較・検証範囲
 

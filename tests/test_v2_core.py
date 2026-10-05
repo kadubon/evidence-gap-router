@@ -619,8 +619,10 @@ def test_schema2_plan_roundtrip_and_unknown_migration_fields_rejected():
         migrate_v1_json(json.dumps({"schema_version": "1", "obligations": [], "policy": {}}))
 
 
-def test_migration_rejects_expanded_snapshot_over_limit_without_overwriting(tmp_path):
-    from evidence_gap_router import _legacy
+def test_migration_rejects_expanded_snapshot_over_limit_without_overwriting(tmp_path, monkeypatch):
+    from evidence_gap_router import _legacy, jsonio
+
+    monkeypatch.setattr(jsonio, "MAX_SNAPSHOT_BYTES", 1_048_576)
 
     obligation = _legacy.Obligation(
         id=DATA.id, description="old", scope=DATA.scope, acceptance="old"
@@ -629,7 +631,7 @@ def test_migration_rejects_expanded_snapshot_over_limit_without_overwriting(tmp_
     raw = _legacy.State(obligations=(obligation,), evidence=(evidence,)).model_dump_json()
     path = tmp_path / "old.json"
     path.write_text(raw, encoding="utf-8")
-    with pytest.raises(ValueError, match="including its original archive"):
+    with pytest.raises(ValueError, match="byte limit"):
         migrate_v1_file(path)
     assert path.read_text(encoding="utf-8") == raw
 

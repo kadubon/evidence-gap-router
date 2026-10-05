@@ -48,7 +48,7 @@ jobs:
           uv build --no-sources
           uv run --locked python -c 'from pathlib import Path; Path("dist/.gitignore").unlink(missing_ok=True)'
           uv run --locked twine check dist/*
-          uv run --locked python scripts/package_audit.py dist
+          uv run --locked python scripts/package_audit.py dist --benchmark-freeze benchmarks/results/freeze.json
       - name: Check tag admission and prior manual validation
         id: guard
         env:
@@ -64,6 +64,7 @@ jobs:
           VERSION: ${{ steps.guard.outputs.version }}
         run: |
           uv build --no-sources --wheel dist/*.tar.gz --out-dir "$RUNNER_TEMP/egr-sdist-wheel"
+          uv run --locked python scripts/package_audit.py dist --rebuilt-wheel "$RUNNER_TEMP"/egr-sdist-wheel/*.whl
           uv venv --seed --python 3.12 "$RUNNER_TEMP/egr-sdist"
           "$RUNNER_TEMP/egr-sdist/bin/python" -m pip --isolated install --no-cache-dir "$RUNNER_TEMP"/egr-sdist-wheel/*.whl
           cd "$RUNNER_TEMP"
@@ -264,6 +265,9 @@ jobs:
           cd "$RUNNER_TEMP"
           "$RUNNER_TEMP/egr-pypi/bin/python" -m pip --isolated install --no-cache-dir --index-url https://pypi.org/simple "evidence-gap-router==$VERSION"
           "$RUNNER_TEMP/egr-pypi/bin/python" -I "$GITHUB_WORKSPACE/scripts/smoke.py" --expected-version "$VERSION"
+          mkdir "$RUNNER_TEMP/egr-public-bench"
+          cp -R "$GITHUB_WORKSPACE/benchmarks" "$RUNNER_TEMP/egr-public-bench/benchmarks"
+          "$RUNNER_TEMP/egr-pypi/bin/python" -I "$RUNNER_TEMP/egr-public-bench/benchmarks/smoke.py"
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: native-*-${{ github.sha }}
@@ -277,4 +281,10 @@ jobs:
           MANUAL_RUN: ${{ needs.build.outputs.manual_run }}
         run: |
           uv run --no-project --python 3.12 python scripts/release_notes.py --version "$VERSION" --commit "$COMMIT" --manual-run "$MANUAL_RUN" --release-run "$GITHUB_RUN_ID" --profiles release/native --dist dist --output release/notes.md
-          gh release create "v$VERSION" dist/*.whl dist/*.tar.gz release/SHA256SUMS release/native/*.json --repo kadubon/evidence-gap-router --verify-tag --title "v$VERSION" --notes-file release/notes.md
+          mkdir release/benchmark
+          cp benchmarks/protocol.json release/benchmark/protocol.json
+          cp benchmarks/results/freeze.json release/benchmark/freeze.json
+          cp benchmarks/results/summary.json release/benchmark/benchmark-summary.json
+          cp docs/benchmark.md release/benchmark/benchmark-report.md
+          cp docs/benchmark.ja.md release/benchmark/benchmark-report.ja.md
+          gh release create "v$VERSION" dist/*.whl dist/*.tar.gz release/SHA256SUMS release/native/*.json release/benchmark/* --repo kadubon/evidence-gap-router --verify-tag --title "v$VERSION" --notes-file release/notes.md

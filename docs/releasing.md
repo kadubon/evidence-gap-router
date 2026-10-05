@@ -3,7 +3,25 @@
 Source publication, GitHub Release, PyPI upload and public-install verification
 are separate outcomes. Do not move a public tag, replace public bytes, weaken
 environment protection or describe unexecuted checks as passed. This updates an
-existing project; v0.1.0 remains unchanged.
+existing project; v0.1.0 and v0.2.0 remain unchanged.
+
+## Freeze and measure before final publication
+
+Commit the runtime, checkers, experiment code and protocol before holdout. Build
+the candidate from that exact archive, install it outside the checkout and freeze
+the implementation commit, wheel/package hashes, manifest and matched environment.
+Use the official v0.2.0 wheel/hash for the separate baseline environment. The
+experiment's development phase precedes freeze; the full holdout has no case
+filter. A runtime/protocol fix after holdout requires retained old results and a
+new protocol with unused holdout, rather than tuning the measured conditions.
+
+Keep raw JSONL/CSV and scaling records outside the wheel. A later docs/results
+commit records the freeze, small summary, English report and Japanese summary.
+Large raw results are a separately checksummed Release asset. Final CI calls
+`package_audit.py --benchmark-freeze benchmarks/results/freeze.json` so documentation
+metadata changes cannot conceal changed measured package bytes. The sdist rebuilt
+wheel must also have the same package fingerprint. The benchmark code hashes are
+recorded independently of the later results files, avoiding a self-hash cycle.
 
 ## Local and exact-commit manual validation
 
@@ -31,14 +49,16 @@ credentials, unrelated files, caches or local/editable dependencies.
 Test the existing wheel from a new environment outside the checkout, for example:
 
 ```sh
-uv run --no-project --python 3.12 python scripts/native_check.py --wheel dist/evidence_gap_router-0.2.0-py3-none-any.whl --version 0.2.0 --python 3.12 --platform Linux --architecture x86_64 --report /tmp/egr-native-linux.json
+uv run --no-project --python 3.12 python scripts/native_check.py --wheel dist/evidence_gap_router-0.2.1-py3-none-any.whl --version 0.2.1 --python 3.12 --platform Linux --architecture x86_64 --report /tmp/egr-native-linux.json
 ```
 
 On Windows use `--platform Windows --architecture x86_64` and an external report
 path. The helper creates a clean venv, installs the actual wheel with locked
-runtime constraints and pytest, copies regressions outside the source, verifies
-import locations and runs installed smoke. Build/install the sdist separately.
-`scripts/smoke.py --expected-version 0.2.0` receives the actual expected version;
+runtime constraints and pytest, copies regressions and the small benchmark outside
+the source, verifies import locations and runs both installed smokes.
+Build/install the sdist separately and compare its package bytes with the release
+wheel using `package_audit.py --rebuilt-wheel PATH`.
+`scripts/smoke.py --expected-version 0.2.1` receives the actual expected version;
 it must run with that clean environment's isolated Python outside the repository.
 
 Commit/push `main` normally, then dispatch combined CI only after changes are ready:
@@ -82,7 +102,7 @@ reviewers and protections. If authentication, publisher or required approval is
 actually unavailable, finish implementation/local/manual verification, record
 the exact remaining operation and do not bypass it.
 
-Check official PyPI for 0.2.0 before tagging. If it already exists, compare its
+Check official PyPI for 0.2.1 before tagging. If it already exists, compare its
 actual files/hashes and report the collision; do not change version silently,
 replace files or use `skip-existing` to turn conflict into success.
 
@@ -94,8 +114,8 @@ Once configuration is confirmed and manual CI passed for the unchanged commit:
 git switch main
 git status --short
 git rev-parse HEAD
-git tag -a v0.2.0 -m "evidence-gap-router 0.2.0"
-git push origin v0.2.0
+git tag -a v0.2.1 -m "evidence-gap-router 0.2.1"
+git push origin v0.2.1
 gh run list --repo kadubon/evidence-gap-router --workflow workflow.yml --event push --limit 5
 gh run view RELEASE_RUN_ID --repo kadubon/evidence-gap-router
 ```
@@ -114,16 +134,23 @@ only the final verified GitHub Release job has `contents: write`.
 
 After upload, `scripts/verify_pypi.py` polls official PyPI JSON within a finite
 bound, downloads the actual wheel and sdist, and compares each SHA-256 against
-the original workflow artifact. A new outside-repository environment then runs:
+the original workflow artifact. It then polls the official Simple index at most
+20 times, 15 seconds apart, requiring the same non-yanked filenames and hashes.
+This addresses actual 0.2.0 index visibility lag without retrying its successful
+upload. A new outside-repository environment then runs:
 
 ```sh
-python -m pip --isolated install --no-cache-dir --index-url https://pypi.org/simple evidence-gap-router==0.2.0
+python -m pip --isolated install --no-cache-dir --index-url https://pypi.org/simple evidence-gap-router==0.2.1
 ```
 
-Installed isolated smoke verifies version, SDK, CLI, data/cause examples and
-migration. The final job requires six matching passed native reports, generates
-v0.2-specific release notes and attaches the original wheel/sdist, `SHA256SUMS`
-and native JSON reports. Tagged docs do not anticipate these future outcomes.
+Installed isolated smoke verifies version, SDK, CLI, exact-decimal local files,
+issued-history invalidation/continuation, data/cause examples and migration;
+the same public environment runs portable benchmark smoke. The final job requires
+six matching passed native reports and benchmark outcome hashes, generates
+v0.2.1-specific release notes and attaches the original wheel/sdist, `SHA256SUMS`
+and native JSON reports, the frozen manifest/protocol, summary and reports.
+Upload the separately checksummed large raw benchmark archive without replacing
+any existing asset. Tagged docs do not anticipate these future outcomes.
 Hash equality establishes equality of observed bytes, not a completely
 reproducible source build or general product performance.
 
@@ -135,7 +162,7 @@ new directory, and compare public filenames/bytes before choosing the next actio
 
 ```sh
 gh run download RELEASE_RUN_ID --repo kadubon/evidence-gap-router --name distributions-COMMIT_SHA --dir EXTERNAL_ARTIFACT_DIR
-python scripts/verify_pypi.py EXTERNAL_ARTIFACT_DIR 0.2.0
+python scripts/verify_pypi.py EXTERNAL_ARTIFACT_DIR 0.2.1
 ```
 
 If public verification fails after upload, report **published; post-publication
@@ -163,7 +190,7 @@ uv is pinned to the installed/observed 0.12.19.
 | Action | Official release | Resolved commit |
 | --- | --- | --- |
 | actions/checkout | v7.0.1 | `3d3c42e5aac5ba805825da76410c181273ba90b1` |
-| astral-sh/setup-uv | v10.2.0 | `c18668ad3cf93ea998bef934396af7bb5c839dc7` |
+| astral-sh/setup-uv | v10.2.1 | `c18668ad3cf93ea998bef934396af7bb5c839dc7` |
 | actions/upload-artifact | v7.0.1 | `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a` |
 | actions/download-artifact | v8.0.1 | `3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c` |
 | pypa/gh-action-pypi-publish | v1.14.2 | `dc37677b2e1c63e2034f94d8a5b11f265b73ba33` |

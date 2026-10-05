@@ -3,11 +3,13 @@
 from ._version import __version__
 from .jsonio import (
     MAX_JSON_BYTES,
+    MAX_SNAPSHOT_BYTES,
     dump_json,
     load_json,
     migrate_v1_file,
     migrate_v1_json,
     read_json,
+    write_json,
 )
 from .models import (
     ActionCandidate,
@@ -24,6 +26,7 @@ from .models import (
     Exclusion,
     Gap,
     HandlerRegistration,
+    Invalidation,
     Obligation,
     PlanInput,
     Policy,
@@ -37,6 +40,8 @@ from .models import (
 )
 from .router import (
     evidence_binding,
+    feasible_actions,
+    invalidate,
     make_basis,
     observe,
     plan,
@@ -48,6 +53,7 @@ from .runner import CallbackView, RunReport, StepReport, run, step
 
 __all__ = [
     "MAX_JSON_BYTES",
+    "MAX_SNAPSHOT_BYTES",
     "ActionCandidate",
     "Attempt",
     "Budget",
@@ -63,6 +69,7 @@ __all__ = [
     "Exclusion",
     "Gap",
     "HandlerRegistration",
+    "Invalidation",
     "Obligation",
     "PlanInput",
     "Policy",
@@ -78,6 +85,8 @@ __all__ = [
     "dump_json",
     "contract_fingerprint",
     "evidence_binding",
+    "feasible_actions",
+    "invalidate",
     "load_json",
     "make_basis",
     "migrate_v1_file",
@@ -90,4 +99,5 @@ __all__ = [
     "run",
     "start",
     "step",
+    "write_json",
 ]

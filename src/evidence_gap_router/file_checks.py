@@ -16,6 +16,7 @@ from .data_quality import (
     read_local_bytes,
     validate_dataset,
 )
+from .jsonio import exact_json, load_json
 from .models import (
     ActionCandidate,
     Budget,
@@ -110,9 +111,13 @@ def _data_host(
     def acquire(view: CallbackView, read: Callable[[], bytes], is_dictionary: bool) -> Result:
         try:
             raw = read()
-            value = (
-                parse_rules(raw).model_dump(mode="json") if is_dictionary else parse_dataset(raw)
-            )
+            if is_dictionary:
+                parse_rules(raw)
+                # Preserve validated decimal lexemes and the input byte bound;
+                # inserting defaults could expand a full-sized document.
+                content = raw.decode("utf-8-sig")
+            else:
+                content = exact_json(parse_dataset(raw), sort_keys=True)
         except DataInputError as exc:
             return view.result(
                 status="failed",
@@ -125,7 +130,7 @@ def _data_host(
             scope=view.obligation.scope,
             digest=hashlib.sha256(raw).hexdigest(),
             producer=view.action.handler_id,
-            content=json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False),
+            content=content,
             source=dictionary_source if is_dictionary else data_source,
             reference=dictionary_source if is_dictionary else data_source,
             provenance_group="declared-dictionary-source"
@@ -140,12 +145,12 @@ def _data_host(
         records = {item.id: item for item in view.inputs}
         if view.action.target_evidence_id == "dictionary":
             try:
-                Rules.model_validate_json(records["dictionary"].content or "null")
+                load_json(records["dictionary"].content or "null", Rules)
                 errors: tuple[str, ...] = ()
             except ValueError as exc:
                 errors = (str(exc),)
         else:
-            rules = Rules.model_validate_json(records["dictionary"].content or "null")
+            rules = load_json(records["dictionary"].content or "null", Rules)
             dataset = json.loads(records["dataset"].content or "null")
             errors = validate_dataset(dataset, rules)
         check = view.check(

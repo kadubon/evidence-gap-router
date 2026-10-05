@@ -1,5 +1,51 @@
 # Validation evidence and native profiles
 
+## v0.2.1 facts available before publication
+
+The official v0.2.0 wheel (SHA256
+`039594d7fc5e39ab7b600c71f54682bb2d46147ba4e69a05a55f255a1806f3bf`)
+was installed in an isolated external Windows x86_64 / Python 3.12.14 environment,
+with Pydantic 2.13.5 / native core 2.46.5. The original 170 source tests passed
+before edits. All nine supplied observations were independently reproduced;
+[audit mapping and boundaries](audit-020.md) links the actual baseline records.
+The exact original commit was also extracted outside the repository and all 170
+original tests passed against that installed official wheel, using isolated
+Python and pytest 9.1.1 (1.82 seconds on this host).
+
+New regression expectations cover issued-record invalidation, repeated current
+resolution, old wrong-alias acceptance, pre-callback self-check rejection, narrow
+multi-stage helpers, exact JSON decimals, bounded snapshot continuation,
+exact-ID progress and state/policy/cycle-safe dependency evaluation. Publication
+and archive guards also check index visibility, RECORD bytes and measured-package
+equality. Final commands/counts and the measured protocol/environment are recorded
+below after execution; a development check is not a native release result.
+
+The v0.2.1 release still requires all six same-wheel native profiles in the table
+below. Each also runs the same portable benchmark smoke, whose canonical outcome
+hash must agree. Full statistical measurements run in one explicit environment;
+the native smoke is not a replacement for that experiment.
+
+Executed on Windows x86_64 / uv-managed Python 3.12.14 before the implementation
+commit: `uv sync --locked --group dev`, `ruff check .`, `ruff format --check .`
+(61 files), `mypy src` (14 modules), and the full `pytest -q` suite: **260 passed,
+no skips**, in 5.53 seconds. The private development wheel/sdist passed
+`uv build --no-sources`, `twine check` and actual RECORD/package-byte audit
+(25 identical package files). Its external cache-free ordinary install passed
+isolated SDK/CLI/file/issued-history continuation smoke. It is a development
+artifact, distinct from the exact Git-archive candidate and final CI build.
+Actionlint 1.7.12 accepted the changed workflow; shellcheck was unavailable.
+
+The immutable v0.2.0 release ultimately passed manual run `37255968948` and tag
+run `37256324812` attempt 2 at commit
+`e8d77f210d7579d6a367b7564b485b2586ffd074`. Attempt 1 had already published both
+files, then failed a fresh install while the official Simple index still listed
+only 0.1.0. After verifying the public bytes and a cache-free install, only the
+failed verification/release job was rerun. v0.2.1 now waits within a finite bound
+for the expected non-yanked index files/hashes before installing; no successful
+upload is blindly repeated.
+
+## Archived v0.2.0 development and release checks
+
 This source document records facts available before the v0.2.0 release workflow.
 A configured runner is not an executed test. The exact tagged commit, successful
 manual/release run IDs, actual native versions and public verification are written

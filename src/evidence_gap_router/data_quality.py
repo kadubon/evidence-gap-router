@@ -8,13 +8,14 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Annotated, Any, Literal, Self
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 
-from .jsonio import load_json
+from .jsonio import MAX_JSON_BYTES, _parse_json, bounded_decimal, exact_json, load_json
 from .models import Record
 
 MAX_FILE_BYTES = 1_048_576
 MAX_DATA_ROWS = 10_000
+MAX_CSV_FIELD_CHARACTERS = 131_072
 COLUMNS = ("order_id", "amount", "currency")
 
 
@@ -26,8 +27,47 @@ class Rules(Record):
     description: str = ""
     required_columns: tuple[Literal["order_id", "amount", "currency"], ...]
     primary_key: Literal["order_id"]
-    minimum_amount: Annotated[int | float, Field(ge=0)]
+    minimum_amount: Annotated[int | float | Decimal, Field(ge=0)]
     allowed_currencies: tuple[Annotated[str, Field(min_length=1)], ...]
+
+    @field_validator("minimum_amount", mode="after")
+    @classmethod
+    def finite_decimal_contract(cls, value: int | float | Decimal) -> int | float | Decimal:
+        # SDK float inputs retain their existing decimal string representation;
+        # information already lost by a caller's float conversion cannot be restored.
+        bounded_decimal(value if isinstance(value, Decimal) else str(value))
+        return value
+
+    @classmethod
+    def _validate_exact_json(cls, value: object, **kwargs: Any) -> Self:
+        if not isinstance(value, dict):
+            return cls.model_validate(value, **kwargs)
+        fields = dict(value)
+        minimum = fields.get("minimum_amount")
+        if isinstance(minimum, bool) or not isinstance(minimum, (int, Decimal)):
+            raise ValueError("minimum_amount must be a JSON number")
+        for name in ("required_columns", "allowed_currencies"):
+            if isinstance(fields.get(name), list):
+                fields[name] = tuple(fields[name])
+        return cls.model_validate(fields, **kwargs)
+
+    @classmethod
+    def model_validate_json(cls, json_data: str | bytes | bytearray, **kwargs: Any) -> Self:
+        """Keep Decimal-sensitive JSON validation exact, including direct SDK calls."""
+        _, parsed = _parse_json(
+            bytes(json_data) if isinstance(json_data, bytearray) else json_data, MAX_JSON_BYTES
+        )
+        return cls._validate_exact_json(parsed, **kwargs)
+
+    def model_dump_json(
+        self, *, indent: int | None = None, ensure_ascii: bool = False, **kwargs: Any
+    ) -> str:
+        """Round-trip this contract as numeric JSON without converting Decimal to float."""
+        value = self.model_dump(mode="python", **kwargs)
+        text = exact_json(value, indent=indent, ensure_ascii=ensure_ascii)
+        if len(text.encode("utf-8")) > MAX_JSON_BYTES:
+            raise ValueError(f"JSON exceeds {MAX_JSON_BYTES} byte limit")
+        return text
 
     @model_validator(mode="after")
     def fixed_contract(self) -> Self:
@@ -90,13 +130,16 @@ def parse_dataset(raw: bytes) -> dict[str, Any]:
                 raise DataInputError(f"CSV exceeds {MAX_DATA_ROWS} data rows")
             if len(row) != len(header):
                 raise DataInputError(f"CSV line {reader.line_num} has missing or extra fields")
+            if any(len(field) > MAX_CSV_FIELD_CHARACTERS for field in row):
+                raise DataInputError(
+                    f"CSV line {reader.line_num}: "
+                    f"field exceeds {MAX_CSV_FIELD_CHARACTERS} characters"
+                )
             values = dict(zip(header, row, strict=True))
             try:
-                amount = Decimal(values["amount"])
-            except InvalidOperation as exc:
-                raise DataInputError(f"CSV line {reader.line_num}: amount is not numeric") from exc
-            if not amount.is_finite():
-                raise DataInputError(f"CSV line {reader.line_num}: amount is non-finite")
+                bounded_decimal(values["amount"])
+            except (InvalidOperation, ValueError) as exc:
+                raise DataInputError(f"CSV line {reader.line_num}: invalid amount: {exc}") from exc
             rows.append(values)
         if not rows:
             raise DataInputError("CSV must contain at least one data row")
@@ -109,7 +152,7 @@ def validate_dataset(dataset: dict[str, Any], rules: Rules) -> tuple[str, ...]:
     """Inspect every parsed row against the declared bounded dictionary contract."""
     errors: list[str] = []
     seen: set[str] = set()
-    minimum = Decimal(str(rules.minimum_amount))
+    minimum = bounded_decimal(str(rules.minimum_amount))
     for row_number, row in enumerate(dataset["rows"], start=2):
         identifier = row["order_id"]
         if not identifier.strip():
@@ -118,7 +161,7 @@ def validate_dataset(dataset: dict[str, Any], rules: Rules) -> tuple[str, ...]:
             errors.append(f"row {row_number}: duplicate primary key {identifier}")
         else:
             seen.add(identifier)
-        if Decimal(row["amount"]) < minimum:
+        if bounded_decimal(row["amount"]) < minimum:
             errors.append(f"row {row_number}: amount is below minimum")
         if row["currency"] not in rules.allowed_currencies:
             errors.append(f"row {row_number}: currency is not in dictionary")

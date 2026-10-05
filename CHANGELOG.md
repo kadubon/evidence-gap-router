@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.2.1
+
+- Append-only host invalidation preserves issued receipts and costs while making
+  an exact evidence/check record and dependent verification inapplicable.
+- Resolution binds the exact evidence subject, including retained old schema-2
+  histories. Reopened checks/contradictions can use new current resolution grounds.
+- Known prohibited self-verification is excluded before invocation. Narrow
+  declared prerequisite work can support required tasks through satisfied helpers.
+- Bounded exact decimal input prevents JSON threshold rounding. State snapshots
+  have a separate 32 MiB limit and validated atomic save; local/plan inputs retain
+  their 1 MiB limits. Required exact-ID dependency fulfillment counts as progress.
+- Applicability evaluation uses per-snapshot indexes/memoization; current policy,
+  contracts, dependencies and invalidation remain part of each new evaluation.
+- A frozen model-free engineering benchmark separates correctness, matched
+  routing utility and controller cost. Raw evidence and limits are documented
+  separately from publication status.
+- Archive auditing verifies wheel RECORD and wheel/sdist package-byte agreement.
+  Public verification also waits for the official install index within a finite bound.
+
 ## 0.2.0
 
 - Verification bases bind target IDs/digests, acceptance contracts, finite explicit

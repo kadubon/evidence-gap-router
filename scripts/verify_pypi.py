@@ -12,6 +12,47 @@ import urllib.request
 from pathlib import Path
 
 
+def wait_for_index(expected: dict[str, str], *, attempts: int = 20, interval: float = 15) -> None:
+    """Wait for the official install index, retaining a finite publication deadline.
+
+    The version JSON API may update before the Simple API used by pip. Match pip's
+    content negotiation and verify names, hashes and yanked flags before installing.
+    A present but different public artifact is an error, never a retry condition.
+    """
+    request = urllib.request.Request(
+        "https://pypi.org/simple/evidence-gap-router/",
+        headers={
+            "Accept": (
+                "application/vnd.pypi.simple.v1+json, "
+                "application/vnd.pypi.simple.v1+html;q=0.1, text/html;q=0.01"
+            ),
+            "Cache-Control": "no-cache",
+        },
+    )
+    for attempt in range(attempts):
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                document = json.load(response)
+            if document.get("name") != "evidence-gap-router":
+                raise ValueError("Official Simple API project mismatch")
+            files = {item["filename"]: item for item in document["files"]}
+            for filename, digest in expected.items():
+                item = files.get(filename)
+                if item is not None and (
+                    item.get("yanked") or item.get("hashes", {}).get("sha256") != digest
+                ):
+                    raise ValueError(f"Simple API hash mismatch or yanked file: {filename}")
+            if set(expected).issubset(files):
+                print("Official install index exposes both verified distributions")
+                return
+        except urllib.error.HTTPError as error:
+            if error.code != 404:
+                raise
+        if attempt + 1 < attempts:
+            time.sleep(interval)
+    raise RuntimeError("Verified distributions did not reach the official install index in time")
+
+
 def verify(dist: Path, version: str, checksums: Path) -> None:
     expected = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in dist.iterdir()}
     if set(expected) != {
@@ -47,6 +88,7 @@ def verify(dist: Path, version: str, checksums: Path) -> None:
         if actual != digest:
             raise ValueError(f"Downloaded bytes mismatch: {filename}")
         print(f"verified {digest}  {filename}")
+    wait_for_index(expected)
     checksums.parent.mkdir(parents=True, exist_ok=True)
     checksums.write_text(
         "".join(f"{expected[name]}  {name}\n" for name in sorted(expected)), encoding="utf-8"

@@ -1,5 +1,27 @@
 # Migrating from 0.1 to 0.2
 
+## 0.2.0 to 0.2.1
+
+The SDK/CLI entry points and schema **2** remain. A legitimate old schema-2
+snapshot is readable without a new basis being invented. The new optional
+`State.invalidations` tuple holds exact host evidence/check invalidations;
+new snapshots include it, so 0.2.0 readers reject the unknown field. Keep the
+original file and upgrade the reader before continuing.
+
+Historical resolution records on a byte-identical different evidence ID remain
+history, but cease to be current acceptance grounds. A legacy negative without
+a recorded exact subject basis needs explicit host assessment/new supported work;
+the importer does not guess its subject. Reopened checks/contradictions may use
+new dedicated current grounds while preserving original receipts and events.
+
+Use `invalidate` rather than editing callback-produced expiry/withdrawal flags.
+Use `write_json`/`read_json(..., State)` for the separate 32 MiB snapshot contract;
+offline plan input and selected files remain 1 MiB. Data-rule JSON numeric text
+is now exact and bounded; an already rounded Python float cannot be repaired.
+See [SDK contracts](api.md) for new operations and limitations.
+
+## 0.1 to 0.2
+
 Version 0.2.0 uses JSON schema **2** and changes callback, verification and
 registration contracts. It is not completely backward compatible. A schema-2
 reader rejects schema 1; changing only the version field is not a migration.

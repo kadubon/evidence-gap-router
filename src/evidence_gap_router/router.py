@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import deque
 from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Literal
@@ -13,12 +14,14 @@ from .models import (
     CheckResult,
     Coverage,
     Decision,
+    DependencyRequirement,
     Evidence,
     EvidenceBinding,
     Exclusion,
     Gap,
     HandlerRegistration,
     IdentifiedRecord,
+    Invalidation,
     Obligation,
     Policy,
     Residual,
@@ -35,6 +38,7 @@ DIMENSIONS = ("actions", "verifications", "tokens")
 
 def _active_evidence(state: State, obligation: Obligation) -> tuple[Evidence, ...]:
     replaced = {s.target_id for s in state.supersessions if s.kind == "evidence"}
+    replaced.update(i.target_id for i in state.invalidations if i.kind == "evidence")
     return tuple(
         e
         for e in state.evidence
@@ -152,6 +156,8 @@ def make_basis(state: State, action: ActionCandidate) -> VerificationBasis:
                 target.digest,
             ):
                 raise ValueError("resolution_target_mismatch")
+            if old.basis is None or old.basis.target.evidence_id != target.evidence_id:
+                raise ValueError("resolution_subject_id_mismatch_or_unassessed")
         else:
             conflict = next(c for c in state.contradictions if c.id == action.resolution_target_id)
             if (conflict.obligation_id, conflict.scope) != (action.obligation_id, action.scope):
@@ -193,116 +199,301 @@ def _registration(policy: Policy, action: ActionCandidate) -> HandlerRegistratio
     return next((h for h in policy.handlers if h.handler_id == action.handler_id), None)
 
 
-def _trusted_check(
-    check: CheckResult,
-    state: State,
-    policy: Policy,
-    visiting: frozenset[str] = frozenset(),
-) -> bool:
-    basis = check.basis
-    if basis is None or check.legacy or check.id in visiting or check.withdrawn or check.expired:
-        return False
-    if check.verifier_id not in policy.trusted_verifiers or not any(
-        h.allows(basis) for h in policy.handlers
-    ):
-        return False
-    if not all(_binding_active(state, b) for b in (basis.target, *basis.dependencies)):
-        return False
-    target = next(e for e in state.evidence if e.id == basis.target.evidence_id)
-    if policy.prohibit_self_verification and target.producer == check.verifier_id:
-        return False
-    if basis.purpose != "content":
-        kind: Literal["check", "contradiction"] = (
-            "check" if basis.purpose == "check_resolution" else "contradiction"
+class _Evaluation:
+    """Indexes and memoized applicability scoped to one immutable state/policy evaluation."""
+
+    def __init__(self, state: State, policy: Policy):
+        self.state, self.policy = state, policy
+        self.evidence = {e.id: e for e in state.evidence}
+        self.obligations = {o.id: o for o in state.obligations}
+        self.checks = {c.id: c for c in state.checks}
+        self.active = {e.id for o in state.obligations for e in _active_evidence(state, o)}
+        self.invalid_checks = {i.target_id for i in state.invalidations if i.kind == "check"}
+        self.by_target: dict[str, list[CheckResult]] = {}
+        self.events: dict[str, list[Supersession]] = {}
+        for check in state.checks:
+            if check.basis is not None:
+                self.by_target.setdefault(check.basis.target.evidence_id, []).append(check)
+        for event in state.supersessions:
+            if event.kind == "check" and not event.legacy:
+                self.events.setdefault(event.target_id, []).append(event)
+        self._check_cache: dict[str, bool] = {}
+        self._target_cache: dict[str, bool] = {}
+        self._resolution_cache: dict[str, bool] = {}
+        self._fingerprints: dict[tuple[str, str], str | None] = {}
+        self._base_cache = {c.id: self._base_check(c) for c in state.checks}
+        self._check_truth: dict[str, bool | None] = {
+            c.id: None if self._base_cache[c.id] else False for c in state.checks
+        }
+        self._target_truth: dict[str, bool | None] = {
+            e.id: None if e.id in self.active else False for e in state.evidence
+        }
+        # Strong-Kleene information only advances from unknown to true/false.
+        # Grounded alternative PASS can establish a finite proof; an unresolved
+        # potential negative cannot temporarily grant PASS during a cycle.
+        listeners: dict[tuple[str, str], set[tuple[str, str]]] = {}
+        for check in state.checks:
+            if check.basis is not None:
+                for binding in check.basis.dependencies:
+                    if binding.requirement == "verified":
+                        listeners.setdefault(("target", binding.evidence_id), set()).add(
+                            ("check", check.id)
+                        )
+        for evidence in state.evidence:
+            for check in self.by_target.get(evidence.id, ()):
+                listeners.setdefault(("check", check.id), set()).add(("target", evidence.id))
+                for event in self.events.get(check.id, ()):
+                    if event.replacement_id is not None:
+                        listeners.setdefault(("check", event.replacement_id), set()).add(
+                            ("target", evidence.id)
+                        )
+        pending = deque(
+            [*(("check", c.id) for c in state.checks), *(("target", e.id) for e in state.evidence)]
         )
-        try:
-            if (
-                resolution_fingerprint(state, kind, basis.resolution_target_id or "")
-                != basis.resolution_fingerprint
-            ):
-                return False
-        except ValueError:
+        queued = set(pending)
+        while pending:
+            kind, identifier = pending.popleft()
+            queued.remove((kind, identifier))
+            if kind == "check":
+                old = self._check_truth[identifier]
+                new = self._evaluate_check_truth(self.checks[identifier])
+                self._check_truth[identifier] = new
+            else:
+                old = self._target_truth[identifier]
+                new = self._evaluate_target_truth(self.evidence[identifier])
+                self._target_truth[identifier] = new
+            if old != new:
+                for listener in sorted(listeners.get((kind, identifier), ())):
+                    if listener not in queued:
+                        pending.append(listener)
+                        queued.add(listener)
+
+    def binding_active(self, binding: EvidenceBinding) -> bool:
+        obligation = self.obligations.get(binding.obligation_id)
+        evidence = self.evidence.get(binding.evidence_id)
+        return bool(
+            obligation is not None
+            and obligation.scope == binding.scope
+            and obligation.contract_fingerprint == binding.contract_fingerprint
+            and evidence is not None
+            and evidence.digest == binding.digest
+            and evidence.id in self.active
+        )
+
+    def trusted_check(self, check: CheckResult) -> bool:
+        if check.id not in self._check_cache:
+            self._check_cache[check.id] = self._compute_check(check)
+        return self._check_cache[check.id]
+
+    def _base_check(self, check: CheckResult) -> bool:
+        basis, policy = check.basis, self.policy
+        if (
+            basis is None
+            or check.legacy
+            or check.id in self.invalid_checks
+            or check.withdrawn
+            or check.expired
+        ):
             return False
-    path = visiting | {check.id}
-    return all(
-        d.requirement != "verified" or _target_verified(state, policy, d.evidence_id, path)
-        for d in basis.dependencies
-    )
+        if check.verifier_id not in policy.trusted_verifiers or not any(
+            h.allows(basis) for h in policy.handlers
+        ):
+            return False
+        if not all(self.binding_active(b) for b in (basis.target, *basis.dependencies)):
+            return False
+        target = self.evidence[basis.target.evidence_id]
+        if policy.prohibit_self_verification and target.producer == check.verifier_id:
+            return False
+        if basis.purpose != "content":
+            kind: Literal["check", "contradiction"] = (
+                "check" if basis.purpose == "check_resolution" else "contradiction"
+            )
+            if kind == "check":
+                old = self.checks.get(basis.resolution_target_id or "")
+                if (
+                    old is None
+                    or old.basis is None
+                    or (old.basis.target.evidence_id != basis.target.evidence_id)
+                ):
+                    return False
+            key = (kind, basis.resolution_target_id or "")
+            if key not in self._fingerprints:
+                try:
+                    self._fingerprints[key] = resolution_fingerprint(self.state, kind, key[1])
+                except ValueError:
+                    self._fingerprints[key] = None
+            if self._fingerprints[key] != basis.resolution_fingerprint:
+                return False
+        return True
+
+    @staticmethod
+    def _all(values: Iterable[bool | None]) -> bool | None:
+        sequence = tuple(values)
+        return False if False in sequence else (None if None in sequence else True)
+
+    @staticmethod
+    def _any(values: Iterable[bool | None]) -> bool | None:
+        sequence = tuple(values)
+        return True if True in sequence else (None if None in sequence else False)
+
+    def _evaluate_check_truth(self, check: CheckResult) -> bool | None:
+        if not self._base_cache[check.id] or check.basis is None:
+            return False
+        return self._all(
+            self._target_truth[d.evidence_id]
+            for d in check.basis.dependencies
+            if d.requirement == "verified"
+        )
+
+    def _resolution_truth(self, event: Supersession) -> bool | None:
+        identifier = event.replacement_id if event.kind == "check" else event.check_id
+        check = self.checks.get(identifier or "")
+        expected = "check_resolution" if event.kind == "check" else "contradiction_resolution"
+        if (
+            event.legacy
+            or event.kind == "evidence"
+            or check is None
+            or check.status != "PASS"
+            or check.basis is None
+            or check.id in self.events
+            or check.basis.purpose != expected
+            or check.basis.resolution_target_id != event.target_id
+        ):
+            return False
+        return self._check_truth[check.id]
+
+    def _effective_truth(self, check: CheckResult) -> bool | None:
+        truth = self._check_truth[check.id]
+        if check.legacy and check.basis is None and check.status in ("FAIL", "UNKNOWN"):
+            truth = check.id not in self.invalid_checks
+        events = self.events.get(check.id, ())
+        if not events:
+            return truth
+        replaced = (
+            True if check.status == "PASS" else self._any(self._resolution_truth(s) for s in events)
+        )
+        return self._all((truth, None if replaced is None else not replaced))
+
+    def _evaluate_target_truth(self, evidence: Evidence) -> bool | None:
+        if evidence.id not in self.active:
+            return False
+        checks = [
+            c
+            for c in self.by_target.get(evidence.id, ())
+            if c.basis is not None and c.basis.purpose in ("content", "check_resolution")
+        ]
+        checks.extend(
+            c
+            for c in self.state.checks
+            if c.legacy
+            and c.basis is None
+            and c.status in ("FAIL", "UNKNOWN")
+            and (c.obligation_id, c.scope, c.target_digest)
+            == (evidence.obligation_id, evidence.scope, evidence.digest)
+        )
+        required = self.obligations[evidence.obligation_id].required_verifiers
+        passes = [c for c in checks if c.status == "PASS"]
+        support = (
+            self._all(
+                self._any(self._effective_truth(c) for c in passes if c.verifier_id == checker)
+                for checker in required
+            )
+            if required
+            else self._any(self._effective_truth(c) for c in passes)
+        )
+        negatives = self._any(self._effective_truth(c) for c in checks if c.status != "PASS")
+        return self._all((support, None if negatives is None else not negatives))
+
+    def _compute_check(self, check: CheckResult) -> bool:
+        return self._check_truth[check.id] is True
+
+    def valid_resolution(self, event: Supersession) -> bool:
+        if event.id not in self._resolution_cache:
+            self._resolution_cache[event.id] = self._resolution_truth(event) is True
+        return self._resolution_cache[event.id]
+
+    def target_checks(self, evidence: Evidence) -> tuple[CheckResult, ...]:
+        current: list[CheckResult] = []
+        # Unassessed legacy negatives remain conservative digest-level issues.
+        checks = [
+            *self.by_target.get(evidence.id, ()),
+            *(
+                c
+                for c in self.state.checks
+                if c.legacy and c.basis is None and c.status in ("FAIL", "UNKNOWN")
+            ),
+        ]
+        for check in checks:
+            if (check.obligation_id, check.scope, check.target_digest) != (
+                evidence.obligation_id,
+                evidence.scope,
+                evidence.digest,
+            ) or check.id in self.invalid_checks:
+                continue
+            events = self.events.get(check.id, ())
+            if events and (check.status == "PASS" or any(self.valid_resolution(s) for s in events)):
+                continue
+            if check.legacy and check.status in ("FAIL", "UNKNOWN"):
+                current.append(check)
+            elif (
+                check.basis is not None
+                and check.basis.purpose in ("content", "check_resolution")
+                and self.trusted_check(check)
+            ):
+                current.append(check)
+        return tuple(current)
+
+    def target_verified(self, identifier: str) -> bool:
+        return self._target_truth[identifier] is True
+
+    def indeterminate_negatives(self, evidence: Evidence) -> tuple[CheckResult, ...]:
+        return tuple(
+            c
+            for c in self.by_target.get(evidence.id, ())
+            if c.status != "PASS"
+            and c.basis is not None
+            and c.basis.purpose in ("content", "check_resolution")
+            and self._effective_truth(c) is None
+        )
+
+
+def _trusted_check(
+    check: CheckResult, state: State, policy: Policy, visiting: frozenset[str] = frozenset()
+) -> bool:
+    return check.id not in visiting and _Evaluation(state, policy).trusted_check(check)
 
 
 def _valid_resolution(
     state: State, event: Supersession, policy: Policy, visiting: frozenset[str] = frozenset()
 ) -> bool:
-    if event.legacy or event.kind == "evidence":
-        return False
-    identifier = event.replacement_id if event.kind == "check" else event.check_id
-    check = next((c for c in state.checks if c.id == identifier), None)
-    if check is None or check.status != "PASS" or check.basis is None:
-        return False
-    if any(
-        s.kind == "check" and s.target_id == check.id and not s.legacy for s in state.supersessions
-    ):
-        return False
-    expected = "check_resolution" if event.kind == "check" else "contradiction_resolution"
-    return (
-        check.basis.purpose == expected
-        and check.basis.resolution_target_id == event.target_id
-        and _trusted_check(check, state, policy, visiting)
-    )
+    return (event.replacement_id or event.check_id) not in visiting and _Evaluation(
+        state, policy
+    ).valid_resolution(event)
 
 
 def _replaced_checks(
     state: State, policy: Policy, visiting: frozenset[str] = frozenset()
 ) -> set[str]:
-    checks = {c.id: c for c in state.checks}
+    evaluation = _Evaluation(state, policy)
     return {
         s.target_id
         for s in state.supersessions
         if s.kind == "check"
         and not s.legacy
-        and (checks[s.target_id].status == "PASS" or _valid_resolution(state, s, policy, visiting))
+        and (evaluation.checks[s.target_id].status == "PASS" or evaluation.valid_resolution(s))
     }
 
 
 def _target_checks(
     state: State, policy: Policy, evidence: Evidence, visiting: frozenset[str] = frozenset()
 ) -> tuple[CheckResult, ...]:
-    replaced = _replaced_checks(state, policy, visiting)
-    return tuple(
-        c
-        for c in state.checks
-        if c.id not in replaced
-        and (c.obligation_id, c.scope, c.target_digest)
-        == (evidence.obligation_id, evidence.scope, evidence.digest)
-        and (
-            c.basis is not None
-            and c.basis.target.evidence_id == evidence.id
-            and c.basis.purpose in ("content", "check_resolution")
-            and _trusted_check(c, state, policy, visiting)
-            or c.legacy
-            and c.status in ("FAIL", "UNKNOWN")
-        )
-    )
+    return _Evaluation(state, policy).target_checks(evidence)
 
 
 def _target_verified(
     state: State, policy: Policy, identifier: str, visiting: frozenset[str] = frozenset()
 ) -> bool:
-    evidence = next(e for e in state.evidence if e.id == identifier)
-    obligation = next(o for o in state.obligations if o.id == evidence.obligation_id)
-    checks = _target_checks(state, policy, evidence, visiting)
-    passes = {
-        c.verifier_id
-        for c in checks
-        if c.status == "PASS"
-        and c.basis is not None
-        and c.basis.purpose in ("content", "check_resolution")
-    }
-    return not any(c.status in ("FAIL", "UNKNOWN") for c in checks) and (
-        set(obligation.required_verifiers).issubset(passes)
-        if obligation.required_verifiers
-        else bool(passes)
-    )
+    return _Evaluation(state, policy).target_verified(identifier)
 
 
 @dataclass(frozen=True)
@@ -313,7 +504,8 @@ class _Assessment:
     pending: int
 
 
-def _analyze(state: State, policy: Policy) -> _Assessment:
+def _analyze(state: State, policy: Policy, evaluation: _Evaluation | None = None) -> _Assessment:
+    evaluation = evaluation or _Evaluation(state, policy)
     residuals: list[Residual] = []
     gaps: list[Gap] = []
     satisfied: set[str] = set()
@@ -450,13 +642,14 @@ def _analyze(state: State, policy: Policy) -> _Assessment:
             )
         canonical_ids = {e.id for e in unique}
         for evidence in current:
-            target_checks = _target_checks(state, policy, evidence)
+            target_checks = evaluation.target_checks(evidence)
             failures = [c for c in target_checks if c.status == "FAIL"]
             unknown_checks = [c for c in target_checks if c.status == "UNKNOWN"]
+            indeterminate = evaluation.indeterminate_negatives(evidence)
             # Duplicate support never increases coverage, but its actual negative
             # check is still a current issue on that exact alias ID and basis.
             canonical = evidence.id in canonical_ids
-            if not canonical and not failures and not unknown_checks:
+            if not canonical and not failures and not unknown_checks and not indeterminate:
                 continue
             passes = {
                 c.verifier_id
@@ -466,7 +659,28 @@ def _analyze(state: State, policy: Policy) -> _Assessment:
                 and c.basis.purpose in ("content", "check_resolution")
             }
             required = set(obligation.required_verifiers) if canonical else set()
-            passed = required.issubset(passes) if required else bool(passes)
+            passed = (required.issubset(passes) if required else bool(passes)) and (
+                evaluation.target_verified(evidence.id) if canonical else not indeterminate
+            )
+            if indeterminate:
+                add(
+                    "dependency_indeterminate",
+                    "Potential negative applicability has no finite grounded dependency proof.",
+                    (c.id for c in indeterminate),
+                )
+                gaps.append(
+                    Gap(
+                        id=f"dependency:indeterminate:{evidence.id}",
+                        obligation_id=obligation.id,
+                        scope=obligation.scope,
+                        kind="dependency",
+                        target_evidence_id=evidence.id,
+                        target_digest=evidence.digest,
+                        record_ids=tuple(c.id for c in indeterminate),
+                        reason="Potential negative applicability has an unresolved cycle.",
+                    )
+                )
+                pending += len(indeterminate)
             if failures:
                 add(
                     "check_failed",
@@ -522,7 +736,7 @@ def _analyze(state: State, policy: Policy) -> _Assessment:
                 for s in state.supersessions
                 if s.kind == "contradiction" and s.target_id == contradiction.id
             ]
-            resolved = any(_valid_resolution(state, s, policy) for s in resolutions)
+            resolved = any(evaluation.valid_resolution(s) for s in resolutions)
             if not resolved:
                 add(
                     "contradiction",
@@ -545,16 +759,23 @@ def _analyze(state: State, policy: Policy) -> _Assessment:
         inactive = [
             e.id
             for e in state.evidence
-            if e.obligation_id == obligation.id
-            and (e.withdrawn or e.expired or e.scope != obligation.scope)
+            if e.obligation_id == obligation.id and e.id not in evaluation.active
         ]
         if inactive:
             add(
                 "ineligible_evidence",
-                "Withdrawn, expired, or mismatched-scope evidence is excluded.",
+                "Evidence excluded by supersession, host invalidation, flags, or scope.",
                 inactive,
                 not bool(current),
             )
+        for event in state.invalidations:
+            if event.obligation_id == obligation.id:
+                add(
+                    f"host_invalidated_{event.kind}",
+                    event.reason,
+                    (event.target_id, event.id),
+                    False,
+                )
         if not any(r.blocking for r in residuals[before:]):
             satisfied.add(obligation.id)
     return _Assessment(tuple(residuals), frozenset(satisfied), tuple(gaps), pending)
@@ -624,7 +845,9 @@ def _candidate_reasons(
     assessment: _Assessment,
     needed_acquisition: bool = False,
     retry: bool = False,
+    evaluation: _Evaluation | None = None,
 ) -> tuple[str, ...]:
+    evaluation = evaluation or _Evaluation(state, policy)
     reasons: list[str] = []
     obligations = {o.id: o for o in state.obligations}
     obligation = obligations.get(action.obligation_id)
@@ -632,7 +855,7 @@ def _candidate_reasons(
         return ("unknown_obligation",)
     if action.scope != obligation.scope:
         reasons.append("scope_mismatch")
-    if action.obligation_id in assessment.satisfied:
+    if action.obligation_id in assessment.satisfied and not needed_acquisition:
         reasons.append("obligation_satisfied")
     registration = _registration(policy, action)
     if registration is None:
@@ -650,10 +873,10 @@ def _candidate_reasons(
         bindings = ()
         reasons.append(str(error))
     for binding in bindings:
-        if binding.requirement != "exists" and not _binding_active(state, binding):
+        if binding.requirement != "exists" and not evaluation.binding_active(binding):
             reasons.append(f"dependency_inactive:{binding.evidence_id}")
-        elif binding.requirement == "verified" and not _target_verified(
-            state, policy, binding.evidence_id
+        elif binding.requirement == "verified" and not evaluation.target_verified(
+            binding.evidence_id
         ):
             reasons.append(f"dependency_unverified:{binding.evidence_id}")
     if action.kind == "verify":
@@ -663,13 +886,23 @@ def _candidate_reasons(
             basis = None
             reasons.append(str(error))
         if basis is not None:
-            if not _binding_active(state, basis.target):
+            if not evaluation.binding_active(basis.target):
                 reasons.append("target_digest_missing_or_stale")
+            target = evaluation.evidence[basis.target.evidence_id]
+            if policy.prohibit_self_verification and target.producer == basis.checker_id:
+                reasons.append("self_verification_forbidden")
             if registration is not None and not registration.allows(basis):
                 reasons.append("checker_permission_forbidden")
         if action.checker_id not in policy.trusted_verifiers:
             reasons.append("verifier_unavailable")
-        if _gap_for_action(action, assessment.gaps) is None:
+        if _gap_for_action(action, assessment.gaps) is None and not needed_acquisition:
+            reasons.append("target_already_verified_or_no_matching_gap")
+        elif (
+            needed_acquisition
+            and action.purpose == "content"
+            and action.target_evidence_id in evaluation.evidence
+            and evaluation.target_verified(action.target_evidence_id)
+        ):
             reasons.append("target_already_verified_or_no_matching_gap")
     elif assessment.pending >= policy.max_pending_verifications and not needed_acquisition:
         reasons.append("verification_capacity_reached")
@@ -710,31 +943,258 @@ def _gap_for_action(action: ActionCandidate, gaps: tuple[Gap, ...]) -> Gap | Non
     return None
 
 
-def _needed_acquisition(
+def _helper_actions(
     state: State,
-    action: ActionCandidate,
     candidates: tuple[ActionCandidate, ...],
+    budget: Budget,
     policy: Policy,
     assessment: _Assessment,
-) -> bool:
-    if action.kind == "verify" or action.produces_evidence_id is None:
-        return False
-    for verify in candidates:
-        if verify.kind != "verify" or _gap_for_action(verify, assessment.gaps) is None:
+    remaining: Resources,
+    evaluation: _Evaluation,
+) -> frozenset[str]:
+    """Finite backwards feasibility paths to a current required verification gap."""
+    by_produced: dict[str, list[ActionCandidate]] = {}
+    by_target: dict[str, list[ActionCandidate]] = {}
+    for action in candidates:
+        if action.kind == "verify" and action.target_evidence_id is not None:
+            by_target.setdefault(action.target_evidence_id, []).append(action)
+        elif action.produces_evidence_id is not None:
+            by_produced.setdefault(action.produces_evidence_id, []).append(action)
+
+    def authorized(action: ActionCandidate) -> bool:
+        obligation = evaluation.obligations.get(action.obligation_id)
+        registration = _registration(policy, action)
+        if (
+            obligation is None
+            or obligation.scope != action.scope
+            or registration is None
+            or action.kind not in registration.roles
+            or any(a.action.id == action.id for a in state.attempts)
+        ):
+            return False
+        for name in DIMENSIONS:
+            upper, left = getattr(action.resources, name), getattr(remaining, name)
+            if getattr(budget.limits, name) is not None and (upper is None or upper > (left or 0)):
+                return False
+        if action.kind == "verify":
+            if action.checker_id not in policy.trusted_verifiers or not any(
+                p.checker_id == action.checker_id
+                and p.revision == action.checker_revision
+                and action.purpose in p.purposes
+                for p in registration.checkers
+            ):
+                return False
+            target = evaluation.evidence.get(action.target_evidence_id or "")
+            if target is not None and (
+                (target.obligation_id, target.scope, target.digest)
+                != (action.obligation_id, action.scope, action.target_digest)
+                or target.id not in evaluation.active
+                or policy.prohibit_self_verification
+                and target.producer == action.checker_id
+            ):
+                return False
+            if action.purpose == "check_resolution":
+                old = evaluation.checks.get(action.resolution_target_id or "")
+                if (
+                    old is None
+                    or old.basis is None
+                    or old.basis.target.evidence_id != action.target_evidence_id
+                ):
+                    return False
+            elif action.purpose == "contradiction_resolution":
+                conflict = next(
+                    (c for c in state.contradictions if c.id == action.resolution_target_id), None
+                )
+                if conflict is None or action.target_evidence_id not in conflict.evidence_ids:
+                    return False
+        return True
+
+    def action_path(action: ActionCandidate, visiting: frozenset[str]) -> set[str] | None:
+        if action.id in visiting or not authorized(action):
+            return None
+        path = visiting | {action.id}
+        needed = {action.id}
+        declared = {d.evidence_id for d in action.dependencies}
+        requirements = [*action.dependencies]
+        for identifier in action.requires_evidence_ids:
+            if identifier not in declared:
+                evidence = evaluation.evidence.get(identifier)
+                if evidence is None:
+                    # Scope is not declared for a missing legacy prerequisite.
+                    return None
+                requirements.append(
+                    DependencyRequirement(
+                        evidence_id=identifier,
+                        obligation_id=evidence.obligation_id,
+                        scope=evidence.scope,
+                    )
+                )
+        for requirement in requirements:
+            material = material_path(requirement, path)
+            if material is None:
+                return None
+            needed |= material
+        return needed
+
+    def material_path(
+        requirement: DependencyRequirement, visiting: frozenset[str]
+    ) -> set[str] | None:
+        obligation = evaluation.obligations.get(requirement.obligation_id)
+        if (
+            obligation is None
+            or obligation.scope != requirement.scope
+            or (
+                requirement.contract_fingerprint is not None
+                and requirement.contract_fingerprint != obligation.contract_fingerprint
+            )
+        ):
+            return None
+        evidence = evaluation.evidence.get(requirement.evidence_id)
+        needed: set[str] = set()
+        if evidence is None:
+            alternatives: list[set[str]] = []
+            for producer in by_produced.get(requirement.evidence_id, ()):
+                if (producer.obligation_id, producer.scope) != (
+                    requirement.obligation_id,
+                    requirement.scope,
+                ):
+                    continue
+                path = action_path(producer, visiting)
+                if path is not None:
+                    alternatives.append(path)
+            if not alternatives:
+                return None
+            needed.update(*alternatives)
+        elif (
+            (evidence.obligation_id, evidence.scope)
+            != (requirement.obligation_id, requirement.scope)
+            or requirement.digest is not None
+            and evidence.digest != requirement.digest
+            or requirement.requirement != "exists"
+            and evidence.id not in evaluation.active
+        ):
+            return None
+        if requirement.requirement != "verified" or (
+            evidence is not None and evaluation.target_verified(evidence.id)
+        ):
+            return needed
+        current = () if evidence is None else evaluation.target_checks(evidence)
+
+        def compatible(candidate: ActionCandidate) -> bool:
+            return (
+                (candidate.obligation_id, candidate.scope)
+                == (requirement.obligation_id, requirement.scope)
+                and (requirement.digest is None or candidate.target_digest == requirement.digest)
+                and (evidence is None or candidate.target_digest == evidence.digest)
+            )
+
+        negatives = [c for c in current if c.status in ("FAIL", "UNKNOWN")]
+        for negative in negatives:
+            paths = [
+                path
+                for candidate in by_target.get(requirement.evidence_id, ())
+                if candidate.purpose == "check_resolution"
+                and compatible(candidate)
+                and candidate.resolution_target_id == negative.id
+                and (path := action_path(candidate, visiting)) is not None
+            ]
+            if not paths:
+                return None
+            needed.update(*paths)
+        passes = {c.verifier_id for c in current if c.status == "PASS"}
+        checkers: tuple[str | None, ...] = (
+            tuple(set(obligation.required_verifiers) - passes)
+            if obligation.required_verifiers
+            else (() if passes else (None,))
+        )
+        for checker in checkers:
+            paths = [
+                path
+                for candidate in by_target.get(requirement.evidence_id, ())
+                if candidate.purpose in ("content", "check_resolution")
+                and compatible(candidate)
+                and (checker is None or candidate.checker_id == checker)
+                and (path := action_path(candidate, visiting)) is not None
+            ]
+            if not paths:
+                # An unknown digest cannot have a concrete verification action
+                # yet. Exact acquisition may bootstrap the host's next finite
+                # factory result when the required checker is already authorized.
+                future_checkers = {
+                    permission.checker_id
+                    for handler in policy.handlers
+                    if "verify" in handler.roles
+                    and (
+                        policy.available_handlers is None
+                        or handler.handler_id in policy.available_handlers
+                    )
+                    and (
+                        not policy.executable_handlers
+                        or handler.handler_id in policy.executable_handlers
+                    )
+                    for permission in handler.checkers
+                    if "content" in permission.purposes
+                    and permission.checker_id in policy.trusted_verifiers
+                }
+                if evidence is not None or (
+                    checker not in future_checkers if checker is not None else not future_checkers
+                ):
+                    return None
+            needed.update(*paths)
+        return needed
+
+    helpers: set[str] = set()
+    for action in candidates:
+        gap = _gap_for_action(action, assessment.gaps)
+        obligation = evaluation.obligations.get(action.obligation_id)
+        if (
+            action.kind != "verify"
+            or gap is None
+            or obligation is None
+            or (not obligation.required and gap.kind != "contradiction")
+        ):
             continue
-        registration = _registration(policy, verify)
-        if registration is None or "verify" not in registration.roles:
-            continue
-        if any(a.action.id == verify.id for a in state.attempts):
-            continue
-        for dependency in verify.dependencies:
-            if (dependency.evidence_id, dependency.obligation_id, dependency.scope) == (
-                action.produces_evidence_id,
-                action.obligation_id,
-                action.scope,
-            ) and not any(e.id == dependency.evidence_id for e in state.evidence):
-                return True
-    return False
+        path = action_path(action, frozenset())
+        if path is not None:
+            helpers.update(path - {action.id})
+    return frozenset(helpers)
+
+
+def feasible_actions(
+    state: State, candidates: tuple[ActionCandidate, ...], budget: Budget, policy: Policy
+) -> tuple[ActionCandidate, ...]:
+    """Safety-only feasible pool in input order; applies no routing preference."""
+    if len({a.id for a in candidates}) != len(candidates):
+        raise ValueError("candidate IDs must be unique")
+    evaluation = _Evaluation(state, policy)
+    assessment = _analyze(state, policy, evaluation)
+    remaining, issues = _resource_status(state, budget)
+    if issues or any(a.id not in {r.attempt_id for r in state.results} for a in state.attempts):
+        return ()
+    if all(not o.required or o.id in assessment.satisfied for o in state.obligations) and not any(
+        r.code == "contradiction" and r.blocking for r in assessment.residuals
+    ):
+        return ()
+    helpers = _helper_actions(state, candidates, budget, policy, assessment, remaining, evaluation)
+    return tuple(
+        a
+        for a in candidates
+        if not _candidate_reasons(
+            state, a, budget, policy, remaining, assessment, a.id in helpers, evaluation=evaluation
+        )
+    )
+
+
+def _needed_helper_actions(
+    state: State, candidates: tuple[ActionCandidate, ...], budget: Budget, policy: Policy
+) -> frozenset[str]:
+    """Shared helper context for the runner's exact-binding progress accounting."""
+    evaluation = _Evaluation(state, policy)
+    assessment = _analyze(state, policy, evaluation)
+    remaining, issues = _resource_status(state, budget)
+    if issues or any(a.id not in {r.attempt_id for r in state.results} for a in state.attempts):
+        return frozenset()
+    return _helper_actions(state, candidates, budget, policy, assessment, remaining, evaluation)
 
 
 def plan(
@@ -743,7 +1203,8 @@ def plan(
     """Recommend at most one declared action without mutating state or consuming budget."""
     if len({a.id for a in candidates}) != len(candidates):
         raise ValueError("candidate IDs must be unique")
-    assessment = _analyze(state, policy)
+    evaluation = _Evaluation(state, policy)
+    assessment = _analyze(state, policy, evaluation)
     residuals = assessment.residuals
     gaps = list(assessment.gaps)
     remaining, resource_issues = _resource_status(state, budget)
@@ -777,11 +1238,14 @@ def plan(
         r.code == "contradiction" and r.blocking for r in residuals
     ):
         global_reason, stop = "required_obligations_satisfied", "satisfied"
+    helpers = _helper_actions(state, candidates, budget, policy, assessment, remaining, evaluation)
     exclusions: list[Exclusion] = []
     eligible: list[ActionCandidate] = []
     for action in sorted(candidates, key=lambda a: a.id):
-        needed = _needed_acquisition(state, action, candidates, policy, assessment)
-        reasons = _candidate_reasons(state, action, budget, policy, remaining, assessment, needed)
+        needed = action.id in helpers
+        reasons = _candidate_reasons(
+            state, action, budget, policy, remaining, assessment, needed, evaluation=evaluation
+        )
         if action.kind == "verify" and _gap_for_action(action, assessment.gaps) is not None:
             for dependency_reason in reasons:
                 if dependency_reason.startswith(("dependency_", "prerequisite_missing")):
@@ -812,7 +1276,7 @@ def plan(
         def rank(action: ActionCandidate) -> tuple[bool, int, int, str]:
             o = obligations[action.obligation_id]
             target_gap = _gap_for_action(action, assessment.gaps)
-            needed = _needed_acquisition(state, action, candidates, policy, assessment)
+            needed = action.id in helpers
             if action.kind == "verify":
                 relevance = 0
             elif needed:
@@ -899,8 +1363,13 @@ def start(
     candidates: tuple[ActionCandidate, ...] = (),
 ) -> State:
     """Record host intent immediately before a callback; retry requires explicit opt-in."""
+    if len({a.id for a in candidates}) != len(candidates):
+        raise ValueError("candidate IDs must be unique")
+    if any(a.id == action.id and a != action for a in candidates):
+        raise ValueError("candidate action ID collision")
     previous = next((a for a in state.attempts if a.id == attempt_id), None)
-    assessment = _analyze(state, policy)
+    evaluation = _Evaluation(state, policy)
+    assessment = _analyze(state, policy, evaluation)
     registration = _registration(policy, action)
     basis = make_basis(state, action) if action.kind == "verify" else None
     inputs = (
@@ -923,6 +1392,7 @@ def start(
         raise ValueError("resource accounting is unsafe")
     if any(a.id not in {r.attempt_id for r in state.results} for a in state.attempts):
         raise ValueError("an attempt is pending; single-writer execution requires its result")
+    helpers = _helper_actions(state, candidates, budget, policy, assessment, remaining, evaluation)
     reasons = _candidate_reasons(
         state,
         action,
@@ -930,9 +1400,14 @@ def start(
         policy,
         remaining,
         assessment,
-        needed_acquisition=_needed_acquisition(state, action, candidates, policy, assessment),
+        needed_acquisition=action.id in helpers,
         retry=retry,
+        evaluation=evaluation,
     )
+    if all(not o.required or o.id in assessment.satisfied for o in state.obligations) and not any(
+        r.code == "contradiction" and r.blocking for r in assessment.residuals
+    ):
+        reasons += ("required_obligations_satisfied",)
     if reasons:
         raise ValueError("cannot issue action: " + ", ".join(reasons))
     return State(**{**state.model_dump(), "attempts": (*state.attempts, attempt)})
@@ -963,8 +1438,16 @@ def observe(state: State, result: Result, policy: Policy | None = None) -> State
         return state
     if not any(a.id == result.attempt_id for a in state.attempts):
         raise ValueError("result refers to an unissued attempt")
+    issued = next(a for a in state.attempts if a.id == result.attempt_id)
+    if (
+        issued.basis is not None
+        and issued.basis.purpose == "check_resolution"
+        and (result.checks or result.supersessions)
+    ):
+        old = next(c for c in state.checks if c.id == issued.basis.resolution_target_id)
+        if old.basis is None or old.basis.target.evidence_id != issued.basis.target.evidence_id:
+            raise ValueError("resolution_subject_id_mismatch_or_unassessed")
     if policy is not None:
-        issued = next(a for a in state.attempts if a.id == result.attempt_id)
         registration = _registration(policy, issued.action)
         if registration is None or issued.action.kind not in registration.roles:
             raise ValueError("current host policy does not authorize this receipt")
@@ -986,6 +1469,24 @@ def resolve(state: State, event: Supersession, policy: Policy) -> State:
         return state
     if not _valid_resolution(state, event, policy):
         raise ValueError("resolution needs an authorized current dedicated check basis")
+    evaluation = _Evaluation(state, policy)
+    if any(
+        s.kind == event.kind and s.target_id == event.target_id and evaluation.valid_resolution(s)
+        for s in state.supersessions
+    ):
+        raise ValueError("resolution already has current active grounds")
     values = {name: getattr(state, name) for name in State.model_fields}
     values["supersessions"] = (*state.supersessions, event)
+    return State(**values)
+
+
+def invalidate(state: State, event: Invalidation) -> State:
+    """Append a host invalidation without altering the original record or receipt."""
+    previous = next((i for i in state.invalidations if i.id == event.id), None)
+    if previous is not None:
+        if previous != event:
+            raise ValueError("invalidation ID collision")
+        return state
+    values = {name: getattr(state, name) for name in State.model_fields}
+    values["invalidations"] = (*state.invalidations, event)
     return State(**values)

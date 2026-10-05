@@ -12,7 +12,7 @@ from pathlib import Path
 import evidence_gap_router as egr
 from evidence_gap_router.demo import run_cause_demo, run_demo
 from evidence_gap_router.models import State
-from evidence_gap_router.sdk_example import run_callback_example
+from evidence_gap_router.sdk_example import run_callback_example, run_continuation_example
 
 
 def main() -> None:
@@ -77,6 +77,13 @@ def main() -> None:
         dictionary.write_bytes(
             b"\xef\xbb\xbf" + fixture.joinpath("data_dictionary.json").read_bytes()
         )
+        continued = run_continuation_example(directory / "継続 snapshot.json")
+        assert continued.decision.stop_reason == "satisfied", continued
+        assert len(continued.state.attempts) == len(continued.state.results) == 3
+        assert len(continued.state.invalidations) == 1
+        assert sum(r.actual_resources.actions or 0 for r in continued.state.results) == 3
+        assert sum(r.actual_resources.verifications or 0 for r in continued.state.results) == 2
+        assert egr.load_json(egr.dump_json(continued.state), State) == continued.state
         completed = subprocess.run(
             [
                 str(command),
@@ -115,6 +122,32 @@ def main() -> None:
         )
         assert rejected.returncode == 1 and rejected.stderr, rejected
         assert json.loads(rejected.stdout)["outcome"] == "input_error"
+
+        # The literal decimal threshold is larger than the CSV value by exactly
+        # one; losing its least significant digit would incorrectly accept it.
+        dictionary.write_bytes(
+            b'{"required_columns":["order_id","amount","currency"],'
+            b'"primary_key":"order_id","minimum_amount":9007199254740993.0,'
+            b'"allowed_currencies":["USD"]}'
+        )
+        dataset.write_bytes(b"order_id,amount,currency\r\nA,9007199254740992,USD\r\n")
+        precise = subprocess.run(
+            [
+                str(command),
+                "check-data",
+                "--data",
+                str(dataset),
+                "--dictionary",
+                str(dictionary),
+                "--json",
+            ],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=False,
+        )
+        assert precise.returncode == 2 and not precise.stderr, precise
+        assert json.loads(precise.stdout)["decision"]["stop_reason"] != "satisfied"
 
     # A legacy PASS is retained without manufacturing its missing verification
     # contract. This snapshot comes from the documented v1 schema.
