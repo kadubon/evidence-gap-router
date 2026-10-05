@@ -211,6 +211,23 @@ def test_old_campaign_cannot_adopt_termination_policy(tmp_path):
             )
 
 
+def test_campaign_allows_only_two_uncertain_server_recoveries(tmp_path):
+    with fake_http(successful(), delay=0.15) as (url, _):
+        connection = modern(url, tmp_path, request_wall_seconds=0.02)
+        for number in range(3):
+            request = f"uncertain-{number}"
+            chat(connection, request, f"primary-{number}")
+            if number == 2:
+                with pytest.raises(ClientBlocked, match="termination"):
+                    connection.terminate_unmetered(request, proof(f"epoch-{number + 1}"))
+                break
+            connection.terminate_unmetered(request, proof(f"epoch-{number + 1}"))
+            connection.advance_server_epoch(f"epoch-{number + 2}")
+        summary = connection.summary()
+        assert summary["blocked"] and len(summary["terminated_unmetered"]) == 2
+        assert summary["charged_total_tokens"] == 72 and summary["total_tokens"] is None
+
+
 def test_native_ownership_rejects_pid_reuse_and_checks_late_descendants(monkeypatch):
     identities = {
         p: {
@@ -404,6 +421,50 @@ def test_monotonic_campaign_anchor_survives_wall_clock_rollback(tmp_path, monkey
         assert connection.summary()["campaign_elapsed_seconds"] >= 101
 
 
+def test_campaign_does_not_silently_reset_across_system_boots(tmp_path, monkeypatch):
+    from experiments.ollama import client as transport
+
+    with fake_http(successful()) as (url, received):
+        connection = modern(url, tmp_path)
+        chat(connection)
+        monkeypatch.setattr(transport, "_boot_identity", lambda: "changed-boot")
+        with pytest.raises(ClientBlocked, match="boot"):
+            chat(connection, "new", "unstarted")
+        assert len(received) == 1
+
+
+def test_worker_heartbeat_records_audited_receipt_without_another_dispatch(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(
+        cli, "PROTOCOL", json.loads((cli.ROOT / "protocol-v0.2.4.json").read_text())
+    )
+    monkeypatch.setattr(cli, "guard", lambda _args: {})
+    monkeypatch.setattr(cli, "verify_inventory", lambda *_args: {})
+    monkeypatch.setattr(cli, "observe_backend", lambda *_args: {})
+    monkeypatch.setattr(cli, "collect_resources", lambda **_kwargs: {})
+    with fake_http(successful()) as (url, received):
+        connection = modern(url, tmp_path)
+        bound = cli.BoundClient(
+            connection,
+            SimpleNamespace(directory=tmp_path, url=url, server_log=None, server_pid=12),
+            "development",
+            "trial",
+        )
+        bound.chat(
+            model=TAG,
+            trial_id="ignored",
+            request_id="call",
+            messages=[{"role": "user", "content": "test"}],
+            schema=SCHEMA,
+            seed=17,
+        )
+        heartbeat = json.loads((tmp_path / "worker-heartbeat.json").read_text())
+        assert heartbeat["last_completed_request_id"] == "trial/call"
+        assert heartbeat["before_request_remaining"]["calls"] == connection.limits.global_calls - 1
+        assert len(received) == 1
+
+
 def test_only_native_console_host_descendant_is_owned(monkeypatch):
     monkeypatch.setenv("SystemRoot", "C:/Windows")
     assert ownership._owned_executable({"executable": "C:/Windows/System32/conhost.exe"})
@@ -446,3 +507,106 @@ def test_formal_cold_preload_is_reserved_once_in_speed_forecast():
     ]
     forecast = cli.speed_forecast(ledger, resources, [model])[model]
     assert forecast["per_request_seconds"] == 26 and forecast["once_per_model_load_seconds"] == 112
+
+
+def test_new_analysis_preserves_missing_denominators_and_fresh_stop_pairs(tmp_path, monkeypatch):
+    from experiments.ollama import analysis
+
+    protocol = json.loads((cli.ROOT / "protocol-v0.2.4.json").read_text())
+    task, _ = confirmation_tasks("024")[0]
+    monkeypatch.setattr(
+        analysis,
+        "evaluate",
+        lambda _t, _g, trial: {
+            "oracle_assessed": True,
+            "answer_correct": trial["success"],
+            "answer_grounded_correct": trial["success"],
+            "verified_supported_completion": trial["success"],
+            "evidence_supported_completion": trial["success"],
+            "grounded_abstention": False,
+            "errors": [],
+        },
+    )
+    ledger = []
+    planned = []
+    sensitivity = []
+    for phase in ("confirmation", "sensitivity-strict", "sensitivity-bounded"):
+        for arm in ("A", "B", "C") if phase == "confirmation" else ("A", "B"):
+            key = phase + "-" + arm
+            entry = {
+                "key": key,
+                "task_id": task.task_id,
+                "model": TAG,
+                "arm": arm,
+                "seed": protocol["seed"],
+            }
+            (planned if phase == "confirmation" else sensitivity).append(
+                entry if phase == "confirmation" else {**entry, "phase": phase}
+            )
+            if arm == "C":
+                continue
+            call = {
+                "request_id": key + "/call",
+                "done": True,
+                "unknown_consumption": False,
+                "pending": False,
+                "parsed": {},
+                "status": "ok",
+            }
+            trial = {
+                "calls": [call],
+                "success": arm == "A" and phase != "sensitivity-strict",
+                "pending": False,
+                "fault": None,
+                "system_claimed_complete": False,
+            }
+            if phase == "sensitivity-bounded" and arm == "A":
+                trial.update(
+                    secondary_trigger="no_progress",
+                    secondary_trigger_fault="length",
+                    secondary_callbacks=2,
+                )
+            cli.write_json(
+                tmp_path / "trials" / phase / (key + ".json"),
+                {**entry, "phase": phase, "execution": "completed", "trial": trial},
+            )
+            ledger.extend(
+                [
+                    {
+                        "event": "reserve",
+                        "request_id": key + "/call",
+                        "trial_id": key,
+                        "request": {"model": TAG},
+                        "reserved_total_tokens": 100,
+                        "metadata": {"phase": phase},
+                    },
+                    {
+                        "event": "response",
+                        "request_id": key + "/call",
+                        "record": {**call, "usage": {"generated_tokens": 10, "total_tokens": 30}},
+                    },
+                ]
+            )
+    (tmp_path / "calls.jsonl").write_text(
+        "".join(json.dumps(row) + "\n" for row in ledger), encoding="utf-8"
+    )
+    summary = analysis.analyze(
+        tmp_path,
+        tmp_path / "output",
+        protocol,
+        frozen={"planned_trial_keys": planned, "planned_sensitivity_keys": sensitivity},
+    )
+    assert summary["comparisons"][TAG]["paired_assessed_parents"] == 1
+    assert summary["outcomes"][TAG]["C"]["unexecuted"] == 1
+    assert summary["confirmation_outcome_costs"][TAG + "/C"]["successful"]["total_tokens"] is None
+    assert summary["confirmation_outcome_costs"][TAG + "/A"]["successful"]["total_tokens"] == 30
+    stopped = summary["stop_sensitivity"][TAG]
+    assert stopped["selectors"]["sensitivity-bounded"]["additional_callbacks"] == 2
+    assert (
+        stopped["recovery_minus_strict"]["A"]["metrics"]["verified_supported_completion"][
+            "mean_difference"
+        ]
+        == 1
+    )
+    rows = json.loads((tmp_path / "output/scored-trials.json").read_text())
+    assert next(r for r in rows if r["key"] == "confirmation-C")["answer_correct"] is None

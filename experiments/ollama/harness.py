@@ -271,6 +271,8 @@ class _Trial:
         self.runner_error: str | None = None
         self.secondary_origin_results: int | None = None
         self.secondary_limit: int | None = None
+        self.secondary_trigger: str | None = None
+        self.secondary_trigger_fault: str | None = None
         self.decisions: list[dict[str, Any]] = []
         self.trial_id = f"{task.task_id}:{arm}:{digest[:12]}:seed-{seed}"
 
@@ -315,6 +317,8 @@ class _Trial:
         self.runner_error = saved.get("runner_error")
         self.secondary_origin_results = saved.get("secondary_origin_results")
         self.secondary_limit = saved.get("secondary_limit")
+        self.secondary_trigger = saved.get("secondary_trigger")
+        self.secondary_trigger_fault = saved.get("secondary_trigger_fault")
         observed = {receipt.attempt_id for receipt in self.state.results}
         pending = tuple(attempt for attempt in self.state.attempts if attempt.id not in observed)
         if pending:
@@ -869,6 +873,11 @@ class _Trial:
             "runner_error": self.runner_error,
             "secondary_origin_results": self.secondary_origin_results,
             "secondary_limit": self.secondary_limit,
+            "secondary_trigger": self.secondary_trigger,
+            "secondary_trigger_fault": self.secondary_trigger_fault,
+            "secondary_callbacks": 0
+            if self.secondary_origin_results is None
+            else len(self.state.results) - self.secondary_origin_results,
             "domain_stop": decision.stop_reason,
             "decisions": self.decisions,
             "router_satisfied": None if self.arm == "C" else decision.stop_reason == "satisfied",
@@ -978,6 +987,8 @@ def run_trial(
         if trial.secondary_origin_results is None:
             trial.secondary_origin_results = len(trial.state.results)
             trial.secondary_limit = secondary_steps
+            trial.secondary_trigger = trial.runner_stop
+            trial.secondary_trigger_fault = trial.fault
             # Pin the total sensitivity allowance before its first dispatch.
             trial.save()
         elif trial.secondary_limit != secondary_steps:

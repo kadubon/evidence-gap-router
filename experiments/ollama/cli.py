@@ -10,6 +10,7 @@ import os
 import random
 import subprocess
 import sys
+import threading
 import time
 import zipfile
 from dataclasses import asdict, replace
@@ -295,7 +296,64 @@ class BoundClient:
             "inventory_before": inventory,
             "before_sampling_wall_seconds": pre_sampling_wall,
         }
-        record = self.client.chat(**kwargs)
+        stop_heartbeat = threading.Event()
+        heartbeat_start = time.monotonic()
+        budget_before = self.client.summary() if edition() == "024" else {}
+
+        def heartbeat(status: str) -> None:
+            # Read no journal while its request lock is held. This observation
+            # cannot change the client deadline, budget or inference process.
+            if edition() != "024":
+                return
+            path = self.args.directory / "worker-heartbeat.json"
+            temporary = path.with_suffix(".tmp")
+            write_json(
+                temporary,
+                {
+                    "phase": self.phase,
+                    "current_key": self.trial_key,
+                    "request_id": kwargs["request_id"],
+                    "status": status,
+                    "observed_epoch": time.time(),
+                    "request_observed_elapsed_seconds": time.monotonic() - heartbeat_start,
+                    "last_completed_request_id": (
+                        budget_before.get("completed_request_ids") or [None]
+                    )[-1],
+                    "budget_snapshot": "audited after the returned receipt"
+                    if status == "request_returned"
+                    else "audited before this request; not a later settlement",
+                    "before_request_remaining": {
+                        "calls": self.client.limits.global_calls - budget_before["calls"],
+                        "generated_tokens": self.client.limits.global_generated_tokens
+                        - budget_before.get(
+                            "charged_generated_tokens", budget_before["observed_generated_tokens"]
+                        ),
+                        "total_tokens": self.client.limits.global_total_tokens
+                        - budget_before.get(
+                            "charged_total_tokens", budget_before["observed_total_tokens"]
+                        ),
+                        "wall_seconds": self.client.limits.global_wall_seconds
+                        - budget_before.get("campaign_elapsed_seconds", 0),
+                    },
+                },
+            )
+            temporary.replace(path)
+
+        def watch() -> None:
+            while not stop_heartbeat.wait(15):
+                heartbeat("request_waiting")
+
+        heartbeat("request_starting")
+        observer = threading.Thread(target=watch, daemon=True)
+        observer.start()
+        try:
+            record = self.client.chat(**kwargs)
+        finally:
+            stop_heartbeat.set()
+            observer.join(timeout=1)
+        if edition() == "024":
+            budget_before = self.client.summary()
+        heartbeat("request_returned")
         sampling_began = time.monotonic()
         try:
             backend = observe_backend(self.args.url, self.args.server_log)
@@ -1123,6 +1181,9 @@ def calibrate(args: argparse.Namespace, client: OllamaClient) -> dict[str, Any]:
                         "reviewer_status": (record.get("parsed") or {}).get("status"),
                         "expected_accept": case["evaluation_only_expected_accept"],
                         "request_id": identity + "/call",
+                        "length_fault": record["status"] == "length",
+                        "client_wall_seconds": record["client_wall_seconds"],
+                        "known_usage": record["unknown_consumption"] is False,
                     }
                     result["false_pass"] = (
                         result["reviewer_status"] == "PASS" and not result["expected_accept"]
@@ -1150,6 +1211,18 @@ def calibrate(args: argparse.Namespace, client: OllamaClient) -> dict[str, Any]:
                         "syntax_valid": sum(r["syntax_valid"] for r in subset),
                         "last20_valid": sum(r["syntax_valid"] for r in subset[-20:]),
                         "false_pass": sum(r["false_pass"] for r in subset),
+                        "length_faults": sum(r["length_fault"] for r in subset),
+                        "correct_unknown_cases": sum(
+                            r["kind"] == "grounded_unknown" for r in subset
+                        ),
+                        "correct_unknown_accepted": sum(
+                            r["kind"] == "grounded_unknown" and r["reviewer_status"] == "PASS"
+                            for r in subset
+                        ),
+                        "mean_client_wall_seconds": sum(r["client_wall_seconds"] for r in subset)
+                        / len(subset)
+                        if subset
+                        else None,
                     }
                 )
     # Same compact schema/cap in every arm/model. Outcome comparisons never

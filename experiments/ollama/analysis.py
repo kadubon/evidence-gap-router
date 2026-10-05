@@ -84,6 +84,77 @@ def _finish_cost(cost: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _cost_subset(
+    selected_rows: list[dict[str, Any]], trial_costs: dict[tuple[str, str], dict[str, Any]]
+) -> dict[str, Any]:
+    values = [trial_costs.get((row["phase"], row["key"])) for row in selected_rows]
+    aggregate = _new_cost()
+    for value in values:
+        if value is None:
+            continue
+        for name in aggregate:
+            if isinstance(aggregate[name], dict):
+                for key, amount in value[name].items():
+                    aggregate[name][key] = aggregate[name].get(key, 0) + amount
+            else:
+                aggregate[name] += value[name]
+    result = {
+        **_finish_cost(aggregate),
+        "trials": len(values),
+        "trials_with_cost_records": sum(value is not None for value in values),
+    }
+    if not values or any(value is None for value in values):
+        for name in ("generated_tokens", "total_tokens", *aggregate["known_duration_calls"]):
+            result[name] = None
+    return result
+
+
+def _paired_metrics(
+    planned_pairs: list[dict[str, dict[str, Any]]], left: str, right: str, protocol: dict[str, Any]
+) -> dict[str, Any]:
+    assessed = [
+        pair
+        for pair in planned_pairs
+        if all(
+            pair[a]["oracle_assessed"] and pair[a]["known_attempt_termination"]
+            for a in (left, right)
+        )
+    ]
+    metrics = {}
+    for metric in ("verified_supported_completion", "false_acceptance", "grounded_abstention"):
+        differences = [
+            int(bool(pair[left][metric])) - int(bool(pair[right][metric])) for pair in assessed
+        ]
+        bounds = []
+        for pair in planned_pairs:
+            ranges = {
+                a: [int(bool(pair[a][metric]))] * 2
+                if pair[a]["oracle_assessed"] and pair[a]["known_attempt_termination"]
+                else [0, 1]
+                for a in (left, right)
+            }
+            bounds.append((ranges[left][0] - ranges[right][1], ranges[left][1] - ranges[right][0]))
+        metrics[metric] = {
+            "positive_differences": differences.count(1),
+            "ties": differences.count(0),
+            "negative_differences": differences.count(-1),
+            "mean_difference": sum(differences) / len(differences) if differences else None,
+            "parent_bootstrap_95_interval": _interval(
+                differences, protocol["bootstrap_seed"], protocol["bootstrap_replicates"]
+            ),
+            "all_planned_unresolved_bounds": [
+                sum(b[i] for b in bounds) / len(bounds) for i in (0, 1)
+            ]
+            if bounds
+            else None,
+        }
+    return {
+        "planned_parents": len(planned_pairs),
+        "paired_assessed_parents": len(assessed),
+        "metrics": metrics,
+    }
+
+
 def analyze(
     directory: Path, output: Path, protocol: dict[str, Any], *, frozen: dict[str, Any] | None = None
 ) -> dict[str, Any]:
@@ -92,6 +163,12 @@ def analyze(
     tasks = {
         task.task_id: (task, gold)
         for task, gold in (*development_tasks(edition), *confirmation_tasks(edition))
+    }
+    ledger_path = directory / "calls.jsonl"
+    ledger_bytes = ledger_path.read_bytes() if ledger_path.exists() else b""
+    ledger = [json.loads(line) for line in ledger_bytes.decode("utf-8").splitlines()]
+    terminated_ids = {
+        row["request_id"] for row in ledger if row.get("event") == "terminated_unmetered"
     }
     rows: list[dict[str, Any]] = []
     failures = []
@@ -170,6 +247,7 @@ def analyze(
             **scored,
         }
         calls = result.get("calls", [])
+        executed = bool(calls or result.get("state", {}).get("attempts"))
         row.update(
             answer_grounded_correct=scored.get(
                 "answer_grounded_correct", scored["evidence_supported_completion"]
@@ -177,11 +255,12 @@ def analyze(
             verified_supported_completion=scored.get(
                 "verified_supported_completion", scored["evidence_supported_completion"]
             ),
-            executed=bool(calls),
-            unexecuted=record["execution"] != "completed",
+            executed=executed,
+            unexecuted=not executed,
             transport_completed=bool(calls) and all(c.get("done") is True for c in calls),
             known_usage=bool(calls) and all(c.get("unknown_consumption") is False for c in calls),
             request_pending=any(c.get("pending") for c in calls),
+            terminated_unmetered=any(c.get("request_id") in terminated_ids for c in calls),
             output_schema_valid=bool(calls)
             and all(isinstance(c.get("parsed"), dict) for c in calls),
             length_or_format_fault=any(
@@ -190,10 +269,15 @@ def analyze(
             ),
             reviewer_status=(result.get("reviews") or [{}])[-1].get("status"),
             router_satisfied=result.get("router_satisfied"),
+            secondary_trigger=result.get("secondary_trigger"),
+            secondary_trigger_fault=result.get("secondary_trigger_fault"),
+            secondary_callbacks=result.get("secondary_callbacks", 0),
         )
         row["reviewer_false_pass"] = (
             row["reviewer_status"] == "PASS" and row["answer_grounded_correct"] is False
         )
+        if edition == "024" and not executed:
+            row["answer_correct"] = None
         row["erroneous_stop"] = (
             row["oracle_assessed"]
             and not row["verified_supported_completion"]
@@ -204,6 +288,7 @@ def analyze(
             and not row["pending"]
             and row["fault"]
             not in ("unknown_consumption", "pending_or_unknown_dispatch", "callback_exception")
+            and (edition != "024" or row["known_usage"])
         )
         row["false_acceptance"] = row["system_claimed_complete"] and not bool(
             row["evidence_supported_completion"]
@@ -222,9 +307,6 @@ def analyze(
                     ],
                 }
             )
-    ledger_path = directory / "calls.jsonl"
-    ledger_bytes = ledger_path.read_bytes() if ledger_path.exists() else b""
-    ledger = [json.loads(line) for line in ledger_bytes.decode("utf-8").splitlines()]
     reservations = {r["request_id"]: r for r in ledger if r["event"] == "reserve"}
     receipts = {r["request_id"]: r["record"] for r in ledger if r["event"] == "response"}
     costs: dict[str, dict[str, Any]] = {}
@@ -268,6 +350,8 @@ def analyze(
     models = sorted({row["model"] for row in rows})
     comparisons = {}
     outcomes: dict[str, Any] = {}
+    sensitivity: dict[str, Any] = {}
+    outcome_costs: dict[str, Any] = {}
     for model in models:
         model_rows = [
             row
@@ -361,6 +445,17 @@ def analyze(
                 )
             bounds.append((values["A"][0] - values["B"][1], values["A"][1] - values["B"][0]))
         comparisons[model]["all_planned_answerable_parents"] = len(answerable)
+        comparisons[model]["paired_metrics"] = _paired_metrics(answerable, "A", "B", protocol)
+        comparisons[model]["insufficient_paired_metrics"] = _paired_metrics(
+            [
+                p
+                for p in by_parent.values()
+                if "A" in p and "B" in p and p["A"]["gold_decision"] == "unknown"
+            ],
+            "A",
+            "B",
+            protocol,
+        )
         comparisons[model]["unresolved_A_minus_B_bounds"] = (
             [sum(b[i] for b in bounds) / len(bounds) for i in (0, 1)] if bounds else None
         )
@@ -392,13 +487,110 @@ def analyze(
                 ),
                 "execution_counts": dict(Counter(row["execution"] for row in arm_rows)),
                 "stop_counts": dict(Counter(str(row["runner_stop"]) for row in arm_rows)),
+                "answerable": {
+                    "planned": sum(row["gold_decision"] != "unknown" for row in arm_rows),
+                    "assessed": sum(
+                        row["gold_decision"] != "unknown" and row["oracle_assessed"]
+                        for row in arm_rows
+                    ),
+                    "verified_supported_completion": sum(
+                        row["gold_decision"] != "unknown"
+                        and bool(row["verified_supported_completion"])
+                        for row in arm_rows
+                    ),
+                },
+                "insufficient": {
+                    "planned": sum(row["gold_decision"] == "unknown" for row in arm_rows),
+                    "assessed": sum(
+                        row["gold_decision"] == "unknown" and row["oracle_assessed"]
+                        for row in arm_rows
+                    ),
+                    "correct_grounded_abstention": sum(
+                        row["gold_decision"] == "unknown" and bool(row["grounded_abstention"])
+                        for row in arm_rows
+                    ),
+                },
             }
+            outcome_costs[model + "/" + arm] = {
+                label: _cost_subset(selected, trial_costs)
+                for label, selected in (
+                    ("all_planned", arm_rows),
+                    (
+                        "successful",
+                        [
+                            r
+                            for r in arm_rows
+                            if r["oracle_assessed"]
+                            and r["known_attempt_termination"]
+                            and r["verified_supported_completion"]
+                        ],
+                    ),
+                    (
+                        "known_failed",
+                        [
+                            r
+                            for r in arm_rows
+                            if r["oracle_assessed"]
+                            and r["known_attempt_termination"]
+                            and not r["verified_supported_completion"]
+                        ],
+                    ),
+                    (
+                        "unresolved_or_unexecuted",
+                        [
+                            r
+                            for r in arm_rows
+                            if not (r["oracle_assessed"] and r["known_attempt_termination"])
+                        ],
+                    ),
+                )
+            }
+        sensitivity[model] = {"selectors": {}, "recovery_minus_strict": {}}
+        for phase in ("sensitivity-strict", "sensitivity-bounded"):
+            phase_rows = [r for r in rows if r["model"] == model and r["phase"] == phase]
+            parents: dict[str, dict[str, Any]] = {}
+            for row in phase_rows:
+                parents.setdefault(row["task_id"], {})[row["arm"]] = row
+            paired = [p for p in parents.values() if "A" in p and "B" in p]
+            sensitivity[model]["selectors"][phase] = {
+                **_paired_metrics(paired, "A", "B", protocol),
+                "scheduled_trials": len(phase_rows),
+                "executed_trials": sum(r["executed"] for r in phase_rows),
+                "oracle_assessed_trials": sum(r["oracle_assessed"] for r in phase_rows),
+                "continuation_triggered_trials": sum(
+                    r["secondary_trigger"] is not None for r in phase_rows
+                ),
+                "additional_callbacks": sum(r["secondary_callbacks"] for r in phase_rows),
+                "trigger_fault_counts": dict(
+                    Counter(
+                        str(r["secondary_trigger_fault"])
+                        for r in phase_rows
+                        if r["secondary_trigger"] is not None
+                    )
+                ),
+                "costs": _cost_subset(phase_rows, trial_costs),
+            }
+        for arm in ("A", "B"):
+            parents = {}
+            for row in rows:
+                if (
+                    row["model"] == model
+                    and row["arm"] == arm
+                    and row["phase"] in ("sensitivity-strict", "sensitivity-bounded")
+                ):
+                    parents.setdefault(row["task_id"], {})[row["phase"]] = row
+            paired = [p for p in parents.values() if len(p) == 2]
+            sensitivity[model]["recovery_minus_strict"][arm] = _paired_metrics(
+                paired, "sensitivity-bounded", "sensitivity-strict", protocol
+            )
     summary = {
         "protocol_id": protocol["protocol_id"],
         "rows": len(rows),
         "outcomes": outcomes,
         "comparisons": comparisons,
         "all_attempt_costs": {key: _finish_cost(value) for key, value in costs.items()},
+        "confirmation_outcome_costs": outcome_costs,
+        "stop_sensitivity": sensitivity,
         "planned_confirmation_keys": len(planned),
         "planned_auxiliary_keys": len(auxiliary_sources),
         "planned_sensitivity_keys": 0
