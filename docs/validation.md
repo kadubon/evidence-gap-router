@@ -20,6 +20,14 @@ contracts in 13.81 s**, 44 benchmark-smoke trials and all three complete documen
 examples (183 local links). These executed offline checks precede the new live
 warm/pilot observations and are not native release CI.
 
+The corrective-key resource forecast subsequently passed **698 source tests in
+26.91 s**, Ruff check/format (119 files) and mypy (14 SDK modules). Development
+timings from the new namespace are retained, and primary outcomes stay excluded
+from the forecast.
+The same ordinary candidate passed 296 installed SDK regressions, **224 portable
+contracts in 15.98 s**, 44 benchmark-smoke trials and three document examples
+(183 links) on Windows x64. No live worker was running during these full gates.
+
 Immediately before confirmation, `bb6304e2f8b58b98feb9ce3010a0b8e2055eae57`
 passed **683 source tests in 28.18 seconds**, Ruff check/format (119 Python
 files) and mypy (14 SDK modules). The measured ordinary candidate's latest

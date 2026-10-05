@@ -34,6 +34,15 @@ The unchanged ordinary candidate wheel also passed 296 installed SDK regressions
 223 portable contracts in 13.81 s, 44 benchmark-smoke trials and three complete
 document examples (183 local links) on native Windows x64 / Python 3.12.14.
 
+The pre-freeze resource forecast also needed to recognize the corrective request
+namespace. It now includes both original and corrective paid warm/pilot timings,
+while excluding calibration, confirmation and sensitivity outcomes. A regression
+prevents ignoring a newly measured slow request because of its key prefix. This
+change passed **698 source tests in 26.91 s**, lint/format and mypy; it changes
+profile forecasting only, not model calls, SDK behavior or scoring.
+Its ordinary candidate check passed 296 SDK regressions, 224 portable contracts
+in 15.98 s, 44 benchmark-smoke trials and three complete document examples.
+
 The audit found experiment transport and output-contract limitations. It did
 not establish a new defect in the SDK's acceptance, permission or helper rules.
 Those rules continue to use schema 2 and the public `plan/start/observe/step/run`

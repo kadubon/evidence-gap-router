@@ -699,6 +699,26 @@ def test_unknown_swap_is_not_reported_as_zero(tmp_path, monkeypatch):
     assert "swap_observation_unknown" in result["blocking_reasons"]
 
 
+def test_corrective_development_timings_enter_forecast_without_primary_outcomes(monkeypatch):
+    from experiments.ollama import cli
+
+    monkeypatch.setattr(cli, "PROTOCOL", {"request_key_prefix": "r2-"})
+    ids = (
+        "warmup-cycle-3/model/read",
+        "pilot-model-parent-A-seed/read",
+        "r2-warmup-cycle-3/model/read",
+        "r2-scope-v1-warmup-cycle-3/model/read",
+        "r2-pilot-model-parent-A-seed/read",
+        "confirmation-model-parent-A-seed/read",
+        "r2-confirmation-model-parent-A-seed/read",
+        "r2-sensitivity-strict-model-parent-A-seed/read",
+        "calibration-cycle-3/model/review",
+    )
+    ledger = [{"event": "response", "record": {"request_id": key}} for key in ids]
+    retained = cli.development_forecast_ledger(ledger)
+    assert [row["record"]["request_id"] for row in retained] == list(ids[:5])
+
+
 def test_formal_cold_preload_is_reserved_once_in_speed_forecast():
     model = TAG
     ledger = [

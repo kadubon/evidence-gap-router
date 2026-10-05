@@ -743,6 +743,19 @@ def speed_forecast(
     return result
 
 
+def development_forecast_ledger(ledger: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep paid development timings across the corrective request namespace."""
+    prefix = PROTOCOL.get("request_key_prefix", "")
+    return [
+        row
+        for row in ledger
+        if row.get("event") != "response"
+        or row["record"]["request_id"]
+        .removeprefix(prefix)
+        .startswith(("warmup", "scope-v1-warmup", "pilot"))
+    ]
+
+
 def freeze(args: argparse.Namespace) -> dict[str, Any]:
     from scripts.package_audit import package_fingerprint
 
@@ -767,13 +780,7 @@ def freeze(args: argparse.Namespace) -> dict[str, Any]:
         else []
     )
     modern = edition() == "024"
-    eligible_ledger = [
-        r
-        for r in ledger
-        if not modern
-        or r.get("event") != "response"
-        or r["record"]["request_id"].startswith(("warmup", "pilot"))
-    ]
+    eligible_ledger = development_forecast_ledger(ledger) if modern else ledger
     forecast = speed_forecast(eligible_ledger, resources, PROTOCOL["models"])
     forecast_known = all(value["per_request_seconds"] is not None for value in forecast.values())
     remaining_calls = PROTOCOL["global_limits"]["calls"] - summary["calls"]
