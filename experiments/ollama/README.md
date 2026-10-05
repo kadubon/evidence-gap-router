@@ -130,8 +130,8 @@ reads saved records and issues no inference.
 
 ## Finite costs and interpretation
 
-The immutable ledger configuration covers the first durable generation reservation
-through smoke, pilot, confirmation and auxiliary work: at most four hours, 1,200
+The ledger configuration covers the first durable generation reservation
+through smoke, pilot, confirmation and auxiliary work: at most eight hours, 1,200
 requests, 600,000 observed generated tokens and 5,000,000 prompt-plus-generated
 tokens. Each trial has at most six LLM calls, 600 seconds and a conservative
 27,648-token envelope; SDK actions/verifications are separately bounded at 16/8.
@@ -139,6 +139,23 @@ Each request fixes temperature 0, explicit seed, context 4096 and output cap 512
 ordinary request wall is 120 seconds and initial cold smoke can use 180 seconds.
 Socket waits are bounded by remaining wall, including issuance overhead. Raw and
 snapshot storage is bounded at 512 MiB and history is retained when issuance stops.
+
+The recorded run began under protocol v1 with a four-hour ceiling. The user
+explicitly extended that ceiling to eight hours after the pilot had started.
+Protocol v2 retains the original first-reservation epoch and every call, token,
+receipt and pending state. The original code/protocol and closing journal are
+retained under `segments/initial-4h`; the change is a one-time, fsynced
+`wall_budget_amendment` event, not a fresh budget or replay. Prompts, tasks,
+seeds and all non-wall caps are unchanged. A fresh v2 run already uses eight hours.
+For this retained v1 journal only, the implemented transition command is:
+
+```sh
+/tmp/egr-ollama-env/bin/python -I /absolute/path/evidence-gap-router/experiments/ollama/cli.py amend-wall --directory /tmp/egr-ollama-run --url http://127.0.0.1:11435 --amendment-id user-wall-eight-hours-20261005 --authorization '総上限時間は8時間に緩和してください'
+```
+
+The host establishes the user's authorization; this command records it and cannot
+authenticate a human instruction. Repeating the amendment stops safely. Continue
+with `freeze`/`live` or `resume`, retaining the same journal and original clock.
 
 Calls reserve context-plus-output capacity before dispatch and fsync it. Known
 receipts settle actual prompt/generated counters; unknown consumption retains its

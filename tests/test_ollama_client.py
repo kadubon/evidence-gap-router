@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import sys
 import threading
@@ -99,7 +100,7 @@ def fake_http(
                     self.wfile.write(body[1:])
                 else:
                     self.wfile.write(body)
-            except (BrokenPipeError, ConnectionResetError):
+            except ConnectionError:
                 pass
 
     server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
@@ -382,7 +383,10 @@ def test_socket_and_whole_request_deadlines_keep_unknown_pending(
         assert elapsed < 0.5
         with pytest.raises(ClientBlocked):
             chat(connection, "second")
-        assert len(received) == 1
+        # The whole deadline includes reservation/fsync and may expire before send.
+        assert len(received) <= 1
+        assert connection.summary()["calls"] == 1
+        assert connection.summary()["pending"] == ["request-1"]
 
 
 def test_large_declared_body_is_not_read_and_unknown(tmp_path: Path) -> None:
@@ -624,3 +628,382 @@ def test_validator_exception_is_paid_known_failure(tmp_path: Path) -> None:
         result = chat(client(endpoint, tmp_path), validator=fail)
         assert result["status"] == "validator_error"
         assert result["unknown_consumption"] is False
+
+
+def amend_wall(connection: OllamaClient, **changes: Any) -> dict[str, Any]:
+    fields = {
+        "amendment_id": "authorized-eight-hour-v2",
+        "new_run_id": "test-run-v2",
+        "new_freeze_id": "b" * 64,
+        "authorization": "総上限時間は8時間に緩和してください",
+    }
+    fields.update(changes)
+    return connection.amend_global_wall_budget(**fields)
+
+
+def amended_client(
+    endpoint: str, tmp_path: Path, limits: Limits = DEFAULT_LIMITS, **changes: Any
+) -> OllamaClient:
+    fields = {
+        "run_id": "test-run-v2",
+        "freeze_id": "b" * 64,
+        "profiles": {TAG: PROFILE},
+        "limits": replace(limits, global_wall_seconds=28_800),
+    }
+    fields.update(changes)
+    return OllamaClient(endpoint, tmp_path / "requests.jsonl", **fields)
+
+
+def canonical_hash(value: Any) -> str:
+    return hashlib.sha256(
+        json.dumps(
+            value, ensure_ascii=True, allow_nan=False, sort_keys=True, separators=(",", ":")
+        ).encode()
+    ).hexdigest()
+
+
+def write_test_rows(path: Path, rows: list[dict[str, Any]]) -> None:
+    path.write_bytes(
+        b"".join(
+            json.dumps(row, ensure_ascii=True, allow_nan=False, separators=(",", ":")).encode()
+            + b"\n"
+            for row in rows
+        )
+    )
+
+
+def test_wall_amendment_is_explicit_and_keeps_original_bytes_costs_epoch_and_receipts(
+    tmp_path: Path,
+) -> None:
+    with fake_http(successful(), ledger=tmp_path / "requests.jsonl") as (endpoint, received):
+        connection = client(endpoint, tmp_path)
+        receipt = chat(connection)
+        before = connection.summary()
+        prefix = connection.path.read_bytes()
+        with pytest.raises(ClientBlocked, match="identity differs"):
+            amended_client(endpoint, tmp_path)
+        assert connection.path.read_bytes() == prefix
+        amendment = amend_wall(connection)
+        assert connection.path.read_bytes().startswith(prefix)
+        assert len(connection.path.read_bytes().splitlines()) == len(prefix.splitlines()) + 1
+        assert amendment["prior_events_canonical_sha256"] == canonical_hash(
+            [strict_json(line.decode()) for line in prefix.splitlines()]
+        )
+        resumed = amended_client(endpoint, tmp_path)
+        after = resumed.summary()
+        for key in amendment["retained_budget_state"]:
+            assert after[key] == before[key]
+        assert after["limits"]["global_wall_seconds"] == 28_800
+        assert after["initial_config"] == before["initial_config"]
+        assert after["initial_config"]["limits"]["global_wall_seconds"] == 14_400
+        assert after["run_id"] == "test-run-v2"
+        assert after["freeze_id"] == "b" * 64
+        assert after["wall_budget_amendments"] == [amendment]
+        assert resumed.lookup("request-1") == receipt
+        with pytest.raises(ClientBlocked, match="already issued"):
+            chat(resumed)
+        chat(resumed, "new-request", "new-trial")
+        assert len(received) == 2
+        assert received[1]["durable_rows"][-2]["event"] == "wall_budget_amendment"
+        assert received[1]["durable_rows"][-1]["event"] == "reserve"
+        assert resumed.summary()["total_tokens"] == 12
+        assert resumed.summary()["started_epoch"] == before["started_epoch"]
+
+
+def test_stale_live_instance_and_constructor_cannot_dispatch_after_wall_amendment(
+    tmp_path: Path,
+) -> None:
+    with fake_http(successful()) as (endpoint, received):
+        connection = client(endpoint, tmp_path)
+        stale_peer = client(endpoint, tmp_path)
+        amend_wall(connection)
+        before = connection.path.read_bytes()
+        for stale in (connection, stale_peer):
+            with pytest.raises(ClientBlocked, match="identity differs"):
+                chat(stale)
+        with pytest.raises(ClientBlocked, match="identity differs"):
+            client(endpoint, tmp_path)
+        with pytest.raises(ClientBlocked, match="identity differs"):
+            amend_wall(connection)
+        assert connection.path.read_bytes() == before
+        assert received == []
+
+
+def test_wall_amendment_does_not_rebase_global_or_trial_deadlines(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    with fake_http(successful()) as (endpoint, received):
+        connection = client(endpoint, tmp_path)
+        chat(connection)
+        started = connection.summary()["started_epoch"]
+        monkeypatch.setattr("experiments.ollama.client.time.time", lambda: started + 15_000)
+        with pytest.raises(ClientBlocked, match="envelope exhausted"):
+            chat(connection, "old-wall-exhausted", "next-trial")
+        amend_wall(connection)
+        resumed = amended_client(endpoint, tmp_path)
+        with pytest.raises(ClientBlocked, match="envelope exhausted"):
+            chat(resumed, "expired-trial", "trial-1")
+        chat(resumed, "next-request", "next-trial")
+        assert resumed.summary()["started_epoch"] == started
+        assert len(received) == 2
+        monkeypatch.setattr("experiments.ollama.client.time.time", lambda: started + 28_801)
+        with pytest.raises(ClientBlocked, match="envelope exhausted"):
+            chat(resumed, "new-wall-exhausted", "third-trial")
+        assert len(received) == 2
+
+
+def test_wall_amendment_before_first_reservation_does_not_start_the_wall_clock(
+    tmp_path: Path,
+) -> None:
+    with fake_http(successful()) as (endpoint, _):
+        connection = client(endpoint, tmp_path)
+        amend_wall(connection)
+        resumed = amended_client(endpoint, tmp_path)
+        assert resumed.summary()["started_epoch"] is None
+        assert resumed.summary()["calls"] == 0
+        chat(resumed)
+        assert resumed.summary()["started_epoch"] is not None
+
+
+@pytest.mark.parametrize("known_response", [False, True])
+def test_wall_amendment_never_clears_uncertain_consumption_or_allows_retry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, known_response: bool
+) -> None:
+    with fake_http(successful(eval_count=None)) as (endpoint, received):
+        connection = client(endpoint, tmp_path)
+        if known_response:
+            original_record = chat(connection)
+        else:
+
+            def crash(*_: Any) -> Any:
+                raise RuntimeError("interrupted after durable reservation")
+
+            monkeypatch.setattr(connection, "_dispatch", crash)
+            with pytest.raises(RuntimeError, match="interrupted"):
+                chat(connection)
+            original_record = None
+        before = connection.summary()
+        amend_wall(connection)
+        resumed = amended_client(endpoint, tmp_path)
+        after = resumed.summary()
+        assert after["pending"] == before["pending"] == ["request-1"]
+        assert after["blocked"] is True
+        assert after["unknown_consumption"] is True
+        assert after["total_tokens"] is None
+        assert after["generated_tokens"] is None
+        assert after["reserved_total_tokens"] == 24
+        assert after["reserved_generated_tokens"] == 8
+        assert resumed.lookup("request-1") == original_record
+        for request_id in ("request-1", "new-request"):
+            with pytest.raises(ClientBlocked, match="pending/unknown"):
+                chat(resumed, request_id, "new-trial")
+        assert len(received) == int(known_response)
+        assert after["started_epoch"] == before["started_epoch"]
+
+
+def test_wall_amendment_preserves_known_profile_halt(tmp_path: Path) -> None:
+    with fake_http(successful(eval_count=9)) as (endpoint, received):
+        connection = client(endpoint, tmp_path)
+        receipt = chat(connection)
+        assert receipt["halt"] is True
+        assert receipt["pending"] is False
+        amend_wall(connection)
+        resumed = amended_client(endpoint, tmp_path)
+        assert resumed.summary()["halted"] == ["request-1"]
+        assert resumed.summary()["total_tokens"] == 13
+        assert resumed.summary()["blocked"] is True
+        with pytest.raises(ClientBlocked):
+            chat(resumed, "new-request")
+        assert len(received) == 1
+
+
+@pytest.mark.parametrize(
+    "limits",
+    [
+        Limits(global_calls=1),
+        Limits(trial_calls=1),
+        Limits(global_total_tokens=24),
+        Limits(global_generated_tokens=8),
+    ],
+)
+def test_wall_amendment_does_not_reset_other_exhausted_envelopes(
+    tmp_path: Path, limits: Limits
+) -> None:
+    with fake_http(successful()) as (endpoint, received):
+        connection = client(endpoint, tmp_path, limits)
+        chat(connection)
+        amend_wall(connection)
+        resumed = amended_client(endpoint, tmp_path, limits)
+        with pytest.raises(ClientBlocked, match="envelope exhausted"):
+            chat(resumed, "new-request")
+        assert resumed.summary()["calls"] == 1
+        assert len(received) == 1
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "endpoint",
+        "profiles",
+        "server_version",
+        "context_policy",
+        "schema_version",
+        "extra_config_field",
+        "limits.global_wall_seconds",
+        "limits.global_calls",
+        "limits.global_generated_tokens",
+        "limits.global_total_tokens",
+        "limits.trial_wall_seconds",
+        "limits.trial_calls",
+        "limits.trial_total_tokens",
+        "limits.request_wall_seconds",
+        "limits.maximum_request_wall_seconds",
+        "limits.socket_timeout_seconds",
+        "limits.max_response_bytes",
+        "limits.max_request_bytes",
+        "limits.max_disk_bytes",
+        "limits.extra_limit",
+    ],
+)
+def test_wall_amendment_rejects_other_config_changes_even_with_updated_hash(
+    tmp_path: Path, field: str
+) -> None:
+    endpoint = "http://127.0.0.1:11435"
+    connection = client(endpoint, tmp_path)
+    amend_wall(connection)
+    rows = [strict_json(line) for line in connection.path.read_text().splitlines()]
+    amendment = rows[-1]
+    config = amendment["config"]
+    if field.startswith("limits."):
+        config["limits"][field.split(".")[1]] = 1
+    elif field == "endpoint":
+        config[field] = {"host": "127.0.0.1", "port": 11436}
+    elif field == "profiles":
+        config[field][TAG]["digest"] = "c" * 64
+    elif field == "context_policy":
+        config[field]["truncate"] = True
+    else:
+        config[field] = "changed"
+    amendment["to_config_sha256"] = canonical_hash(config)
+    write_test_rows(connection.path, rows)
+    tampered = connection.path.read_bytes()
+    with pytest.raises(ClientBlocked, match="invalid wall-budget amendment"):
+        amended_client(endpoint, tmp_path)
+    assert connection.path.read_bytes() == tampered
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "from_config_sha256",
+        "to_config_sha256",
+        "prior_events_canonical_sha256",
+        "prior_event_count",
+        "retained_budget_state",
+        "authorization",
+        "created_at",
+        "schema_version",
+        "unexpected_field",
+    ],
+)
+def test_wall_amendment_rejects_tampered_history_or_authorization(
+    tmp_path: Path, field: str
+) -> None:
+    endpoint = "http://127.0.0.1:11435"
+    connection = client(endpoint, tmp_path)
+    amend_wall(connection)
+    rows = [strict_json(line) for line in connection.path.read_text().splitlines()]
+    rows[-1][field] = "" if field != "prior_event_count" else True
+    write_test_rows(connection.path, rows)
+    with pytest.raises(ClientBlocked, match="invalid wall-budget amendment"):
+        amended_client(endpoint, tmp_path)
+
+
+def test_wall_amendment_rejects_duplicate_event_and_second_amendment(tmp_path: Path) -> None:
+    endpoint = "http://127.0.0.1:11435"
+    connection = client(endpoint, tmp_path)
+    amendment = amend_wall(connection)
+    resumed = amended_client(endpoint, tmp_path)
+    before = resumed.path.read_bytes()
+    with pytest.raises(ValueError, match="initial 14400"):
+        amend_wall(resumed, new_run_id="test-run-v3", new_freeze_id="c" * 64)
+    assert resumed.path.read_bytes() == before
+    with resumed.path.open("ab") as stream:
+        stream.write(json.dumps(amendment).encode() + b"\n")
+    with pytest.raises(ClientBlocked, match="invalid wall-budget amendment"):
+        amended_client(endpoint, tmp_path)
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"amendment_id": ""},
+        {"amendment_id": "not permitted spaces"},
+        {"authorization": ""},
+        {"authorization": " "},
+        {"new_run_id": "test-run"},
+        {"new_freeze_id": "test-freeze"},
+        {"new_freeze_id": "B" * 64},
+    ],
+)
+def test_wall_amendment_invalid_arguments_do_not_change_ledger(
+    tmp_path: Path, changes: dict[str, Any]
+) -> None:
+    connection = client("http://127.0.0.1:11435", tmp_path)
+    before = connection.path.read_bytes()
+    with pytest.raises(ValueError):
+        amend_wall(connection, **changes)
+    assert connection.path.read_bytes() == before
+
+
+def test_failed_wall_amendment_append_cannot_enable_new_config(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    endpoint = "http://127.0.0.1:11435"
+    connection = client(endpoint, tmp_path)
+    before = connection.path.read_bytes()
+
+    def fail(_: Any) -> None:
+        raise OSError("disk failed before amendment append")
+
+    monkeypatch.setattr(connection, "_append", fail)
+    with pytest.raises(OSError, match="disk failed"):
+        amend_wall(connection)
+    assert connection.path.read_bytes() == before
+    with pytest.raises(ClientBlocked, match="identity differs"):
+        amended_client(endpoint, tmp_path)
+    assert client(endpoint, tmp_path).summary()["wall_budget_amendments"] == []
+
+
+def test_torn_wall_amendment_is_preserved_and_neither_identity_can_dispatch(tmp_path: Path) -> None:
+    endpoint = "http://127.0.0.1:11435"
+    connection = client(endpoint, tmp_path)
+    with connection.path.open("ab") as stream:
+        stream.write(b'{"event":"wall_budget_amendment"')
+    before = connection.path.read_bytes()
+    for constructor in (client, amended_client):
+        with pytest.raises(ClientBlocked, match="incomplete ledger"):
+            constructor(endpoint, tmp_path)
+    assert connection.path.read_bytes() == before
+
+
+def test_wall_amendment_is_serialized_with_dispatch_and_fsynced_before_return(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    connection = client("http://127.0.0.1:11435", tmp_path)
+    peer = client("http://127.0.0.1:11435", tmp_path)
+    with connection._locked(), pytest.raises(ClientBlocked, match="ledger lock"):
+        amend_wall(peer)
+    sync_observations: list[bytes] = []
+    import os
+
+    original_fsync = os.fsync
+
+    def observe_fsync(fd: int) -> None:
+        original_fsync(fd)
+        sync_observations.append(connection.path.read_bytes())
+
+    monkeypatch.setattr("experiments.ollama.client.os.fsync", observe_fsync)
+    amendment = amend_wall(connection)
+    assert len(sync_observations) == 1
+    assert strict_json(sync_observations[0].splitlines()[-1].decode()) == amendment

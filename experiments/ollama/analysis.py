@@ -341,6 +341,37 @@ def analyze(
         ),
         "primary_seed": protocol["seed"],
         "ledger_sha256": hashlib.sha256(ledger_bytes).hexdigest(),
+        "ledger_configuration_events": [
+            {
+                name: row[name]
+                for name in (
+                    "event",
+                    "created_at",
+                    "amendment_id",
+                    "authorization",
+                    "from_config_sha256",
+                    "to_config_sha256",
+                    "prior_events_canonical_sha256",
+                    "prior_event_count",
+                )
+                if name in row
+            }
+            | {
+                name: {
+                    field: row[name][field]
+                    for field in ("run_id", "freeze_id", "limits")
+                    if field in row[name]
+                }
+                for name in ("config", "new_config")
+                if isinstance(row.get(name), dict)
+            }
+            for row in ledger
+            if row.get("event") in ("config", "wall_budget_amendment")
+        ],
+        "original_first_reservation_epoch": next(
+            (row.get("started_epoch") for row in ledger if row.get("event") == "reserve"), None
+        ),
+        "declared_global_wall_seconds": protocol["global_limits"]["wall_seconds"],
         "no_cross_model_absolute_timing_claim": True,
         "unknown_tokens_are_not_zero": True,
         "energy_and_price": "not measured",

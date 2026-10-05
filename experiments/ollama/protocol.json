@@ -1,5 +1,15 @@
 {
-  "protocol_id": "egr-023-local-ollama-v1",
+  "protocol_id": "egr-023-local-ollama-v2",
+  "budget_amendment": {
+    "user_authorization": "総上限時間は8時間に緩和してください",
+    "initial_protocol_id": "egr-023-local-ollama-v1",
+    "initial_protocol_sha256": "d116d3fdba875c3aed4eb9f79a89cc18274b2794d0fdeb79a8fb667e644560e1",
+    "initial_segment_manifest_sha256": "a8f554ce9ae8f3ba0b73e29af2bac0fe2677e97e7bca92d69c38834cfcf1d19e",
+    "changed_limit_only": "global_limits.wall_seconds",
+    "initial_wall_seconds": 14400,
+    "amended_wall_seconds": 28800,
+    "retention": "Append-only ledger amendment retains the original first-reservation epoch, all previous costs, pending and halt conditions. All non-wall limits, model profiles, prompts, tasks, oracle, seeds and trial budgets are unchanged. The completed v1 pilot and original protocol/harness segment are preserved; unused confirmation inputs receive a new v2 freeze."
+  },
   "package_version": "0.2.3",
   "models": ["gemma4:e4b", "qwen3.6:35b-a3b"],
   "arms": ["A", "B", "C"],
@@ -17,7 +27,7 @@
   "bootstrap_seed": 23031041,
   "bootstrap_replicates": 2000,
   "primary": "Within each model, parent-paired A minus B evidence-supported completion; false acceptance and grounded abstention separately. C is a pooled-information reference with a different information arrival policy.",
-  "global_limits": {"wall_seconds": 14400, "calls": 1200, "generated_tokens": 600000, "total_tokens": 5000000, "disk_bytes": 536870912},
+  "global_limits": {"wall_seconds": 28800, "calls": 1200, "generated_tokens": 600000, "total_tokens": 5000000, "disk_bytes": 536870912},
   "trial_limits": {"calls": 6, "wall_seconds": 600, "tokens": 27648, "actions": 16, "verifications": 8},
   "request": {"num_ctx": 4096, "num_predict": 512, "temperature": 0.0, "think": false, "stream": false, "truncate": false, "shift": false, "wall_seconds": 120, "first_backend_cold_wall_seconds": 180, "socket_timeout_seconds": 180, "keep_alive": "5m"},
   "server": {"version": "0.35.0", "parallel": 1, "maximum_loaded_models": 1, "cloud_disabled": true, "automatic_model_downloads": false},

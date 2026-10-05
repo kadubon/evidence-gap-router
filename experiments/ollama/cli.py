@@ -25,6 +25,7 @@ from experiments.ollama.client import (  # noqa: E402
     Limits,
     ModelProfile,
     OllamaClient,
+    strict_json,
 )
 from experiments.ollama.environment import (  # noqa: E402
     collect_resources,
@@ -92,8 +93,55 @@ def client_for(args: argparse.Namespace) -> OllamaClient:
         run_id=PROTOCOL["protocol_id"],
         freeze_id=sha(ROOT / "protocol.json"),
         profiles=profiles,
-        limits=Limits(socket_timeout_seconds=180, max_response_bytes=65536),
+        limits=Limits(
+            global_wall_seconds=PROTOCOL["global_limits"]["wall_seconds"],
+            socket_timeout_seconds=180,
+            max_response_bytes=65536,
+        ),
         disk_root=args.directory,
+    )
+
+
+def amend_wall(args: argparse.Namespace) -> dict[str, Any]:
+    """Explicitly append the authorized wall-only amendment to the original journal."""
+    if args.authorization != PROTOCOL["budget_amendment"]["user_authorization"]:
+        raise ValueError("amend-wall requires the exact explicit user authorization")
+    if not args.amendment_id:
+        raise ValueError("amend-wall requires an amendment identity")
+    path = args.directory / "calls.jsonl"
+    if path.stat().st_size > PROTOCOL["global_limits"]["disk_bytes"]:
+        raise ClientBlocked("ledger exceeds disk envelope")
+    raw = path.read_bytes()
+    if not raw.endswith(b"\n"):
+        raise ClientBlocked("incomplete ledger tail; retain it and do not amend")
+    rows = [strict_json(line.decode("utf-8")) for line in raw.splitlines()]
+    if any(not isinstance(row, dict) for row in rows):
+        raise ClientBlocked("ledger contains a non-object event; retain it and do not amend")
+    if not rows or rows[0].get("event") != "config":
+        raise ClientBlocked("ledger must retain its original config")
+    if any(row.get("event") == "wall_budget_amendment" for row in rows):
+        raise ClientBlocked("wall budget amendment is already recorded; no dispatch or reset")
+    initial = rows[0]["config"]
+    if (
+        initial["run_id"] != PROTOCOL["budget_amendment"]["initial_protocol_id"]
+        or initial["freeze_id"] != PROTOCOL["budget_amendment"]["initial_protocol_sha256"]
+    ):
+        raise ClientBlocked("initial protocol identity differs from the retained v1 segment")
+    old_client = OllamaClient(
+        args.url,
+        path,
+        run_id=initial["run_id"],
+        freeze_id=initial["freeze_id"],
+        profiles={name: ModelProfile(**profile) for name, profile in initial["profiles"].items()},
+        limits=Limits(**initial["limits"]),
+        disk_root=args.directory,
+        server_version=initial["server_version"],
+    )
+    return old_client.amend_global_wall_budget(
+        amendment_id=args.amendment_id,
+        new_run_id=PROTOCOL["protocol_id"],
+        new_freeze_id=sha(ROOT / "protocol.json"),
+        authorization=args.authorization,
     )
 
 
@@ -292,7 +340,10 @@ def auxiliary(
         reason = "main_not_known_no_progress"
     elif summary["blocked"]:
         reason = "pending_or_unknown_consumption"
-    elif summary["started_epoch"] is None or time.time() - summary["started_epoch"] >= 14400:
+    elif (
+        summary["started_epoch"] is None
+        or time.time() - summary["started_epoch"] >= PROTOCOL["global_limits"]["wall_seconds"]
+    ):
         reason = "global_wall_exhausted"
     ledger_path = args.directory / "calls.jsonl"
     ledger = [json.loads(line) for line in ledger_path.read_text("utf-8").splitlines()]
@@ -513,7 +564,7 @@ def freeze(args: argparse.Namespace) -> dict[str, Any]:
     if summary["blocked"] or summary["started_epoch"] is None:
         raise ClientBlocked("freeze requires known completed development dispatches")
     start = summary["started_epoch"]
-    remaining = max(0.0, 14400 - (time.time() - start))
+    remaining = max(0.0, PROTOCOL["global_limits"]["wall_seconds"] - (time.time() - start))
     guard(args)
     resource_path = args.directory / "resources.jsonl"
     resources = (
@@ -587,6 +638,8 @@ def freeze(args: argparse.Namespace) -> dict[str, Any]:
         ],
         "exclusion_reason": "Predeclared balanced profile chosen from speed/resource budgets",
         "remaining_wall_at_freeze_seconds": remaining,
+        "original_first_reservation_epoch": start,
+        "ledger_sha256_at_freeze": sha(args.directory / "calls.jsonl"),
         "remaining_calls_at_freeze": remaining_calls,
         "remaining_generated_tokens_at_freeze": remaining_generated,
         "remaining_total_tokens_at_freeze": remaining_tokens,
@@ -631,7 +684,8 @@ def live(args: argparse.Namespace, client: OllamaClient) -> None:
                 if (
                     summary["blocked"]
                     or summary["started_epoch"] is None
-                    or time.time() - summary["started_epoch"] >= 14400
+                    or time.time() - summary["started_epoch"]
+                    >= PROTOCOL["global_limits"]["wall_seconds"]
                     or summary["calls"] + maximum_calls > 1200
                     or summary["generated_tokens"] + maximum_calls * 512 > 600000
                     or summary["total_tokens"] + maximum_calls * 4608 > 5000000
@@ -676,16 +730,32 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "command",
-        choices=("preflight", "backend-smoke", "pilot", "freeze", "live", "resume", "analyze"),
+        choices=(
+            "preflight",
+            "backend-smoke",
+            "pilot",
+            "amend-wall",
+            "freeze",
+            "live",
+            "resume",
+            "analyze",
+        ),
     )
     parser.add_argument("--directory", type=Path, required=True)
     parser.add_argument("--url", default="http://127.0.0.1:11435")
     parser.add_argument("--server-pid", type=int)
     parser.add_argument("--server-log", type=Path)
+    parser.add_argument("--authorization")
+    parser.add_argument("--amendment-id")
     parser.add_argument("--wheel", type=Path)
     parser.add_argument("--freeze", type=Path, default=ROOT / "results/freeze-v0.2.3.json")
     parser.add_argument("--output", type=Path, default=ROOT / "results/v0.2.3")
     args = parser.parse_args(argv)
+    if args.command == "amend-wall":
+        if not args.authorization or not args.amendment_id:
+            parser.error("amend-wall requires --authorization and --amendment-id")
+        print(json.dumps(amend_wall(args), ensure_ascii=False))
+        return 0
     if args.command == "preflight":
         result = preflight(
             args.url,

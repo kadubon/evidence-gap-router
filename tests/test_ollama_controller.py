@@ -5,6 +5,7 @@ import json
 import sys
 import time
 import zipfile
+from dataclasses import asdict
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -393,7 +394,7 @@ def test_live_expired_global_first_reservation_writes_all_unexecuted(tmp_path, m
     client = SimpleNamespace(
         summary=lambda: {
             "blocked": False,
-            "started_epoch": time.time() - 14401,
+            "started_epoch": time.time() - cli.PROTOCOL["global_limits"]["wall_seconds"] - 1,
             "calls": 0,
             "generated_tokens": 0,
             "total_tokens": 0,
@@ -456,3 +457,201 @@ def test_missing_predeclared_auxiliary_record_keeps_its_unexecuted_denominator(t
     rows = json.loads((tmp_path / "output/scored-trials.json").read_text("utf-8"))
     aux = next(row for row in rows if row["phase"] == "auxiliary")
     assert aux["execution"] == "unexecuted_no_terminal_record" and not aux["oracle_assessed"]
+
+
+def test_protocol_v2_changes_only_wall_authority_and_preserves_nonwall_caps():
+    protocol = cli.PROTOCOL
+    assert protocol["protocol_id"] == "egr-023-local-ollama-v2"
+    assert protocol["global_limits"] == {
+        "wall_seconds": 28800,
+        "calls": 1200,
+        "generated_tokens": 600000,
+        "total_tokens": 5000000,
+        "disk_bytes": 536870912,
+    }
+    assert protocol["trial_limits"] == {
+        "calls": 6,
+        "wall_seconds": 600,
+        "tokens": 27648,
+        "actions": 16,
+        "verifications": 8,
+    }
+    amendment = protocol["budget_amendment"]
+    assert amendment["user_authorization"] == "総上限時間は8時間に緩和してください"
+    assert (
+        amendment["initial_protocol_sha256"]
+        == "d116d3fdba875c3aed4eb9f79a89cc18274b2794d0fdeb79a8fb667e644560e1"
+    )
+    assert amendment["changed_limit_only"] == "global_limits.wall_seconds"
+
+
+def test_v2_live_uses_original_epoch_beyond_four_hours_within_eight(tmp_path, monkeypatch):
+    source = tmp_path / "harness"
+    source.mkdir()
+    (source / "protocol.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(cli, "ROOT", source)
+    planned = [item(arm) for arm in "ABC"]
+    cli.write_json(
+        tmp_path / "freeze.json",
+        {
+            "harness_sha256": hashlib.sha256().hexdigest(),
+            "manifest_sha256": cli.sha(source / "protocol.json"),
+            "planned_trial_keys": planned,
+            "planned_auxiliary_source_keys": [],
+        },
+    )
+    epoch = time.time() - 20000
+    client = SimpleNamespace(
+        summary=lambda: {
+            "blocked": False,
+            "started_epoch": epoch,
+            "calls": 94,
+            "generated_tokens": 1000,
+            "total_tokens": 10000,
+        }
+    )
+    monkeypatch.setattr(cli, "guard", lambda _a: {})
+    executed = []
+    monkeypatch.setattr(cli, "execute", lambda *arguments: executed.append(arguments[3]["key"]))
+    cli.live(args(tmp_path), client)
+    assert executed == [entry["key"] for entry in planned]
+    assert client.summary()["started_epoch"] == epoch and client.summary()["calls"] == 94
+
+
+def test_analysis_retains_initial_epoch_and_all_costs_across_configuration_amendment(
+    tmp_path, scored
+):
+    first = item()
+    terminal(tmp_path, first)
+    old_config = {
+        "run_id": "egr-023-local-ollama-v1",
+        "freeze_id": "a" * 64,
+        "limits": {"global_wall_seconds": 14400},
+    }
+    new_config = {
+        "run_id": cli.PROTOCOL["protocol_id"],
+        "freeze_id": "b" * 64,
+        "limits": {"global_wall_seconds": 28800},
+    }
+    cli.append(tmp_path / "calls.jsonl", {"event": "config", "config": old_config})
+    cli.append(tmp_path / "calls.jsonl", {**reservation(first, "old"), "started_epoch": 111})
+    cli.append(tmp_path / "calls.jsonl", response("old"))
+    cli.append(
+        tmp_path / "calls.jsonl",
+        {
+            "event": "wall_budget_amendment",
+            "amendment_id": "8h",
+            "from_config_sha256": "c" * 64,
+            "to_config_sha256": "d" * 64,
+            "authorization": "総上限時間は8時間に緩和してください",
+            "config": new_config,
+        },
+    )
+    cli.append(tmp_path / "calls.jsonl", {**reservation(first, "new"), "started_epoch": 222})
+    cli.append(tmp_path / "calls.jsonl", response("new"))
+    summary = analyze(tmp_path)
+    cost = summary["all_attempt_costs"][first["model"] + "/confirmation"]
+    assert cost["attempted_calls"] == 2 and cost["total_tokens"] == 20
+    assert summary["original_first_reservation_epoch"] == 111
+    assert summary["declared_global_wall_seconds"] == 28800
+    history = summary["ledger_configuration_events"]
+    assert len(history) == 2 and history[0]["config"]["limits"]["global_wall_seconds"] == 14400
+    assert history[1]["config"]["limits"]["global_wall_seconds"] == 28800
+    assert history[1]["authorization"] == cli.PROTOCOL["budget_amendment"]["user_authorization"]
+
+
+def test_client_for_passes_effective_protocol_wall_without_resetting_other_limits(
+    tmp_path, monkeypatch
+):
+    preflight = tmp_path / "preflight/manifest.json"
+    cli.write_json(
+        preflight,
+        {
+            "server_version": "0.35.0",
+            "ready_for_backend_smoke": True,
+            "models": [
+                {
+                    "tag": model,
+                    "digest": "a" * 64,
+                    "supported_thinking_values_advertised": [False, True],
+                }
+                for model in cli.PROTOCOL["models"]
+            ],
+        },
+    )
+    recorded = []
+    monkeypatch.setattr(cli, "OllamaClient", lambda *a, **k: recorded.append(k) or k)
+    cli.client_for(args(tmp_path))
+    effective = recorded[0]
+    assert effective["run_id"] == cli.PROTOCOL["protocol_id"]
+    assert effective["limits"].global_wall_seconds == 28800
+    assert effective["limits"].global_calls == 1200
+    assert effective["limits"].global_total_tokens == 5000000
+    assert effective["limits"].trial_wall_seconds == 600 and effective["limits"].trial_calls == 6
+
+
+def test_amend_wall_opens_original_identity_and_delegates_explicit_authorization(
+    tmp_path, monkeypatch
+):
+    initial = {
+        "run_id": cli.PROTOCOL["budget_amendment"]["initial_protocol_id"],
+        "freeze_id": cli.PROTOCOL["budget_amendment"]["initial_protocol_sha256"],
+        "profiles": {
+            model: asdict(cli.ModelProfile(model, "a" * 64)) for model in cli.PROTOCOL["models"]
+        },
+        "limits": asdict(
+            cli.Limits(
+                global_wall_seconds=14400, socket_timeout_seconds=180, max_response_bytes=65536
+            )
+        ),
+        "server_version": "0.35.0",
+    }
+    cli.append(tmp_path / "calls.jsonl", {"event": "config", "config": initial})
+    cli.append(tmp_path / "calls.jsonl", {**reservation(item()), "started_epoch": 123})
+    original = (tmp_path / "calls.jsonl").read_bytes()
+    openings, amendments = [], []
+
+    class OldClient:
+        def __init__(self, *positional, **kwargs):
+            openings.append((positional, kwargs))
+
+        def amend_global_wall_budget(self, **kwargs):
+            amendments.append(kwargs)
+            return {"event": "wall_budget_amendment", **kwargs}
+
+    monkeypatch.setattr(cli, "OllamaClient", OldClient)
+    options = args(tmp_path)
+    options.authorization = cli.PROTOCOL["budget_amendment"]["user_authorization"]
+    options.amendment_id = "user-8h"
+    result = cli.amend_wall(options)
+    assert result["event"] == "wall_budget_amendment"
+    assert openings[0][1]["run_id"] == initial["run_id"]
+    assert openings[0][1]["freeze_id"] == initial["freeze_id"]
+    assert openings[0][1]["limits"].global_wall_seconds == 14400
+    assert amendments == [
+        {
+            "amendment_id": "user-8h",
+            "new_run_id": cli.PROTOCOL["protocol_id"],
+            "new_freeze_id": cli.sha(cli.ROOT / "protocol.json"),
+            "authorization": options.authorization,
+        }
+    ]
+    assert (tmp_path / "calls.jsonl").read_bytes() == original
+    cli.append(tmp_path / "calls.jsonl", {"event": "wall_budget_amendment"})
+    with pytest.raises(cli.ClientBlocked, match="already recorded"):
+        cli.amend_wall(options)
+    assert len(openings) == 1
+
+
+def test_amend_wall_cannot_invent_missing_human_authorization(tmp_path, monkeypatch):
+    options = args(tmp_path)
+    options.authorization = ""
+    options.amendment_id = "user-8h"
+    monkeypatch.setattr(
+        cli, "OllamaClient", lambda *a, **k: pytest.fail("no constructor or dispatch")
+    )
+    with pytest.raises(ValueError, match="explicit user authorization"):
+        cli.amend_wall(options)
+    with pytest.raises(SystemExit) as error:
+        cli.main(["amend-wall", "--directory", str(tmp_path)])
+    assert error.value.code == 2

@@ -16,6 +16,7 @@ import math
 import os
 import re
 import socket
+import sys
 import threading
 import time
 from collections.abc import Callable, Iterator, Mapping
@@ -70,6 +71,64 @@ def strict_json(text: str) -> Any:
 
 def _bytes(value: Any) -> bytes:
     return json.dumps(value, ensure_ascii=True, allow_nan=False, separators=(",", ":")).encode()
+
+
+def _canonical_sha256(value: Any) -> str:
+    encoded = json.dumps(
+        value, ensure_ascii=True, allow_nan=False, sort_keys=True, separators=(",", ":")
+    ).encode()
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _wall_amended_config(
+    config: dict[str, Any], new_run_id: str, new_freeze_id: str
+) -> dict[str, Any]:
+    if config["limits"]["global_wall_seconds"] != 14_400:
+        raise ValueError("only the initial 14400-second wall budget can be amended once")
+    if (
+        not isinstance(new_run_id, str)
+        or not new_run_id
+        or len(new_run_id) > 256
+        or new_run_id == config["run_id"]
+    ):
+        raise ValueError("the amendment requires a different explicit run identity")
+    if (
+        not isinstance(new_freeze_id, str)
+        or not re.fullmatch(r"[0-9a-f]{64}", new_freeze_id)
+        or new_freeze_id == config["freeze_id"]
+    ):
+        raise ValueError("the amendment requires a different protocol SHA256 freeze identity")
+    amended = strict_json(_bytes(config).decode())
+    if not isinstance(amended, dict):
+        raise ValueError("the frozen config must be a JSON object")
+    amended["run_id"] = new_run_id
+    amended["freeze_id"] = new_freeze_id
+    amended["limits"]["global_wall_seconds"] = 28_800
+    return amended
+
+
+def _retained_budget_state(summary: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        key: summary[key]
+        for key in (
+            "calls",
+            "started_epoch",
+            "generated_tokens",
+            "total_tokens",
+            "observed_generated_tokens",
+            "observed_total_tokens",
+            "usage_assessed",
+            "reserved_generated_tokens",
+            "reserved_total_tokens",
+            "unknown_consumption",
+            "pending",
+            "halted",
+            "blocked",
+            "request_ids",
+            "completed_request_ids",
+            "trials",
+        )
+    }
 
 
 def _stamp() -> str:
@@ -141,7 +200,7 @@ class Limits:
 
     def __post_init__(self) -> None:
         maximums = {
-            "global_wall_seconds": 14_400,
+            "global_wall_seconds": 28_800,
             "global_calls": 1200,
             "global_generated_tokens": 600_000,
             "global_total_tokens": 5_000_000,
@@ -311,10 +370,9 @@ class OllamaClient:
                         "started_epoch": time.time(),
                     }
                 )
-            elif _bytes(rows[0].get("config")) != _bytes(self.config):
-                raise ClientBlocked(
-                    "run/freeze/profile/limit identity differs from existing ledger"
-                )
+            else:
+                self._assert_identity(rows)
+                self._summary(rows)
         self._created_monotonic = time.monotonic()
         self._created_epoch = time.time()
 
@@ -331,7 +389,7 @@ class OllamaClient:
                 lock_file.flush()
             lock_file.seek(0)
             try:
-                if os.name == "nt":
+                if sys.platform == "win32":
                     import msvcrt
 
                     msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
@@ -347,7 +405,7 @@ class OllamaClient:
             if lock_file is not None:
                 if acquired:
                     lock_file.seek(0)
-                    if os.name == "nt":
+                    if sys.platform == "win32":
                         import msvcrt
 
                         msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
@@ -392,10 +450,120 @@ class OllamaClient:
         finally:
             os.close(fd)
 
+    def _effective_config(self, rows: list[dict[str, Any]]) -> dict[str, Any]:
+        initial_config = rows[0].get("config") if rows else None
+        if not isinstance(initial_config, dict):
+            raise ClientBlocked("ledger does not contain its original config")
+        effective: dict[str, Any] = initial_config
+        seen_amendment = False
+        expected_fields = {
+            "event",
+            "schema_version",
+            "amendment_id",
+            "created_at",
+            "authorization",
+            "from_config_sha256",
+            "to_config_sha256",
+            "prior_events_canonical_sha256",
+            "prior_event_count",
+            "config",
+            "retained_budget_state",
+        }
+        for index, row in enumerate(rows[1:], start=1):
+            if row.get("event") != "wall_budget_amendment":
+                continue
+            try:
+                if seen_amendment or set(row) != expected_fields or row["schema_version"] != "1":
+                    raise ValueError("invalid or repeated amendment")
+                if (
+                    not isinstance(row["amendment_id"], str)
+                    or not re.fullmatch(r"[A-Za-z0-9_.:-]{1,128}", row["amendment_id"])
+                    or not isinstance(row["authorization"], str)
+                    or not row["authorization"].strip()
+                    or len(row["authorization"]) > 1024
+                    or not isinstance(row["created_at"], str)
+                    or datetime.fromisoformat(row["created_at"]).tzinfo is None
+                    or type(row["prior_event_count"]) is not int
+                    or row["prior_event_count"] != index
+                ):
+                    raise ValueError("invalid amendment identity or authorization record")
+                new_config = row["config"]
+                if not isinstance(new_config, dict):
+                    raise ValueError("amended config must be an object")
+                expected = _wall_amended_config(
+                    effective, new_config["run_id"], new_config["freeze_id"]
+                )
+                if (
+                    _canonical_sha256(new_config) != _canonical_sha256(expected)
+                    or row["from_config_sha256"] != _canonical_sha256(effective)
+                    or row["to_config_sha256"] != _canonical_sha256(expected)
+                    or row["prior_events_canonical_sha256"] != _canonical_sha256(rows[:index])
+                    or row["retained_budget_state"]
+                    != _retained_budget_state(self._summary(rows[:index]))
+                ):
+                    raise ValueError("amendment changed frozen config or retained history")
+            except (KeyError, TypeError, ValueError, OverflowError) as exc:
+                raise ClientBlocked("invalid wall-budget amendment; retain ledger") from exc
+            effective = new_config
+            seen_amendment = True
+        return effective
+
+    def _assert_identity(self, rows: list[dict[str, Any]]) -> None:
+        if _canonical_sha256(self._effective_config(rows)) != _canonical_sha256(self.config):
+            raise ClientBlocked("run/freeze/profile/limit identity differs from existing ledger")
+
+    def amend_global_wall_budget(
+        self,
+        *,
+        amendment_id: str,
+        new_run_id: str,
+        new_freeze_id: str,
+        authorization: str,
+    ) -> dict[str, Any]:
+        """Record the explicit 4h-to-8h authorization without resetting any consumption.
+
+        The host establishes the user's authorization. This method records it; it
+        cannot authenticate a human instruction. Reopen with the new identity after
+        this durable one-time event. Pending consumption remains blocked.
+        """
+        if (
+            not isinstance(amendment_id, str)
+            or not re.fullmatch(r"[A-Za-z0-9_.:-]{1,128}", amendment_id)
+            or not isinstance(authorization, str)
+            or not authorization.strip()
+            or len(authorization) > 1024
+        ):
+            raise ValueError("an explicit amendment identity and authorization are required")
+        new_config = _wall_amended_config(self.config, new_run_id, new_freeze_id)
+        with self._locked():
+            rows = self._rows()
+            self._assert_identity(rows)
+            if any(row.get("event") == "wall_budget_amendment" for row in rows[1:]):
+                raise ClientBlocked("wall-budget amendment already recorded")
+            summary = self._summary(rows)
+            amendment = {
+                "event": "wall_budget_amendment",
+                "schema_version": "1",
+                "amendment_id": amendment_id,
+                "created_at": _stamp(),
+                "authorization": authorization,
+                "from_config_sha256": _canonical_sha256(self.config),
+                "to_config_sha256": _canonical_sha256(new_config),
+                "prior_events_canonical_sha256": _canonical_sha256(rows),
+                "prior_event_count": len(rows),
+                "config": new_config,
+                "retained_budget_state": _retained_budget_state(summary),
+            }
+            self._append(amendment)
+            return amendment
+
     def _summary(self, rows: list[dict[str, Any]]) -> dict[str, Any]:
+        effective_config = self._effective_config(rows)
         reservations: dict[str, dict[str, Any]] = {}
         responses: dict[str, dict[str, Any]] = {}
         for row in rows[1:]:
+            if row.get("event") == "wall_budget_amendment":
+                continue
             key = row.get("request_id")
             if not isinstance(key, str) or not key:
                 raise ClientBlocked("ledger contains an invalid request identity")
@@ -442,8 +610,8 @@ class OllamaClient:
             if response is not None and response.get("halt"):
                 halted.append(key)
         return {
-            "run_id": self.config["run_id"],
-            "freeze_id": self.config["freeze_id"],
+            "run_id": effective_config["run_id"],
+            "freeze_id": effective_config["freeze_id"],
             "calls": len(reservations),
             "started_epoch": next(iter(reservations.values()))["started_epoch"]
             if reservations
@@ -462,17 +630,26 @@ class OllamaClient:
             "request_ids": list(reservations),
             "completed_request_ids": [key for key in responses if not responses[key]["pending"]],
             "trials": trials,
-            "limits": asdict(self.limits),
+            "limits": effective_config["limits"],
+            "initial_config": rows[0]["config"],
+            "wall_budget_amendments": [
+                row for row in rows[1:] if row.get("event") == "wall_budget_amendment"
+            ],
             "responses": responses,
         }
 
     def summary(self) -> dict[str, Any]:
         with self._locked():
-            return self._summary(self._rows())
+            rows = self._rows()
+            self._assert_identity(rows)
+            return self._summary(rows)
 
     def record(self, request_id: str) -> dict[str, Any] | None:
         """Read an existing result without retrying, replaying, or sharing a live response."""
-        return self.summary()["responses"].get(request_id)
+        record = self.summary()["responses"].get(request_id)
+        if record is not None and not isinstance(record, dict):
+            raise ClientBlocked("ledger response must be an object")
+        return record
 
     def lookup(self, request_id: str) -> dict[str, Any] | None:
         """Alias for settling a persisted SDK attempt from its already completed HTTP record."""
@@ -530,6 +707,7 @@ class OllamaClient:
             raise ValueError("request byte envelope exceeded")
         with self._locked():
             rows = self._rows()
+            self._assert_identity(rows)
             summary = self._summary(rows)
             if summary["blocked"]:
                 raise ClientBlocked("pending/unknown consumption or profile violation; no retry")
@@ -594,7 +772,7 @@ class OllamaClient:
         began = time.monotonic()
         observed_epoch = max(time.time(), self._created_epoch + began - self._created_monotonic)
         issuance_elapsed = max(0, observed_epoch - reservation["started_epoch"])
-        deadline = began + max(0, reservation["wall_seconds"] - issuance_elapsed)
+        deadline: float = began + max(0, reservation["wall_seconds"] - issuance_elapsed)
         connection: http.client.HTTPConnection | None = None
         read_socket: socket.socket | None = None
         raw = bytearray()
