@@ -107,6 +107,19 @@ def _process_tree(root: int) -> list[int]:
         selected = enlarged
 
 
+def _owned_executable(identity: dict[str, Any]) -> bool:
+    path = Path(identity["executable"])
+    if path.name.lower() in ("ollama.exe", "llama-server.exe"):
+        return True
+    # Ollama's Windows runners can create a native console-host descendant.
+    # A matching basename elsewhere is not enough to authorize termination.
+    return (
+        path.name.lower() == "conhost.exe"
+        and path.resolve()
+        == (Path(os.environ.get("SystemRoot", "C:/Windows")) / "System32/conhost.exe").resolve()
+    )
+
+
 def start_owned(directory: Path, executable: Path) -> dict[str, Any]:
     """Start one hidden dedicated server, with configuration at server startup."""
     directory.mkdir(parents=True, exist_ok=True)
@@ -177,7 +190,7 @@ def verify_and_stop_owned(owner: dict[str, Any]) -> dict[str, Any]:
             if handle is not root:
                 handles.append(handle)
             identity = handle.identity()
-            if Path(identity["executable"]).name.lower() not in ("ollama.exe", "llama-server.exe"):
+            if not _owned_executable(identity):
                 raise ClientBlocked("unexpected descendant; termination ownership unproven")
             identities.append(identity)
         # Single sequential inference and the frozen MAX_QUEUE=1 limit further
@@ -200,8 +213,7 @@ def verify_and_stop_owned(owner: dict[str, Any]) -> dict[str, Any]:
                 handles.append(handle)
                 identity = handle.identity()
                 if (
-                    Path(identity["executable"]).name.lower()
-                    not in ("ollama.exe", "llama-server.exe")
+                    not _owned_executable(identity)
                     or identity["creation_filetime"] < actual["creation_filetime"]
                 ):
                     raise ClientBlocked("late descendant identity unproven")

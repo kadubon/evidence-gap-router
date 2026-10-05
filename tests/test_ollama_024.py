@@ -265,7 +265,7 @@ def test_new_task_rules_and_minimal_witnesses_are_disjoint_from_old_inputs():
     current = datasets[1]
     assert len(current) == 24 and sum(g.decision == "unknown" for t, g in current) == 6
     for task, gold in current:
-        assert "場合に限り" in task.documents[0].text
+        assert "必要十分条件" in task.documents[0].text
         assert all(w.quote in task.document(w.source_id).text for w in gold.witnesses)
         messages = integration_messages(task, task.documents)
         assert "原文全体" not in messages[1]["content"]
@@ -385,3 +385,64 @@ def test_one_format_repair_preserves_failed_output_and_charges_both_calls(tmp_pa
         resume=True,
     )
     assert resumed == result and len(fake.fake.records) == count
+
+
+def test_monotonic_campaign_anchor_survives_wall_clock_rollback(tmp_path, monkeypatch):
+    from experiments.ollama import client as transport
+
+    with fake_http(successful()) as (url, received):
+        connection = modern(url, tmp_path, global_wall_seconds=100)
+        chat(connection)
+        path = connection.path.with_suffix(".clock.json")
+        anchor = json.loads(path.read_text())
+        first = connection.summary()["started_epoch"]
+        monkeypatch.setattr(transport.time, "time", lambda: first - 500)
+        monkeypatch.setattr(transport.time, "monotonic", lambda: anchor["anchor_monotonic"] + 101)
+        with pytest.raises(ClientBlocked, match="envelope"):
+            chat(connection, "new", "new-trial")
+        assert len(received) == 1
+        assert connection.summary()["campaign_elapsed_seconds"] >= 101
+
+
+def test_only_native_console_host_descendant_is_owned(monkeypatch):
+    monkeypatch.setenv("SystemRoot", "C:/Windows")
+    assert ownership._owned_executable({"executable": "C:/Windows/System32/conhost.exe"})
+    assert not ownership._owned_executable({"executable": "C:/unrelated/conhost.exe"})
+
+
+def test_formal_cold_preload_is_reserved_once_in_speed_forecast():
+    model = TAG
+    ledger = [
+        {
+            "event": "response",
+            "request_id": "load",
+            "record": {
+                "model": model,
+                "status": "loaded",
+                "request_id": "load",
+                "client_wall_seconds": 112,
+                "durations_seconds": {},
+            },
+        },
+        {
+            "event": "response",
+            "request_id": "warm",
+            "record": {
+                "model": model,
+                "status": "ok",
+                "request_id": "warm",
+                "client_wall_seconds": 24,
+                "durations_seconds": {"load_duration": 1},
+            },
+        },
+    ]
+    resources = [
+        {
+            "request_id": "warm",
+            "model": model,
+            "before_sampling_wall_seconds": 1,
+            "sampling_wall_seconds": 2,
+        }
+    ]
+    forecast = cli.speed_forecast(ledger, resources, [model])[model]
+    assert forecast["per_request_seconds"] == 26 and forecast["once_per_model_load_seconds"] == 112

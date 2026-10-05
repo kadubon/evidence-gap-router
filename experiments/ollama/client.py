@@ -16,6 +16,7 @@ import math
 import os
 import re
 import socket
+import subprocess
 import sys
 import threading
 import time
@@ -23,6 +24,7 @@ from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
@@ -138,6 +140,35 @@ def _stamp() -> str:
 def _positive(value: Any, name: str, maximum: float) -> None:
     if type(value) not in (int, float) or not math.isfinite(value) or not 0 < value <= maximum:
         raise ValueError(f"{name} must be positive and at most {maximum}")
+
+
+@lru_cache(maxsize=1)
+def _boot_identity() -> str:
+    """Read one stable boot identity on explicit campaign use, never on import."""
+    if sys.platform == "win32":
+        value = subprocess.check_output(
+            [
+                "powershell",
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                "(Get-CimInstance Win32_OperatingSystem).LastBootUpTime"
+                ".ToUniversalTime().ToString('o')",
+            ],
+            text=True,
+            timeout=20,
+        ).strip()
+    elif sys.platform.startswith("linux"):
+        value = Path("/proc/sys/kernel/random/boot_id").read_text("ascii").strip()
+    elif sys.platform == "darwin":
+        value = subprocess.check_output(
+            ["sysctl", "-n", "kern.boottime"], text=True, timeout=20
+        ).strip()
+    else:
+        raise ClientBlocked("campaign boot identity unavailable")
+    if not value:
+        raise ClientBlocked("campaign boot identity empty")
+    return hashlib.sha256(value.encode()).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -638,7 +669,7 @@ class OllamaClient:
                         or not isinstance(i.get("executable_sha256"), str)
                         or re.fullmatch(r"[0-9a-f]{64}", i["executable_sha256"]) is None
                         or i.get("executable_name", "").lower()
-                        not in ("ollama.exe", "llama-server.exe")
+                        not in ("ollama.exe", "llama-server.exe", "conhost.exe")
                         for i in identities
                     )
                 ):
@@ -726,7 +757,76 @@ class OllamaClient:
         with self._locked():
             rows = self._rows()
             self._assert_identity(rows)
-            return self._summary(rows)
+            summary = self._summary(rows)
+            if summary["started_epoch"] is not None:
+                summary["campaign_elapsed_seconds"] = (
+                    self._campaign_epoch(rows) - summary["started_epoch"]
+                )
+            else:
+                summary["campaign_elapsed_seconds"] = 0.0
+            return summary
+
+    def _campaign_epoch(self, rows: list[dict[str, Any]]) -> float:
+        """Keep paused time and a same-boot monotonic lower bound across processes."""
+        observed = max(
+            time.time(), self._created_epoch + time.monotonic() - self._created_monotonic
+        )
+        if not self.config.get("termination_policy"):
+            return observed
+        first = next((r["started_epoch"] for r in rows if r.get("event") == "reserve"), None)
+        if first is None:
+            return observed
+        clock_path = self.path.with_suffix(".clock.json")
+        if not clock_path.exists():
+            last = max(
+                [first]
+                + [r.get("started_epoch", first) for r in rows if r.get("event") == "reserve"]
+                + [
+                    datetime.fromisoformat(r["record"]["ended_at"]).timestamp()
+                    for r in rows
+                    if r.get("event") == "response"
+                ]
+            )
+            if observed < last:
+                raise ClientBlocked("clock precedes the existing campaign; no new anchor")
+            prefix = self.path.read_bytes()
+            anchor = {
+                "first_reservation_epoch": first,
+                "anchor_epoch": observed,
+                "elapsed_seconds": observed - first,
+                "anchor_monotonic": time.monotonic(),
+                "boot_identity": _boot_identity(),
+                "prefix_bytes": len(prefix),
+                "prefix_sha256": hashlib.sha256(prefix).hexdigest(),
+            }
+            with clock_path.open("xb") as handle:
+                handle.write(_bytes(anchor))
+                handle.flush()
+                os.fsync(handle.fileno())
+        if clock_path.stat().st_size > 4096:
+            raise ClientBlocked("clock anchor exceeds its finite envelope")
+        anchor = strict_json(clock_path.read_text("utf-8"))
+        if (
+            anchor["first_reservation_epoch"] != first
+            or anchor["boot_identity"] != _boot_identity()
+            or type(anchor["prefix_bytes"]) is not int
+            or not 0 < anchor["prefix_bytes"] <= self.path.stat().st_size
+            or any(
+                type(anchor.get(k)) not in (int, float)
+                or not math.isfinite(anchor[k])
+                or anchor[k] < 0
+                for k in ("elapsed_seconds", "anchor_monotonic", "anchor_epoch")
+            )
+        ):
+            raise ClientBlocked("clock anchor or boot identity differs; no restart reset")
+        with self.path.open("rb") as handle:
+            prefix = handle.read(anchor["prefix_bytes"])
+        if hashlib.sha256(prefix).hexdigest() != anchor["prefix_sha256"]:
+            raise ClientBlocked("clock's exact retained ledger prefix differs")
+        monotonic_elapsed = time.monotonic() - anchor["anchor_monotonic"]
+        if monotonic_elapsed < 0:
+            raise ClientBlocked("monotonic clock precedes the durable campaign anchor")
+        return max(observed, first + anchor["elapsed_seconds"] + monotonic_elapsed)
 
     def record(self, request_id: str) -> dict[str, Any] | None:
         """Read an existing result without retrying, replaying, or sharing a live response."""
@@ -813,7 +913,7 @@ class OllamaClient:
                 )
             if trial_id in summary["terminated_trial_ids"]:
                 raise ClientBlocked("terminated primary trial cannot be retried")
-            now = max(time.time(), self._created_epoch + time.monotonic() - self._created_monotonic)
+            now = self._campaign_epoch(rows)
             start = summary["started_epoch"] if summary["started_epoch"] is not None else now
             if now < start:
                 raise ClientBlocked("wall clock precedes the ledger start")
@@ -866,6 +966,7 @@ class OllamaClient:
             self._append(
                 reservation
             )  # Durable issuance precedes every possible network side effect.
+            self._campaign_epoch([*rows, reservation])
             record = self._dispatch(body, profile, reservation, validator)
             self._append({"event": "response", "request_id": request_id, "record": record})
             return record

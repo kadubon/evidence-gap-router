@@ -635,6 +635,12 @@ def speed_forecast(
             wall = record["client_wall_seconds"]
             if not _seconds(wall):
                 continue
+            if record.get("status") == "loaded":
+                # Empty ChatHandler load receipts omit server duration counters.
+                # Their full observed wall is a conservative cold-operation
+                # bound, charged once per model block, not every generation.
+                loads.append(float(wall))
+                continue
             load = (record.get("durations_seconds") or {}).get("load_duration")
             if _seconds(load) and load <= wall:
                 loads.append(float(load))
@@ -677,7 +683,11 @@ def freeze(args: argparse.Namespace) -> dict[str, Any]:
     if summary["blocked"] or summary["started_epoch"] is None:
         raise ClientBlocked("freeze requires known completed development dispatches")
     start = summary["started_epoch"]
-    remaining = max(0.0, PROTOCOL["global_limits"]["wall_seconds"] - (time.time() - start))
+    remaining = max(
+        0.0,
+        PROTOCOL["global_limits"]["wall_seconds"]
+        - summary.get("campaign_elapsed_seconds", time.time() - start),
+    )
     guard(args)
     resource_path = args.directory / "resources.jsonl"
     resources = (
@@ -856,7 +866,9 @@ def live(args: argparse.Namespace, client: OllamaClient) -> None:
                 if (
                     summary["blocked"]
                     or summary["started_epoch"] is None
-                    or time.time() - summary["started_epoch"]
+                    or summary.get(
+                        "campaign_elapsed_seconds", time.time() - summary["started_epoch"]
+                    )
                     >= PROTOCOL["global_limits"]["wall_seconds"]
                     or summary["calls"] + maximum_calls > PROTOCOL["global_limits"]["calls"]
                     or summary.get("charged_generated_tokens", summary.get("generated_tokens"))
@@ -924,10 +936,11 @@ def warmup(args: argparse.Namespace, client: OllamaClient) -> None:
 
     settings = trial_settings(args.directory)
     task, _ = development_tasks("024")[0]
+    prefix = "warmup" if args.development_cycle == 1 else f"warmup-cycle-{args.development_cycle}"
     for model in PROTOCOL["models"]:
-        preload_id = "warmup/" + model + "/preload"
+        preload_id = prefix + "/" + model + "/preload"
         if client.record(preload_id) is None:
-            record = BoundClient(client, args, "preload", "warmup/" + model).chat(
+            record = BoundClient(client, args, "preload", prefix + "/" + model).chat(
                 model=model,
                 trial_id="unused",
                 request_id="preload",
@@ -961,7 +974,7 @@ def warmup(args: argparse.Namespace, client: OllamaClient) -> None:
                 ("integrate", Answer),
                 ("review", CompactReview),
             ):
-                identity = f"warmup/{model}/round-{repetition}/{stage}"
+                identity = f"{prefix}/{model}/round-{repetition}/{stage}"
                 existing = client.record(identity + "/call")
                 messages = (
                     extraction_messages(chosen, chosen.documents[0])
@@ -1193,6 +1206,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--wheel", type=Path)
     parser.add_argument("--protocol", type=Path, default=ROOT / "protocol-v0.2.4.json")
     parser.add_argument("--request-id")
+    parser.add_argument("--development-cycle", type=int, choices=(1, 2, 3), default=1)
     parser.add_argument("--freeze", type=Path, default=ROOT / "results/freeze-v0.2.4.json")
     parser.add_argument("--output", type=Path, default=ROOT / "results/v0.2.4")
     args = parser.parse_args(argv)

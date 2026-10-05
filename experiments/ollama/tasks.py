@@ -564,7 +564,10 @@ def _new_tasks(
                 ("L4", 6),
             } or (development and family == "L4")
             decision = "unknown" if unknown else ("yes" if number % 2 else "no")
-            rule = "条件Pと条件Qが両方真である場合に限り許可する。他の条件や例外はない。"
+            rule = (
+                "許可の必要十分条件は条件Pと条件Qが両方真であること。"
+                "両方真なら必ず許可する。他の条件や例外はない。"
+            )
             fact_p = f"{ident}の条件Pは真と確認した。"
             fact_q = f"{ident}の条件Qは{'真' if decision == 'yes' else '偽'}と確認した。"
             if unknown:
@@ -578,7 +581,8 @@ def _new_tasks(
             minimum, historical = 1, ()
             if family == "L2":
                 rule = (
-                    "独立した二発行元が適合と報告した場合に限り許可する。転載は独立発行元でない。"
+                    "許可の必要十分条件は独立した二発行元が適合と報告すること。"
+                    "両発行元が適合なら必ず許可する。転載は独立発行元でない。"
                 )
                 p = f"{ident}は適合と検査甲が報告した。"
                 q = (
@@ -593,10 +597,16 @@ def _new_tasks(
                     ("検査乙", "1", "独立乙", q),
                 ]
                 witnesses, minimum = [(0, rule), (1, p), (3, q)], 3
-                question += "発行元の同一性は公開originで判定する。"
+                question += (
+                    "発行元の同一性は公開originで判定する。"
+                    "対象への公開資料中の報告だけを数え、他の発行元の外部報告は認めない。"
+                )
+                if decision == "no":
+                    witnesses, minimum = [(0, rule), (3, q)], 2
             elif family == "L3":
                 rule = (
-                    "現行版2で条件Pが真かつ禁止例外Qが偽の場合に限り許可する。旧版1は失効している。"
+                    "許可の必要十分条件は現行版2で条件Pが真かつ禁止例外Qが偽であること。"
+                    "現行版の両条件を満たせば必ず許可する。旧版1は失効している。"
                 )
                 q = (
                     f"{ident}の禁止例外Qは未確認である。"
@@ -610,11 +620,13 @@ def _new_tasks(
                     ("記録当局", "2", "記録", current),
                 ]
                 witnesses, historical = [(0, rule), (2, fact_p), (2, q)], ("document-2",)
+                if decision == "no":
+                    witnesses = [(0, rule), (2, q)]
                 question += "記録当局の現行版2を用いる。"
             elif family == "L4":
                 rule = (
-                    "記録当局が当日到着済みと確認した場合に限り許可する。"
-                    "発送だけでは到着を意味しない。"
+                    "許可の必要十分条件は記録当局が当日到着済みと確認したこと。"
+                    "確認済みなら必ず許可する。発送だけでは到着を意味しない。"
                 )
                 fact = (
                     f"{ident}の当日到着状況は未確認である。"
@@ -638,10 +650,18 @@ def _new_tasks(
                 for i, (owner, version, origin, text) in enumerate(material)
             )
             task = PublicTask(task_id, family, question, docs, development)
+            if family == "L1" and decision == "no":
+                witnesses = [(0, rule), (1, fact_q)]
             gold = GoldTask(
                 task_id,
                 decision,
-                tuple(Witness(docs[i].source_id, quote) for i, quote in witnesses),
+                tuple(
+                    Witness(
+                        docs[i].source_id,
+                        quote.split("。", 1)[0] + "。" if quote == rule else quote,
+                    )
+                    for i, quote in witnesses
+                ),
                 minimum,
                 historical,
             )
