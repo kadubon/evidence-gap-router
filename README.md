@@ -28,7 +28,7 @@ input view. The bundled demos are **artificial examples**; local-file output has
 `artificial_data: false` and local scopes.
 
 CSV columns must be exactly `order_id,amount,currency`, in any order. Data must
-have at least one row, unique nonempty IDs, finite amounts above the declared
+have at least one row, unique nonempty IDs, finite amounts at least the declared
 minimum, and an allowed currency. The dictionary is the following fixed contract:
 
 ```json
@@ -150,8 +150,9 @@ from the router's domain stop. Exceptions and invalid receipts retain issued
 attempts, invocation cost and uncertain effects. A pending attempt is never
 reissued. Attempt IDs avoid the entire existing history.
 
-Initial acquisition views contain no other collector's evidence. A verification
-view receives its declared target and exact dependency material. Views are frozen
+Acquisition views disclose only explicitly declared dependencies; the bundled
+independent initial reads declare none. A verification view receives its declared
+target and exact dependency material. Views are frozen
 application-level disclosures, **not a sandbox or a proof of statistical independence**.
 Host-owned candidate factories may inspect the whole state for planning.
 
@@ -173,6 +174,9 @@ assert report.decision.stop_reason == "satisfied"
 assert len(report.state.invalidations) == 1
 assert len(report.state.attempts) == 3
 ```
+
+The supplied path stores the checkpoint after invalidation. Use
+`write_json(report.state, path)` to persist the completed recheck result.
 
 See the [small public APIs](docs/api.md) and [measured benchmark](docs/benchmark.md)
 for the scope of these guarantees and where a fixed pipeline is sufficient.
@@ -268,7 +272,8 @@ Use `write_json(state, path)` and `read_json(path, State)` to save and continue.
 State snapshots have a separate **32 MiB** bound; files and offline `PlanInput`
 remain **1 MiB**. Writes validate the entire readable snapshot before replacing
 the destination. History and negative/unknown records are retained. Legitimate
-old schema-2 states remain readable; older readers reject the new invalidation
+old schema-2 states within the current documented JSON bounds remain readable;
+older readers reject the new invalidation
 field. See [API details](docs/api.md) and [migration](docs/migration.md).
 
 ## Comparison and validation
@@ -279,6 +284,18 @@ material. Conflict, unknown provenance and verification budget cases preserve ga
 The [comparison](docs/comparison.md) records fixed-order and gap-routing outcomes
 from the same materials, checker, callbacks and limits. These finite model-free
 examples do not establish general AI improvement, cost savings or intelligence growth.
+
+The [frozen v0.2.1 benchmark](docs/benchmark.md) adds 240 generated parents,
+strong feasible baselines, an independent oracle and retained raw results.
+In original-order runs (random seed 17), completion among 145 solvable parents
+was EGR 145, fixed 142, verify-first 143 and random 145. The 95% intervals for
+parent-mean differences over all declared orders/seeds include zero. Compared
+with the compatible old-version subset, false satisfaction changed from 9/220
+to 0/220. Selected both-success subsets used fewer callbacks but more trial CPU
+with allocation tracing enabled, including cold imports and desktop noise;
+this is not an all-task savings estimate. Simple fixed pipelines remain
+appropriate for predetermined work; the report retains ties, overhead and
+bounded old-version performance failures.
 
 [Validation profiles](docs/validation.md) distinguish executed results from planned
 profiles. CI builds once on Linux/Python 3.12, installs the same wheel on Windows

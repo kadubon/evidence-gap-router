@@ -1,0 +1,15 @@
+{
+  "question": "Q3",
+  "rows": 360,
+  "versions": [
+    "0.2.0",
+    "0.2.1"
+  ],
+  "completed": 294,
+  "timeout": 65,
+  "exceptions": 1,
+  "unexecuted": 0,
+  "reference_disagreements": [],
+  "indexed_work_bound_violations": [],
+  "limitation": "Method-specific count units; no count-based universal speed ratio. Normal time, count and traced Python allocations use distinct workers. Whole-worker timeouts are right-censored with unknown phase, not plan lower bounds; failed or unexecuted cells retained."
+}

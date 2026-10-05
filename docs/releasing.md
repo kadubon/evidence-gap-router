@@ -74,6 +74,16 @@ Linux 3.12, Windows x64 3.12, macOS arm64 3.12, macOS Intel 3.12, Linux 3.13 and
 Linux 3.14. Skipped/missing jobs are not success. Manual runs, including a dispatch
 at a tag ref, never publish. Any changed commit needs a new successful manual run.
 
+Before creating the tag, download that exact successful manual run's distribution
+artifact and all six native JSON reports into a new external directory. Confirm
+the reported wheel hashes match its wheel, the six canonical benchmark outcome
+hashes agree, and each report has the expected actual OS/architecture/Python,
+locked Pydantic/core, no Rosetta translation, passing pytest and installed smoke.
+Record the run ID, commit, wheel hash and agreed benchmark hash. A missing,
+failed or differing report prevents tagging. The workflow checks cross-profile
+outcome equality again after upload; this pre-tag comparison establishes it before
+publishing. Archive the comparison evidence with the validation records.
+
 There is one workflow, `.github/workflows/workflow.yml`, triggered only by dispatch
 or `v*` tag pushes. Linux 3.12 builds the release distributions once after locked
 gates. The other profiles install that same uploaded wheel. A separate sdist
@@ -190,7 +200,7 @@ uv is pinned to the installed/observed 0.12.19.
 | Action | Official release | Resolved commit |
 | --- | --- | --- |
 | actions/checkout | v7.0.1 | `3d3c42e5aac5ba805825da76410c181273ba90b1` |
-| astral-sh/setup-uv | v10.2.1 | `c18668ad3cf93ea998bef934396af7bb5c839dc7` |
+| astral-sh/setup-uv | v10.2.0 | `c18668ad3cf93ea998bef934396af7bb5c839dc7` |
 | actions/upload-artifact | v7.0.1 | `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a` |
 | actions/download-artifact | v8.0.1 | `3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c` |
 | pypa/gh-action-pypi-publish | v1.14.2 | `dc37677b2e1c63e2034f94d8a5b11f265b73ba33` |

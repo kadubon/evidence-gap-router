@@ -1,0 +1,30 @@
+{
+  "protocol": "egr-021-engineering-v1",
+  "implementation_commit": "305eec2cbf4f16c7d50dbb8bad002bc0cbc6d1c5",
+  "manifest_sha256": "4bfb84ce958aab46890525ee9225832c950e03bbbdfd7266b320c595f65ca06a",
+  "harness_sha256": "d3db76040403efbf802437c8a62514466c01ab0efdfec390823989224aeae4de",
+  "candidate_wheel": "C:\\Users\\1991m\\AppData\\Local\\Temp\\egr-021-evaluation\\candidate-dist-lf\\evidence_gap_router-0.2.1-py3-none-any.whl",
+  "wheel_sha256": "e8c2bead23b7c2cc622ff2a3215e262c23452f621d1298359dba520c027b01aa",
+  "baseline_wheel": "C:\\Users\\1991m\\AppData\\Local\\Temp\\egr-v02-release-37256324812\\dist\\evidence_gap_router-0.2.0-py3-none-any.whl",
+  "baseline_wheel_sha256": "039594d7fc5e39ab7b600c71f54682bb2d46147ba4e69a05a55f255a1806f3bf",
+  "candidate_package_sha256": "5df6a0b5e7c521079e29475950addf6e1b84d62b3f3c70033307a82643e8341a",
+  "baseline_package_sha256": "2a6c9dd4bdddf0a7322a203b73e3963e4e408a95b15cd33500bb43418209a69b",
+  "package_fingerprint_definition": "SHA256 of canonical sorted package-relative filename -> SHA256(bytes) JSON; UTF-8, separators=(',',':'), excludes generated __pycache__.",
+  "environment": {
+    "python": "3.12.14",
+    "os": "Windows-11-10.0.26300-SP0",
+    "machine": "AMD64",
+    "package": "0.2.1",
+    "package_import": "C:\\Users\\1991m\\AppData\\Local\\Temp\\egr-021-evaluation\\new-env\\Lib\\site-packages\\evidence_gap_router\\__init__.py",
+    "pydantic": "2.13.5",
+    "pydantic_core": "2.46.5",
+    "runtime_dependencies": {
+      "pydantic": "2.13.5",
+      "pydantic_core": "2.46.5",
+      "annotated-types": "0.8.0",
+      "typing-extensions": "4.16.0",
+      "typing-inspection": "0.4.4"
+    }
+  },
+  "frozen_at_utc": "2026-10-05T04:38:11Z"
+}

@@ -35,6 +35,73 @@ isolated SDK/CLI/file/issued-history continuation smoke. It is a development
 artifact, distinct from the exact Git-archive candidate and final CI build.
 Actionlint 1.7.12 accepted the changed workflow; shellcheck was unavailable.
 
+The measurement candidate was built on Linux with uv 0.12.19 from implementation
+commit `305eec2cbf4f16c7d50dbb8bad002bc0cbc6d1c5`, using a Git archive with scoped
+`core.autocrlf=false` to preserve the committed LF bytes. An initial Windows
+archive applied CRLF conversion; its differing hashes were detected before
+freeze and holdout, and it remains an unmeasured development artifact. The frozen
+candidate wheel SHA256 is
+`e8c2bead23b7c2cc622ff2a3215e262c23452f621d1298359dba520c027b01aa`;
+its package fingerprint is
+`5df6a0b5e7c521079e29475950addf6e1b84d62b3f3c70033307a82643e8341a`.
+Actual RECORD, wheel/sdist byte equality and frozen harness/protocol checks passed.
+An additional audit of this LF artifact from the CRLF Windows checkout rejected
+the LICENSE byte comparison. The identical command from the frozen LF archive
+passed; archive/reference inputs must have the same committed line-ending bytes.
+Final artifact auditing uses that LF source identity rather than normalizing an
+already-built wheel or weakening the LICENSE comparison.
+Another new external Windows x86_64 / Python 3.12.14 environment passed **223
+installed regressions**, SDK/CLI smoke, and **33 portable benchmark trials / 11
+development parents / 4 graphs** using that candidate. Its benchmark outcome SHA256
+is `b151304eaca99ad064b6a6ad6b27cb4a08361f8257438ec910d57ad6d78b35c5`.
+The original 37 archive/publication/experiment orchestration tests remain
+source-side checks; selecting installed tests does not mark them skipped/pass.
+The final documented release build may have changed README metadata; CI requires
+the exact same measured package and benchmark code/protocol bytes.
+
+The frozen model-free holdout completed all **4,680 new method/reference trials**
+and **720 old-version trials**, covering 240 genuine parents (30 per family).
+Original-order completion was 145/145 solvable parents for EGR, 142/145 fixed,
+143/145 verify-first and 145/145 random seed 17. The three strong-baseline
+parent-cluster 95% completion-difference intervals all include zero. On the
+compatible 220-parent version subset, old EGR completed 99/132 solvable original
+parents versus new EGR 132/132; observed false satisfaction was 9/220 versus
+0/220. Twenty old parents / 60 repetitions require the unsupported new API.
+Deliberate callback/factory/receipt faults remain exceptions rather than correct
+abstentions; unknown verification costs remain unknown.
+The frozen summary's parent-level `correct_abstention` field denotes an
+error-free router stop. Interpret it as correct abstention only when
+`solvable == false`; published aggregate abstention tables already apply that
+condition. Thirty-two solvable arm-parent flags are erroneous stops, not
+correct abstentions. Raw fields are retained without a post-holdout relabel.
+Q1/Q2 trial CPU, end-to-end and allocation tracing begin before the first SDK
+import. The `startup_import_and_ipc_seconds` residual therefore does not isolate
+all SDK/Pydantic import cost; those trial measurements include cold library
+imports. Pure Q3 plan timing is separated and uninstrumented.
+
+All **180 new Q3 cells completed**. Old Q3 retained 114 completed cells,
+65 right-censored whole-worker timeouts and one exception: the instrumented
+cycle/64-target/3-checker count arm reached recursion depth. Its count wrapper
+adds stack depth; this is not an uninstrumented-runtime crash claim. Assessed
+completed cells had no reference disagreement or indexed-work-bound violation.
+Separate ordinary timing and traced-memory records are retained, including small
+warmup/ten-repeat measurements and the large single-repeat cells.
+
+[The English report](benchmark.md) and [Japanese report](benchmark.ja.md) give
+family/budget/paired-cost tables and measurement limits. The immutable raw ZIP
+contains all method/version/scaling JSONL, CSV aggregates, frozen code/protocol,
+exact measured wheels and diagnostic development logs: 9,502,776 bytes, SHA256
+`9212ee2499df0b16b47b23ac3150f71b83b1db69abc85a7123a02044f4fa69a0`.
+Its 29 source-asset hashes and every archived member hash were checked locally.
+It will be attached separately after the actual Release; creation here does not
+assert future upload success. Runtime/harness/protocol remain at the measured
+implementation commit; subsequent tracked changes contain only docs/results.
+
+After adding the docs/results, locked synchronization, Ruff lint, Ruff formatting
+(63 files), mypy (14 source modules) and full source regressions passed again:
+**260 passed**, no skips, in 5.66 seconds. Exact final-commit manual/native checks
+and actual public-byte/install verification remain the separate release gates.
+
 The immutable v0.2.0 release ultimately passed manual run `37255968948` and tag
 run `37256324812` attempt 2 at commit
 `e8d77f210d7579d6a367b7564b485b2586ffd074`. Attempt 1 had already published both

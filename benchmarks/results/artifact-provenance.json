@@ -1,0 +1,49 @@
+{
+  "purpose": "Immutable benchmark artifact provenance; final publication is recorded separately",
+  "protocol": "egr-021-engineering-v1",
+  "manifest_sha256": "4bfb84ce958aab46890525ee9225832c950e03bbbdfd7266b320c595f65ca06a",
+  "harness_commit": "305eec2cbf4f16c7d50dbb8bad002bc0cbc6d1c5",
+  "harness_sha256": "d3db76040403efbf802437c8a62514466c01ab0efdfec390823989224aeae4de",
+  "baseline": {
+    "version": "0.2.0",
+    "runtime_commit": "e8d77f210d7579d6a367b7564b485b2586ffd074",
+    "wheel_filename": "evidence_gap_router-0.2.0-py3-none-any.whl",
+    "wheel_sha256": "039594d7fc5e39ab7b600c71f54682bb2d46147ba4e69a05a55f255a1806f3bf",
+    "package_sha256": "2a6c9dd4bdddf0a7322a203b73e3963e4e408a95b15cd33500bb43418209a69b",
+    "sdist_sha256": "3a5f4b927a29b40750c052c96569af8080257eddf88deb05e8caa0fd7ce8d56f"
+  },
+  "candidate": {
+    "version": "0.2.1",
+    "runtime_commit": "305eec2cbf4f16c7d50dbb8bad002bc0cbc6d1c5",
+    "wheel_filename": "evidence_gap_router-0.2.1-py3-none-any.whl",
+    "wheel_sha256": "e8c2bead23b7c2cc622ff2a3215e262c23452f621d1298359dba520c027b01aa",
+    "package_sha256": "5df6a0b5e7c521079e29475950addf6e1b84d62b3f3c70033307a82643e8341a",
+    "sdist_sha256": "061d46915105061ed3fb9642abf97b06273661c0dd0a9d18ba965f97bd44bcc5"
+  },
+  "freeze_original_sha256": "092dd8e1a8a14eb0b317591c1840b5d48640fb0a88f95fcf0f1b70cc8cd8df7a",
+  "implementation_lf_archive_sha256": "217b6589993388283c5e8b36e5c8e2886d35ff884355ce2483d7ae87bd766d96",
+  "runtime_constraints_sha256": "ab9718db2c5e4d6e8b61ce9817c1deec5deec7629d3626b3436d912180ccbe25",
+  "environment": {
+    "python": "3.12.14",
+    "os": "Windows-11-10.0.26300-SP0",
+    "machine": "AMD64",
+    "package": "0.2.1",
+    "package_import": "C:\\Users\\1991m\\AppData\\Local\\Temp\\egr-021-evaluation\\new-env\\Lib\\site-packages\\evidence_gap_router\\__init__.py",
+    "pydantic": "2.13.5",
+    "pydantic_core": "2.46.5",
+    "runtime_dependencies": {
+      "pydantic": "2.13.5",
+      "pydantic_core": "2.46.5",
+      "annotated-types": "0.8.0",
+      "typing-extensions": "4.16.0",
+      "typing-inspection": "0.4.4"
+    }
+  },
+  "hardware": {
+    "cpu": "AMD Ryzen 7 8840HS w/ Radeon 780M Graphics",
+    "cores": 8,
+    "logical_processors": 16,
+    "ram_bytes": 66363183104
+  },
+  "scope": "CPU/model-free local engineering tasks; no GPU, LLM, token or monetary measurements"
+}

@@ -65,8 +65,10 @@ fair benchmark baselines; hosts still issue and observe the actual invocation.
 ## Bounded serialization and numbers
 
 `dump_json(model) -> str`, `load_json(text, model_type)`, `read_json(path, model_type)`
-and `write_json(model, path) -> None` reject unknown fields/versions, duplicate
-keys and out-of-bound input. State/schema-1 snapshots have a 32 MiB limit;
+and `write_json(model, path) -> None` enforce bounded JSON syntax, duplicate-key
+rejection and numeric limits. SDK record models additionally reject unknown
+fields/versions; custom Pydantic models retain their own validation and
+serialization settings. State/schema-1 snapshots have a 32 MiB limit;
 offline `PlanInput` and individual local data/rules files keep their 1 MiB limit.
 CSV has at most 10,000 rows and each field at most 131,072 characters.
 Nesting is at most 64 levels and JSON integers at

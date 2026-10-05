@@ -80,6 +80,9 @@ assert len(report.state.invalidations) == 1
 assert len(report.state.attempts) == 3
 ```
 
+指定 path には失効後の checkpoint を保存します。再検証を終えた状態も保存する
+場合は、`write_json(report.state, path)` を明示的に呼び出します。
+
 [公開 API](docs/api.md)と[効果・限界の測定](docs/benchmark.ja.md)も参照してください。
 
 `step` は最大 1 呼出し、`run(..., max_steps=32)` は既定で有限です。
@@ -89,8 +92,9 @@ factory/callback の例外、不正 receipt、無進捗、上限到達でも状�
 runner の `max_steps_reached` 等と業務上の `satisfied` を混同しません。
 実行した失敗は呼出回数・不明な費用・副作用を保持し、自動 retry しません。
 
-初期取得 view には他の取得者の回答を含めず、検証時に対象と明示依存資料だけを
-開示します。これはアプリの情報露出規則であり、同一プロセス内の sandbox、
+取得 view には明示した依存資料だけを開示します。同梱例の独立した初回取得は
+依存を宣言しません。検証 view には対象と明示依存資料だけを開示します。
+これはアプリの情報露出規則であり、同一プロセス内の sandbox、
 暗号学的秘匿、統計的独立性ではありません。ホストの factory は計画のため
 全 State を読めます。
 
@@ -107,6 +111,7 @@ URL/path の参照を自動取得せず、handler の文字列を import しま�
 拒否し、offline plan 入力は 1 MiB、State snapshot は別枠で 32 MiB までです。
 `dump_json`/`load_json`/`read_json` で round-trip でき、`write_json(state, path)` は
 全体の読込み検証を済ませてから保存先を置き換えます。履歴や否定的記録は削りません。
+旧 schema 2 snapshot も、現在の JSON サイズ・数値・入れ子の上限内で読み込めます。
 schema 1 は黙って受理せず、[明示的な移行](docs/migration.md)を使います。
 
 Decision の `gaps`・`selected_gap`・`pending_verifications` は、どの対象・条件・
@@ -149,7 +154,8 @@ argparse の使用法エラーも stderr/exit 2 です。`outcome` と業務/run
 指定するホスト操作です。元の record・receipt・費用を変えず、失効イベントを追記します。
 同じイベントの再入力は冪等で、ID 衝突・未知対象・scope 不一致は拒否します。
 取得 callback に他者の否定的記録を失効させる権限を与えず、背景 TTL も行いません。
-正当な旧 schema 2 は引き続き読めます。新 field を含む snapshot は旧 reader では
+正当な旧 schema 2 は現行のサイズ・数値・深さの上限内で引き続き読めます。
+新 field を含む snapshot は旧 reader では
 拒否されます。[API](docs/api.md)と[移行手順](docs/migration.md)を参照してください。
 
 ## 監査・比較・検証範囲
@@ -164,6 +170,15 @@ v0.1 の A01〜A12 を再現し、[監査対応表](docs/audit.md)へ修正・�
 [小さな比較の生結果と解釈](docs/comparison.md)は、同じ資料・callback・checker・予算で
 固定順と gap routing を比較し、同等だったケースも残します。
 一般的な AI 改善、コスト削減、知能成長、集合知効果の実証ではありません。
+
+[固定した v0.2.1 benchmark](docs/benchmark.ja.md)は240親課題、強いfeasible baseline、
+独立oracle、生結果を追加します。元の候補順（random は seed 17）の主条件で、
+解決可能145課題の完了は EGR 145、固定順142、verify-first 143、random 145でした。
+全宣言順序・seed を親課題内で平均した完了差の95%区間はいずれも0を含みます。
+旧版と対応可能なsubsetでは誤受入9/220から0/220。
+両者が全反復で成功した選択subsetではcallback数が減る一方、allocation tracing・
+初回import・desktop負荷を含むtrial CPUは増えました。全課題での費用削減推定ではありません。
+固定手順が明らかな仕事には固定pipelineが適し、同等・追加費用・旧版の打切りも残します。
 
 [実行済みと未確認を分けた検証記録](docs/validation.md)を参照してください。
 CI は Linux/Python 3.12 で 1 回だけ build し、同じ wheel を Windows x64、

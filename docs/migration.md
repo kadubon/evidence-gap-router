@@ -3,7 +3,8 @@
 ## 0.2.0 to 0.2.1
 
 The SDK/CLI entry points and schema **2** remain. A legitimate old schema-2
-snapshot is readable without a new basis being invented. The new optional
+snapshot within the current documented JSON size/numeric/depth bounds is
+readable without a new basis being invented. The new optional
 `State.invalidations` tuple holds exact host evidence/check invalidations;
 new snapshots include it, so 0.2.0 readers reject the unknown field. Keep the
 original file and upgrade the reader before continuing.
@@ -56,8 +57,10 @@ an authenticated execution history.
 
 The old callback shape was `(action, attempt_id, state) -> Result`, in the demo
 host loop. The new public shape is `(view: CallbackView) -> Result`, used by
-`step` or `run`. Initial acquisition has no other collector's content. Verification
-receives only the pinned target and declared dependencies in `view.inputs`.
+`step` or `run`. Acquisition receives only explicitly declared dependencies in
+`view.inputs`; the bundled independent initial reads declare none. Verification
+receives only the pinned target and declared dependencies. This disclosure rule
+does not provide secret isolation within the host process.
 
 ```python
 from evidence_gap_router import CallbackView, Resources
