@@ -170,10 +170,13 @@ def _windows_sample(server_pid: int | None) -> dict[str, Any]:
         }
       }
     }
+    $pageUsage = (Get-CimInstance Win32_PageFileUsage -ErrorAction Stop |
+        Measure-Object CurrentUsage -Sum).Sum
     [PSCustomObject]@{
       total_memory_bytes=[int64]$computerSystem.TotalPhysicalMemory
       installed_memory_bytes=[int64]$installedCapacity
       available_memory_bytes=[int64]$operatingSystem.FreePhysicalMemory*1024
+      swap_used_bytes=[int64]$pageUsage*1048576
       processes=$samples
     } | ConvertTo-Json -Depth 4 -Compress
     """.replace("__IDS__", selected).replace("__SERVER__", str(server))
@@ -244,6 +247,9 @@ def _linux_sample(server_pid: int | None) -> dict[str, Any]:
     return {
         "total_memory_bytes": meminfo.get("MemTotal"),
         "available_memory_bytes": meminfo.get("MemAvailable"),
+        "swap_used_bytes": meminfo["SwapTotal"] - meminfo["SwapFree"]
+        if "SwapTotal" in meminfo and "SwapFree" in meminfo
+        else None,
         "processes": processes,
     }
 
@@ -352,6 +358,11 @@ def collect_resources(server_pid: int | None = None) -> dict[str, Any]:
         "free_memory_floor_basis": (
             "maximum known installed/OS-visible capacity; installed unknown retained"
         ),
+        "swap_used_bytes": _integer(data.get("swap_used_bytes")),
+        "swap_source": {
+            "Windows": "CIM PageFileUsage CurrentUsage (all pagefiles)",
+            "Linux": "/proc SwapTotal minus SwapFree",
+        }.get(system, "unavailable"),
         "available_memory_bytes": available,
         "free_memory_floor_bytes": floor,
         "memory_status": (
@@ -386,6 +397,7 @@ def resource_gate(
     *,
     raw_limit_bytes: int | None = None,
     minimum_disk_free: int = 0,
+    require_swap_observation: bool = False,
 ) -> dict[str, Any]:
     """Check the next-request RAM/disk preconditions; this function never dispatches."""
     resources = collect_resources(server_pid)
@@ -409,6 +421,37 @@ def resource_gate(
     except (OSError, ValueError) as exc:
         used, free, error = None, None, type(exc).__name__
     reasons = []
+    swap = resources.get("swap_used_bytes")
+    swap_history: list[dict[str, Any]] = []
+    worsening_swap = False
+    if require_swap_observation:
+        path = directory / "swap-observations.jsonl"
+        if path.exists():
+            with path.open("rb") as handle:
+                handle.seek(max(0, path.stat().st_size - 65536))
+                tail = handle.read()
+            lines = tail.splitlines()
+            if path.stat().st_size > 65536:
+                lines = lines[1:]
+            swap_history = [strict_json(line.decode("utf-8")) for line in lines[-3:]]
+        current = {"observed_epoch": time.time(), "swap_used_bytes": swap}
+        sequence = [*swap_history, current]
+        values = [row.get("swap_used_bytes") for row in sequence]
+        worsening_swap = (
+            len(values) == 4
+            and all(type(value) is int and value >= 0 for value in values)
+            and all(right > left for left, right in zip(values, values[1:], strict=False))
+            and values[-1] - values[0] >= 256 * 1024**2
+        )
+        directory.mkdir(parents=True, exist_ok=True)
+        with path.open("ab") as handle:
+            handle.write((json.dumps(current, sort_keys=True) + "\n").encode("utf-8"))
+            handle.flush()
+            os.fsync(handle.fileno())
+        if type(swap) is not int or swap < 0:
+            reasons.append("swap_observation_unknown")
+        if worsening_swap:
+            reasons.append("sustained_swap_growth")
     if resources["memory_status"] != "okay":
         reasons.append("system_memory_" + resources["memory_status"])
     if server_pid is not None and resources["server_alive"] is not True:
@@ -427,6 +470,13 @@ def resource_gate(
         "disk_observation_error": error,
         "safe_for_new_request": not reasons,
         "blocking_reasons": reasons,
+        "swap_growth_observed": worsening_swap,
+        "swap_growth_policy": (
+            "Four consecutive known observations, every delta positive, "
+            "net increase at least 256 MiB"
+        )
+        if require_swap_observation
+        else "not enforced in this legacy profile",
     }
 
 

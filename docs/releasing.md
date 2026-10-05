@@ -1,56 +1,59 @@
 # Release procedure
 
-Source publication, GitHub Release, PyPI upload and public-install verification
-are separate outcomes. Do not move a public tag, replace public bytes, weaken
-environment protection or describe unexecuted checks as passed. This updates an
-existing project; v0.1.0 through v0.2.2 and their public assets remain unchanged.
+Source publication, GitHub Release, PyPI upload and public-download verification
+are distinct outcomes. The authorized version is **0.2.4 / v0.2.4**. Existing
+tags, public distributions and old raw experiments remain immutable.
 
-## Freeze and measure before final publication
+## Freeze before primary measurement
 
-The authorized release is v0.2.3. The supplied experiment document's earlier
-no-new-version assumption is superseded by the user's explicit publication request.
-Audit the actual official v0.2.2 distribution first. Its wheel SHA256 is
-`6f417e5664513a5a3125051642dab46b85065f74ab5f669b999a24a79ae7bbc5`, and its
-package fingerprint is `b74c3e906270813246c3871e71a32c40900bbf4bfdc5a7d21577880fddec2afe`.
-Retain its tag, wheel, sdist, frozen experiments and raw archive unchanged.
+The unchanged official v0.2.3 wheel was audited before edits; its SHA256 is
+`73b5e3cf0cacbae0b3dc33f0aacda7355dfe7b4b539d4b3aa7638c57da7ecd59`.
+The new runtime uses canonical Git LF bytes. Build a candidate from an exact
+committed archive, install it noneditable outside the checkout and verify every
+runtime file against Git, wheel and actual site-packages bytes.
 
-Commit the runtime, experiment client/harness, prompts, finite public tasks,
-evaluation-only oracle and protocol before confirmation. Build the candidate
-from that exact archive, install it outside the checkout and freeze its commit,
-wheel/package hashes, protocol/harness hashes, exact local model digests,
-decode controls, all trial keys and environment. Backend smoke and development
-pilot precede confirmation. Select the 24/16/8-parent profile from recorded
-speed, memory and remaining capacity, without inspecting arm success rates.
-If the minimum profile cannot fit, report pilot-only results.
+Commit and hash the existing Ollama harness, prompts, public/gold tasks, oracle,
+protocol, model/template identities, stage caps, transport, budget, seeds, keys,
+order and analysis after calibration/pilot. Select **24 or 16** new parents from
+speed/resources only. Eight is not a v0.2.4 confirmation profile.
 
-Gemma and Qwen comparisons are separate. A/B share public `run`, callback views,
-finite pool, permissions, budgets and stops; only their selectors differ.
-C receives all public documents together and is a separate pooled-information
-reference. Hidden gold stays outside prompts and callback inputs. The protocol's
-one serial generation stream and global call/token/wall/disk envelopes cover
-smoke, pilot, confirmation and any auxiliary work. Durable pre-dispatch
-reservations and unknown pending consumption are retained across resume;
-no automatic HTTP retry, JSON repair or model fallback is permitted.
-A runtime/protocol fix after confirmation requires retained old records and a
-new protocol with unused confirmation inputs, without resetting the total budget.
+Both models use one serial owned server. Qwen starts first. Common paid format
+repair is limited to one per stage, two per trial; semantic correction is a
+different callback. A/B share public runner, finite pool, authority, callbacks,
+resources and stops. C is a pooled-information reference. Gold never enters
+model prompts. Development revisions and every expense remain separately
+identified; old results are not relabeled under a new task definition.
 
-Keep raw JSONL/CSV and scaling records outside the wheel. A later docs/results
-commit records the freeze, small summary, English report and Japanese summary.
-Large raw results are a separately checksummed Release asset. Final CI calls
-`package_audit.py --benchmark-freeze experiments/ollama/results/freeze-v0.2.3.json` so documentation
-metadata changes cannot conceal changed measured package bytes. The sdist rebuilt
-wheel must also have the same package fingerprint. The benchmark code hashes are
-recorded independently of the later results files, avoiding a self-hash cycle.
-The original `benchmarks/results/freeze.json`, `benchmarks/results/freeze-v0.2.2.json`,
-versioned v0.2.1 results/reports,
-`benchmarks/protocol-v0.2.1.json` and official raw ZIP remain unchanged. Raw
-reclassification in `benchmarks/results/v0.2.1-erratum/` is separate from newly
-executed results in `benchmarks/results/v0.2.2/`. The erratum never promotes an
-unknown resource/effect stop to known safe abstention or rewrites old CPU timings.
-The model-free v0.2.2 benchmark is documented in [its report](benchmark.md);
-it is distinct from the new [Ollama technical report](ollama-experiment.md) and
-[Japanese summary](ollama-experiment.ja.md). No pending CI, model inference,
-PyPI installation or Release asset is described as already verified.
+The finite `egr-024-local-ollama-v1` campaign has 48 hours from its first dispatch,
+4,000 requests, 4 million generated/40 million total tokens and 4 GiB raw bytes.
+Durable receipts can be recovered without inference. Only positively verified
+owned-process exit plus an independently supported cap permits a new server
+epoch after an uncertain call. Actual usage stays null and its full reservation
+remains charged. Failed primary keys are not retried; at most two such recoveries
+are allowed. No legacy 4h→8h amendment resets this campaign.
+
+Primary-measured runtime/harness changes require retained old results and a new
+protocol with unused confirmation tasks. A later docs/results commit may change
+whole-wheel metadata, but every runtime fingerprint and measured source byte
+must still match `experiments/ollama/results/freeze-v0.2.4.json` exactly.
+The sdist-built wheel must have the same runtime fingerprint. AST equivalence
+and line-ending-insensitive comparisons do not pass the new gate.
+
+Large raw files stay outside main and the wheel. `scripts/pack_ollama.py` verifies
+the selected v0.2.4 protocol, candidate wheel and freeze, preserves original
+public journal/output bytes, explicitly excludes private owner paths/server
+logs, and refuses secret/path-bearing outputs. The archive has its own export
+identity, manifest and exclusions list. It includes earlier development code
+and costs; weights and user documents are absent. Download the actual public
+archive, safely extract it, then run its retained
+`supplemental/reanalyze_ollama_024.py` to reproduce byte-equal scored outputs
+without inference. Creation, upload and download verification are separate states.
+
+Current methods/results belong in [the v0.2.4 report](ollama-experiment-v0.2.4.md)
+and [Japanese summary](ollama-experiment-v0.2.4.ja.md). The
+[v0.2.3 report](ollama-experiment.md) and all prior freezes remain archives.
+Prepublication source snapshots state checks actually executed; a release's
+public-verification attachment records later publication checks.
 
 ## Local and exact-commit manual validation
 
@@ -65,7 +68,7 @@ uv run --locked pytest
 uv build --no-sources
 uv run --locked python -c 'from pathlib import Path; Path("dist/.gitignore").unlink(missing_ok=True)'
 uv run --locked twine check dist/*
-uv run --locked python scripts/package_audit.py dist --benchmark-freeze experiments/ollama/results/freeze-v0.2.3.json
+uv run --locked python scripts/package_audit.py dist --benchmark-freeze experiments/ollama/results/freeze-v0.2.4.json
 ```
 
 Remove only uv's generated `dist/.gitignore`; other unexpected files remain errors.
@@ -78,7 +81,7 @@ credentials, unrelated files, caches or local/editable dependencies.
 Test the existing wheel from a new environment outside the checkout, for example:
 
 ```sh
-uv run --no-project --python 3.12 python scripts/native_check.py --wheel dist/evidence_gap_router-0.2.3-py3-none-any.whl --version 0.2.3 --python 3.12 --platform Linux --architecture x86_64 --report /tmp/egr-native-linux.json
+uv run --no-project --python 3.12 python scripts/native_check.py --wheel dist/evidence_gap_router-0.2.4-py3-none-any.whl --version 0.2.4 --python 3.12 --platform Linux --architecture x86_64 --report /tmp/egr-native-linux.json
 ```
 
 On Windows use `--platform Windows --architecture x86_64` and an external report
@@ -87,7 +90,7 @@ runtime constraints and pytest, copies regressions and the small benchmark outsi
 the source, verifies import locations and runs both installed smokes.
 Build/install the sdist separately and compare its package bytes with the release
 wheel using `package_audit.py --rebuilt-wheel PATH`.
-`scripts/smoke.py --expected-version 0.2.3` receives the actual expected version;
+`scripts/smoke.py --expected-version 0.2.4` receives the actual expected version;
 it must run with that clean environment's isolated Python outside the repository.
 
 Commit/push `main` normally, then dispatch combined CI only after changes are ready:
@@ -112,7 +115,7 @@ Check the actual selected runtime tests and portable smoke outcomes, including
 the helper/resolution/selector regressions; do not substitute an old outcome
 hash for the newly executed report. Source-only archive/experiment tests run in
 the full Linux source gate and are listed separately in each native report.
-The v0.2.3 fake local HTTP and finite experiment/oracle contracts must also pass
+The v0.2.4 fake local HTTP and finite experiment/oracle contracts must also pass
 in each of the six clean native profiles. They exercise mock communication and
 budget/resume semantics and are not counted as Gemma/Qwen inference results.
 Actual Ollama processes, model weights, downloads and real generation requests
@@ -150,7 +153,7 @@ reviewers and protections. If authentication, publisher or required approval is
 actually unavailable, finish implementation/local/manual verification, record
 the exact remaining operation and do not bypass it.
 
-Check official PyPI for 0.2.3 before tagging. If it already exists, compare its
+Check official PyPI for 0.2.4 before tagging. If it already exists, compare its
 actual files/hashes and report the collision; do not change version silently,
 replace files or use `skip-existing` to turn conflict into success.
 
@@ -162,8 +165,8 @@ Once configuration is confirmed and manual CI passed for the unchanged commit:
 git switch main
 git status --short
 git rev-parse HEAD
-git tag -a v0.2.3 -m "evidence-gap-router 0.2.3"
-git push origin v0.2.3
+git tag -a v0.2.4 -m "evidence-gap-router 0.2.4"
+git push origin v0.2.4
 gh run list --repo kadubon/evidence-gap-router --workflow workflow.yml --event push --limit 5
 gh run view RELEASE_RUN_ID --repo kadubon/evidence-gap-router
 ```
@@ -188,14 +191,14 @@ This addresses actual 0.2.0 index visibility lag without retrying its successful
 upload. A new outside-repository environment then runs:
 
 ```sh
-python -m pip --isolated install --no-cache-dir --index-url https://pypi.org/simple evidence-gap-router==0.2.3
+python -m pip --isolated install --no-cache-dir --index-url https://pypi.org/simple evidence-gap-router==0.2.4
 ```
 
 Installed isolated smoke verifies version, SDK, CLI, exact-decimal local files,
 issued-history invalidation/continuation, data/cause examples and migration;
 the same public environment runs portable benchmark smoke. The final job requires
 six matching passed native reports and benchmark outcome hashes, generates
-v0.2.3-specific release notes and attaches the original wheel/sdist, `SHA256SUMS`
+v0.2.4-specific release notes and attaches the original wheel/sdist, `SHA256SUMS`
 and native JSON reports, the new Ollama freeze/protocol and small summaries,
 artifact provenance and the English/Japanese experiment reports. Keep prior
 model-free reports and erratum available at their original versioned locations.
@@ -215,7 +218,7 @@ new directory, and compare public filenames/bytes before choosing the next actio
 
 ```sh
 gh run download RELEASE_RUN_ID --repo kadubon/evidence-gap-router --name distributions-COMMIT_SHA --dir EXTERNAL_ARTIFACT_DIR
-python scripts/verify_pypi.py EXTERNAL_ARTIFACT_DIR 0.2.3
+python scripts/verify_pypi.py EXTERNAL_ARTIFACT_DIR 0.2.4
 ```
 
 If public verification fails after upload, report **published; post-publication

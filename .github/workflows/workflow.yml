@@ -43,12 +43,13 @@ jobs:
           uv run --locked ruff format --check .
           uv run --locked mypy src
           uv run --locked pytest
+          uv run --locked python scripts/check_docs.py
       - name: Build and inspect fixed distributions
         run: |
           uv build --no-sources
           uv run --locked python -c 'from pathlib import Path; Path("dist/.gitignore").unlink(missing_ok=True)'
           uv run --locked twine check dist/*
-          uv run --locked python scripts/package_audit.py dist --benchmark-freeze experiments/ollama/results/freeze-v0.2.3.json
+          uv run --locked python scripts/package_audit.py dist --benchmark-freeze experiments/ollama/results/freeze-v0.2.4.json
       - name: Check tag admission and prior manual validation
         id: guard
         env:
@@ -281,5 +282,5 @@ jobs:
           MANUAL_RUN: ${{ needs.build.outputs.manual_run }}
         run: |
           uv run --no-project --python 3.12 python scripts/release_notes.py --version "$VERSION" --commit "$COMMIT" --manual-run "$MANUAL_RUN" --release-run "$GITHUB_RUN_ID" --profiles release/native --dist dist --output release/notes.md
-          uv run --no-project --python 3.12 python scripts/experiment_assets.py release/experiment
+          uv run --no-project --python 3.12 python scripts/experiment_assets.py release/experiment --version "$VERSION"
           gh release create "v$VERSION" dist/*.whl dist/*.tar.gz release/SHA256SUMS release/native/*.json release/experiment/* --repo kadubon/evidence-gap-router --verify-tag --title "v$VERSION" --notes-file release/notes.md

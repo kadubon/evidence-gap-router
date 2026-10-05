@@ -52,10 +52,15 @@ def main() -> None:
         ):
             raise ValueError(f"Profile is not a passing native test of this artifact: {name}")
         if (
-            args.version == "0.2.3"
+            args.version in {"0.2.3", "0.2.4"}
             and report.get("experiment_contract", {}).get("status") != "passed"
         ):
             raise ValueError(f"Portable experiment contract did not pass: {name}")
+        if (
+            args.version == "0.2.4"
+            and report.get("documentation_examples", {}).get("status") != "passed"
+        ):
+            raise ValueError(f"Installed documentation examples did not pass: {name}")
         benchmark_hashes.add(report["benchmark"]["outcome_sha256"])
         rows.append(
             f"| {system} | {architecture} | {report['python']} | "
@@ -150,6 +155,68 @@ def main() -> None:
             "A cache-free official-index installation passed SDK/CLI/examples/migration "
             "and model-free benchmark smoke. SHA256SUMS covers the distribution files; "
             "the experiment has a separate raw-data manifest and checksum.\n"
+        )
+    if args.version == "0.2.4":
+        summary = json.loads(
+            Path("experiments/ollama/results/v0.2.4/summary.json").read_text("utf-8")
+        )
+        frozen = json.loads(
+            Path("experiments/ollama/results/freeze-v0.2.4.json").read_text("utf-8")
+        )
+        results = []
+        for model in summary["outcomes"]:
+            for arm in ("A", "B", "C"):
+                value = summary["outcomes"][model][arm]
+                answerable = value["answerable"]
+                results.append(
+                    f"| {model} | {arm} | {answerable['verified_supported_completion']} / "
+                    f"{answerable['assessed']} / {answerable['planned']} | "
+                    f"{value['false_acceptance']} | {value['unexecuted']} |"
+                )
+        notes = (
+            "Evidence-gap router 0.2.4 retains the SDK acceptance and authority contracts, "
+            "adds a finite long-request owned Ollama controller, durable receipt recovery, "
+            "paid common formatting repair, independent grounding scores "
+            "and fresh stop-policy measurements. "
+            "The READMEs and complete ordinary-wheel examples "
+            "now lead to a small documentation index.\n\n"
+            f"[Getting started]({tree}/docs/getting-started.md), "
+            f"[Ollama guide]({tree}/docs/ollama-guide.md), "
+            f"[audit]({tree}/docs/audit-024.md), "
+            f"[English results]({tree}/docs/ollama-experiment-v0.2.4.md), "
+            f"[Japanese summary]({tree}/docs/ollama-experiment-v0.2.4.ja.md).\n\n"
+            f"New frozen confirmation: {frozen['selected_parent_count']} parents per model. "
+            "A and B share the public runner, pool, permissions, views, "
+            "callback budgets and stops; "
+            "C is a pooled-information reference. Exact model identities "
+            "and every development/failed invocation remain in the experiment assets. "
+            "Unknown usage is not zero or model incapacity.\n\n"
+            "| Model | Arm | Answerable verified / assessed / planned | "
+            "False acceptance | Unexecuted |\n"
+            "| --- | --- | --- | --- | --- |\n" + "\n".join(results) + "\n\n"
+            "Review syntax, grounded answers, review acceptance, "
+            "unknown-world abstention and false PASS are separate metrics. "
+            "The summary retains parent-paired intervals, unresolved bounds, all-trial costs, "
+            "failed/successful costs, both-success subset costs and fresh strict/bounded pairs. "
+            "Small authored tasks do not establish general superiority, model ranking "
+            "or independent-agent benefits. Earlier tags and public bytes are unchanged.\n\n"
+            "The same universal wheel passed installed SDK/CLI, Unicode-file, "
+            "continuation, migration, "
+            "documentation examples and portable fake-HTTP contracts on all six native profiles. "
+            "Live model inference was local and separate from CI.\n\n"
+            "| OS | Actual architecture | Python | Pydantic / core | Installed checks |\n"
+            "| --- | --- | --- | --- | --- |\n" + "\n".join(rows) + "\n\n"
+            f"Portable benchmark outcome SHA256: {next(iter(benchmark_hashes))}\n\n"
+            f"Commit: {args.commit}\n\n"
+            f"Manual validation: https://github.com/kadubon/evidence-gap-router/actions/runs/{args.manual_run}\n\n"
+            f"Release validation: https://github.com/kadubon/evidence-gap-router/actions/runs/{args.release_run}\n\n"
+            "Actual official PyPI wheel/sdist bytes matched the build artifacts. "
+            "A cache-free official-index install passed SDK/CLI/migration smoke. "
+            "Raw export creation, upload, public download and "
+            "byte-equal reanalysis are separately recorded in publication verification assets. "
+            "Host input/checker trust, effects and process ownership remain host responsibilities; "
+            "the SDK does not supply exactly-once external execution "
+            "or semantic truth guarantees.\n"
         )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding="utf-8")

@@ -247,7 +247,11 @@ def guard(args: argparse.Namespace) -> dict[str, Any]:
         args.directory,
         server_pid=args.server_pid,
         **(
-            {"raw_limit_bytes": 4294967296, "minimum_disk_free": 5368709120}
+            {
+                "raw_limit_bytes": 4294967296,
+                "minimum_disk_free": 5368709120,
+                "require_swap_observation": True,
+            }
             if edition() == "024"
             else {}
         ),
@@ -1146,7 +1150,12 @@ def calibrate(args: argparse.Namespace, client: OllamaClient) -> dict[str, Any]:
             for cap in (512, 2048):
                 for case in bank:
                     task = next(t for t, g in tasks if t.task_id == case["public_task"]["task_id"])
-                    identity = f"calibration/{model}/{schema_name}/{cap}/{case['case_id']}"
+                    calibration_prefix = (
+                        "calibration"
+                        if args.development_cycle == 1
+                        else f"calibration-cycle-{args.development_cycle}"
+                    )
+                    identity = f"{calibration_prefix}/{model}/{schema_name}/{cap}/{case['case_id']}"
                     record = client.record(identity + "/call")
                     if record is None:
                         record = BoundClient(client, args, "calibration", identity).chat(

@@ -177,7 +177,8 @@ def test_timeout_terminates_owned_descendant_but_not_unrelated_process(tmp_path)
         try:
             result = run_worker(
                 [sys.executable, "-I", "-c", code, child, str(heartbeat)],
-                wall_limit_seconds=0.3,
+                # Include two interpreter startups under concurrent CPU load.
+                wall_limit_seconds=2,
             )
             assert result["worker_status"] == "timeout", result
             assert heartbeat.exists()

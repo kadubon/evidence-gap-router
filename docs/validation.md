@@ -1,6 +1,32 @@
 # Validation evidence and native profiles
 
-## v0.2.2 audit and current validation evidence
+## v0.2.4 development validation
+
+The unchanged v0.2.3 source passed 630 tests on Windows x64 / Python 3.12.14.
+Its fresh official wheel passed 296 installed SDK regressions, 172 portable
+fake-HTTP contracts and smoke. These are model-free checks.
+
+The third development revision passed 666 source tests (42.70 seconds),
+Ruff check/format and mypy. Its ordinary candidate wheel passed 296 SDK
+regressions and 203 portable experiment contracts (16.23 seconds) on this
+Windows host. Complete EN/JA README
+callbacks, real UTF-8 CSV/JSON with Japanese/space paths and snapshot continuation
+were executed outside the checkout through the installed wheel. The documentation
+checker verified 181 local links. The earlier implementation
+`1a1ce17a7d3a39096ef0342fc8eec9887166ab37` passed 655 source tests and
+197 portable contracts before the final task/resource/resume audit. These
+development counts are not a future release-CI claim.
+
+The release retains six native profiles: Linux 3.12 build/full, Windows x64
+3.12, macOS arm64 and Intel 3.12, Linux 3.13 and 3.14. The same universal wheel
+is installed in each profile; actual machine and native Pydantic/core imports
+are recorded. Local Windows CPU inference and portable fake-HTTP contracts
+are distinct. Final exact-commit manual CI and tag publication have not run yet.
+
+[Current audit](audit-024.md), [experiment report](ollama-experiment-v0.2.4.md)
+and [release procedure](releasing.md) record the remaining checks and boundaries.
+
+## Archived v0.2.2 validation evidence
 
 Before edits, the unchanged `3e6a547dd38af9668115aaad9d9d30129c018c1b`
 source passed its original **260 tests**, without skips, in 5.72 seconds on this

@@ -329,11 +329,25 @@ class _Trial:
                 record = self.client.lookup(request_id)
             callback_calls = [record] if record is not None else []
             if self.settings:
-                repaired = self.client.lookup(request_id + ":format-repair-1")
+                repaired = next(
+                    (
+                        item
+                        for item in self.calls
+                        if item["request_id"] == request_id + ":format-repair-1"
+                    ),
+                    None,
+                )
+                if repaired is None:
+                    repaired = self.client.lookup(request_id + ":format-repair-1")
                 if repaired is not None:
+                    if record is None:
+                        self.fault = "pending_or_unknown_dispatch"
+                        return
                     callback_calls.append(repaired)
                     record = repaired
-            if record is None or record.get("unknown_consumption") or record.get("pending"):
+            if not callback_calls or any(
+                c.get("unknown_consumption") or c.get("pending") for c in callback_calls
+            ):
                 self.fault = "pending_or_unknown_dispatch"
                 return
             record = {
@@ -341,13 +355,18 @@ class _Trial:
                 "stage": attempt.action.id.split(":")[0],
                 "stage_provenance": "host_action_id",
             }
-            if all(item["request_id"] != request_id for item in self.calls):
-                self.calls.extend(
-                    c
-                    for c in callback_calls
-                    if c is not None
-                    and all(old["request_id"] != c["request_id"] for old in self.calls)
-                )
+            for call in callback_calls:
+                if all(old["request_id"] != call["request_id"] for old in self.calls):
+                    repair_call = call["request_id"].endswith(":format-repair-1")
+                    self.calls.append(
+                        {
+                            **call,
+                            "stage": "repair" if repair_call else attempt.action.id.split(":")[0],
+                            "stage_provenance": "host_format_repair"
+                            if repair_call
+                            else "host_action_id",
+                        }
+                    )
             if self.settings and len(callback_calls) > 1:
                 record = {
                     **record,

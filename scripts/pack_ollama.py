@@ -160,7 +160,10 @@ def pack(
         p.name: hashlib.sha256(checked_path(p).read_bytes()).hexdigest() for p in harness_paths
     }
     combined = b"".join(p.name.encode() + p.read_bytes() for p in harness_paths)
-    protocol_path = checked_path(directory / "protocol.json")
+    protocol_name = freeze.get("protocol_file", "protocol.json")
+    if not isinstance(protocol_name, str) or Path(protocol_name).name != protocol_name:
+        raise ValueError("Protocol filename must stay in the frozen harness directory")
+    protocol_path = checked_path(directory / protocol_name)
     if (
         hashes != freeze["harness_files"]
         or hashlib.sha256(combined).hexdigest() != freeze["harness_sha256"]
@@ -168,6 +171,8 @@ def pack(
     ):
         raise ValueError("Current harness/protocol differs from supplied exact freeze")
     protocol = json.loads(protocol_path.read_bytes())
+    version = protocol["package_version"]
+    modern = version == "0.2.4"
     for filename, key in (
         ("frozen-public-tasks.json", "public_tasks_sha256"),
         ("evaluation-only-gold.json", "evaluation_only_gold_sha256"),
@@ -177,24 +182,29 @@ def pack(
             raise ValueError("Raw task/gold/preflight bytes differ from freeze")
     if not (raw / "calls.jsonl").is_file():
         raise ValueError("Use the dedicated live-data directory with its original journal")
-    historical = raw / "segments/initial-4h"
-    initial_path = checked_path(historical / "manifest.json")
-    expected_initial = protocol["budget_amendment"]["initial_segment_manifest_sha256"]
-    if hashlib.sha256(initial_path.read_bytes()).hexdigest() != expected_initial:
-        raise ValueError("Historical segment manifest differs from preserved provenance")
-    for filename, expected in json.loads(initial_path.read_bytes())["files"].items():
-        source = checked_path(historical / filename)
-        if not source.is_relative_to(historical):
-            raise ValueError("Historical manifest path leaves its segment")
-        content = source.read_bytes()
-        if (
-            len(content) != expected["bytes"]
-            or hashlib.sha256(content).hexdigest() != expected["sha256"]
-        ):
-            raise ValueError("Historical segment file differs from retained manifest")
+    historical = raw / ("development-history" if modern else "segments/initial-4h")
+    if not modern:
+        initial_path = checked_path(historical / "manifest.json")
+        expected_initial = protocol["budget_amendment"]["initial_segment_manifest_sha256"]
+        if hashlib.sha256(initial_path.read_bytes()).hexdigest() != expected_initial:
+            raise ValueError("Historical segment manifest differs from preserved provenance")
+        for filename, expected in json.loads(initial_path.read_bytes())["files"].items():
+            source = checked_path(historical / filename)
+            if not source.is_relative_to(historical):
+                raise ValueError("Historical manifest path leaves its segment")
+            content = source.read_bytes()
+            if (
+                len(content) != expected["bytes"]
+                or hashlib.sha256(content).hexdigest() != expected["sha256"]
+            ):
+                raise ValueError("Historical segment file differs from retained manifest")
     sources: dict[str, Path] = {}
     excluded: dict[str, str] = {}
-    wheel = historical / f"evidence_gap_router-{protocol['package_version']}-py3-none-any.whl"
+    wheel = (
+        raw / "candidate" if modern else historical
+    ) / f"evidence_gap_router-{version}-py3-none-any.whl"
+    if not wheel.is_file():
+        raise ValueError("Retain the exact ordinary installed candidate wheel in the raw export")
     for path in sorted(raw.rglob("*")):
         checked = checked_path(path)
         if not checked.is_relative_to(raw):
@@ -202,15 +212,22 @@ def pack(
         if not path.is_file():
             continue
         name = "raw/" + path.relative_to(raw).as_posix()
+        if modern and path.is_relative_to(raw / "private"):
+            excluded[name] = (
+                "Private native owner paths and server logs; "
+                "public epoch/exit identities retained separately"
+            )
+            continue
         if path.name == "artifact-provenance.json" and not path.is_relative_to(historical):
             excluded[name] = "Published separately to avoid a ZIP self-hash cycle"
             continue
-        if path.suffix in {".log", ".lock"}:
+        if path.suffix in {".log", ".lock", ".tmp"}:
             excluded[name] = "Private server log or operational lock, not a request/receipt event"
             continue
         allowed = (
             path.suffix in {".json", ".jsonl", ".csv"}
             or (path.suffix == ".py" and path.parent == historical)
+            or (modern and path.suffix == ".py" and path.is_relative_to(historical))
             or (
                 path.suffix == ".txt"
                 and path.parent == raw / "preflight"
@@ -224,8 +241,10 @@ def pack(
             raise ValueError(f"Unexplained source type: {name}; no history silently omitted")
         sources[name] = path
     sources.update({"harness/" + p.name: p for p in harness_paths})
-    sources["harness/protocol.json"] = protocol_path
-    sources["freeze-v0.2.3.json"] = freeze_path
+    sources["harness/" + protocol_name] = protocol_path
+    if modern:
+        sources["harness/protocol.json"] = checked_path(directory / "protocol.json")
+    sources[f"freeze-v{version}.json"] = freeze_path
     for path in sorted(summary.iterdir()):
         checked_path(path)
         if path.is_dir():
@@ -238,11 +257,14 @@ def pack(
         if path.suffix not in {".json", ".jsonl", ".csv", ".md"}:
             raise ValueError("Unexpected summary source type")
         sources["analysis/" + path.name] = path
-    supplemental = root / "scripts/recount_ollama_023.py"
+    supplemental = root / (
+        "scripts/reanalyze_ollama_024.py" if modern else "scripts/recount_ollama_023.py"
+    )
     if supplemental.exists():
-        sources["supplemental/recount_ollama_023.py"] = checked_path(supplemental)
-    if sum(path.stat().st_size for path in sources.values()) > MAX_BYTES:
-        raise ValueError("Raw archive source envelope exceeds 512 MiB")
+        sources["supplemental/" + supplemental.name] = checked_path(supplemental)
+    maximum_bytes = protocol["global_limits"]["disk_bytes"] if modern else MAX_BYTES
+    if sum(path.stat().st_size for path in sources.values()) > maximum_bytes:
+        raise ValueError("Raw archive source envelope exceeds the fixed byte budget")
     manifest = {}
     for name, path in sources.items():
         content = path.read_bytes()
@@ -279,6 +301,12 @@ def pack(
         "sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
         "verified_entries": len(manifest),
         "explicitly_excluded_sources": excluded,
+        "protocol_id": protocol["protocol_id"],
+        "package_version": version,
+        "identity": (
+            "Privacy-checked export with exact retained event/output bytes; "
+            "private operational files excluded explicitly"
+        ),
     }
 
 

@@ -259,9 +259,12 @@ def analyze(
             unexecuted=not executed,
             transport_completed=bool(calls) and all(c.get("done") is True for c in calls),
             known_usage=bool(calls) and all(c.get("unknown_consumption") is False for c in calls),
-            request_pending=any(c.get("pending") for c in calls),
+            request_pending=any(
+                c.get("pending") and c.get("request_id") not in terminated_ids for c in calls
+            ),
             terminated_unmetered=any(c.get("request_id") in terminated_ids for c in calls),
-            output_schema_valid=bool(calls)
+            output_schema_valid=isinstance(result.get("answer"), dict),
+            all_call_outputs_schema_valid=bool(calls)
             and all(isinstance(c.get("parsed"), dict) for c in calls),
             length_or_format_fault=any(
                 c.get("status") in ("length", "final_json_error", "schema_error", "empty_final")
@@ -290,8 +293,10 @@ def analyze(
             not in ("unknown_consumption", "pending_or_unknown_dispatch", "callback_exception")
             and (edition != "024" or row["known_usage"])
         )
-        row["false_acceptance"] = row["system_claimed_complete"] and not bool(
-            row["evidence_supported_completion"]
+        row["false_acceptance"] = (
+            row["system_claimed_complete"] and not bool(row["evidence_supported_completion"])
+            if row["oracle_assessed"]
+            else None
         )
         rows.append(row)
         if not row["evidence_supported_completion"]:
@@ -641,6 +646,47 @@ def analyze(
         "unknown_tokens_are_not_zero": True,
         "energy_and_price": "not measured",
     }
+    resource_path = directory / "resources.jsonl"
+    resources = (
+        [json.loads(line) for line in resource_path.read_text("utf-8").splitlines()]
+        if resource_path.exists()
+        else []
+    )
+    sampling = [
+        r.get(name)
+        for r in resources
+        for name in ("before_sampling_wall_seconds", "sampling_wall_seconds")
+    ]
+    summary["controller_sampling"] = {
+        "resource_records": len(resources),
+        "known_components": sum(_amount(value) for value in sampling),
+        "missing_components": sum(not _amount(value) for value in sampling),
+        "observed_sampling_wall_seconds": sum(value for value in sampling if _amount(value)),
+        "scope": (
+            "Observed pre-dispatch guard/inventory plus post-receipt sampling; "
+            "excludes model wait and other controller work"
+        ),
+    }
+    audit_path = directory / "ledger-summary.json"
+    audit = json.loads(audit_path.read_text("utf-8")) if audit_path.exists() else {}
+    summary["campaign_saved_audit"] = (
+        {
+            name: audit.get(name)
+            for name in (
+                "calls",
+                "campaign_elapsed_seconds",
+                "charged_generated_tokens",
+                "charged_total_tokens",
+                "generated_tokens",
+                "total_tokens",
+                "unknown_consumption",
+                "pending",
+                "terminated_unmetered",
+            )
+        }
+        if audit.get("calls") == len(reservations)
+        else None
+    )
     output.mkdir(parents=True, exist_ok=True)
     write_json(output / "summary.json", summary)
     write_json(output / "scored-trials.json", rows)

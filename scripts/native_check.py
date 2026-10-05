@@ -27,6 +27,7 @@ SOURCE_ONLY_TESTS = {
     "test_ollama_controller.py",
     "test_ollama_environment.py",
     "test_ollama_024.py",
+    "test_ollama_export_024.py",
 }
 V022_INSTALLED_TESTS = {
     "test_v022_helpers.py",
@@ -199,6 +200,29 @@ def main() -> None:
                 "core_import": "same installed release wheel",
             }
         report = json.loads(report_path.read_text(encoding="utf-8"))
+        documentation = None
+        if args.version == "0.2.4":
+            doc_report = clean / "docs-validation.json"
+            call(
+                [
+                    str(python),
+                    "-I",
+                    str(root / "scripts/check_docs.py"),
+                    "--version",
+                    args.version,
+                    "--python",
+                    str(python),
+                    "--output",
+                    str(doc_report),
+                ],
+                cwd=clean,
+            )
+            doc_data = json.loads(doc_report.read_text("utf-8"))
+            documentation = {
+                "status": "passed",
+                "local_links_checked": doc_data["local_links_checked"],
+                "executed_example_documents": len(doc_data["examples"]),
+            }
         report.update(
             {
                 "installed_regression_tests": [test.name for test in selected],
@@ -210,6 +234,7 @@ def main() -> None:
                 "benchmark": benchmark,
                 "dependency_constraints": "uv.lock runtime dependencies; locked pytest",
                 "experiment_contract": experiment_contract,
+                "documentation_examples": documentation,
             }
         )
         report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

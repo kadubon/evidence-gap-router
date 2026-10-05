@@ -404,6 +404,42 @@ def test_one_format_repair_preserves_failed_output_and_charges_both_calls(tmp_pa
     assert resumed == result and len(fake.fake.records) == count
 
 
+def test_crash_after_paid_repair_receipt_keeps_both_calls_on_resume(tmp_path, monkeypatch):
+    from experiments.ollama.harness import run_trial
+
+    task, _ = development_tasks("024")[0]
+    fake = _CompactFake(first_format_fault=True)
+    original = fake.chat
+
+    def interrupted(**kwargs):
+        result = original(**kwargs)
+        if kwargs["request_id"].endswith(":format-repair-1"):
+            raise SystemExit("crash after durable repair response before SDK record")
+        return result
+
+    monkeypatch.setattr(fake, "chat", interrupted)
+    arguments = dict(
+        arm="C",
+        model="fake",
+        model_digest="a" * 64,
+        seed=17,
+        client=fake,
+        checkpoint=tmp_path / "checkpoint.json",
+        settings=TrialSettings(),
+    )
+    with pytest.raises(SystemExit):
+        run_trial(task, **arguments)
+    assert len(fake.fake.records) == 2
+    monkeypatch.setattr(fake, "chat", original)
+    resumed = run_trial(task, resume=True, **arguments)
+    assert len(resumed["calls"]) == len(fake.fake.records)
+    assert len({call["request_id"] for call in resumed["calls"]}) == len(resumed["calls"])
+    assert resumed["calls"][1]["stage"] == "repair"
+    assert resumed["cost"]["tokens"] == sum(
+        call["usage"]["total_tokens"] for call in resumed["calls"]
+    )
+
+
 def test_monotonic_campaign_anchor_survives_wall_clock_rollback(tmp_path, monkeypatch):
     from experiments.ollama import client as transport
 
@@ -469,6 +505,43 @@ def test_only_native_console_host_descendant_is_owned(monkeypatch):
     monkeypatch.setenv("SystemRoot", "C:/Windows")
     assert ownership._owned_executable({"executable": "C:/Windows/System32/conhost.exe"})
     assert not ownership._owned_executable({"executable": "C:/unrelated/conhost.exe"})
+
+
+@pytest.mark.parametrize("last_mib,blocked", [(255, False), (256, True)])
+def test_sustained_swap_growth_blocks_new_dispatch_without_lowering_ram_floor(
+    tmp_path, monkeypatch, last_mib, blocked
+):
+    from experiments.ollama import environment
+
+    values = iter([0, 64, 128, last_mib])
+    monkeypatch.setattr(
+        environment,
+        "collect_resources",
+        lambda _pid: {
+            "memory_status": "okay",
+            "server_alive": True,
+            "swap_used_bytes": next(values) * 1024**2,
+        },
+    )
+    results = [
+        environment.resource_gate(tmp_path, 12, require_swap_observation=True) for _ in range(4)
+    ]
+    assert all(r["safe_for_new_request"] for r in results[:3])
+    assert results[-1]["swap_growth_observed"] is blocked
+    assert ("sustained_swap_growth" in results[-1]["blocking_reasons"]) is blocked
+
+
+def test_unknown_swap_is_not_reported_as_zero(tmp_path, monkeypatch):
+    from experiments.ollama import environment
+
+    monkeypatch.setattr(
+        environment,
+        "collect_resources",
+        lambda _pid: {"memory_status": "okay", "server_alive": True, "swap_used_bytes": None},
+    )
+    result = environment.resource_gate(tmp_path, 12, require_swap_observation=True)
+    assert not result["safe_for_new_request"]
+    assert "swap_observation_unknown" in result["blocking_reasons"]
 
 
 def test_formal_cold_preload_is_reserved_once_in_speed_forecast():
@@ -610,3 +683,38 @@ def test_new_analysis_preserves_missing_denominators_and_fresh_stop_pairs(tmp_pa
     )
     rows = json.loads((tmp_path / "output/scored-trials.json").read_text())
     assert next(r for r in rows if r["key"] == "confirmation-C")["answer_correct"] is None
+
+
+def test_confirmation_parents_are_not_renamed_identical_inputs():
+    import re
+
+    pairs = confirmation_tasks("024")
+    assert sum(g.decision != "unknown" for _, g in pairs) == 18
+    for family in ("L1", "L2", "L3", "L4"):
+        signatures = [
+            tuple(re.sub(r"新規-L[1-4]-[1-6]", "TARGET", d.text) for d in task.documents)
+            for task, _ in pairs
+            if task.family == family
+        ]
+        assert len(set(signatures)) == 6
+    selected = {
+        "confirmation024-" + family + "-" + str(n)
+        for family in ("L1", "L2", "L3", "L4")
+        for n in (1, 2, 3, 6)
+    }
+    assert sum(g.decision == "unknown" for t, g in pairs if t.task_id in selected) == 4
+    for task, gold in pairs:
+        assert all(w.quote in task.document(w.source_id).text for w in gold.witnesses)
+        assert (
+            len({task.document(w.source_id).origin for w in gold.witnesses}) >= gold.minimum_origins
+        )
+
+
+def test_unknown_arrival_contract_depends_on_world_time_not_presence_of_a_check():
+    task, gold = next(
+        (t, g) for t, g in confirmation_tasks("024") if t.task_id == "confirmation024-L4-6"
+    )
+    assert gold.decision == "unknown"
+    assert "17時00分までに到着" in task.documents[0].text
+    assert "到着時刻は未記録" in task.documents[1].text
+    assert "確認したこと" not in task.documents[0].text

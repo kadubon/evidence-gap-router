@@ -2,71 +2,39 @@
 
 **Route work by missing evidence, not by agent count.**
 
-A small Python SDK for choosing the next investigation or verification from a
-finite host-declared action set. Checks bind the actual target, acceptance
-contract and material used, so changed rules trigger the relevant recheck.
-Use it from ordinary Python callbacks or inspect recommendations with an offline CLI.
+A small Python SDK that chooses the next acquisition or verification from
+missing evidence and unfinished checks in a finite, host-declared action set.
 
-Python **3.12 or newer** · Apache-2.0 · [日本語](README.ja.md)
+Python **3.12+** · Apache-2.0 · [日本語](README.ja.md) · [Documentation](docs/index.md)
 
-The optional [local Ollama experiment](experiments/ollama/README.md) shows document
-callbacks with actual structured model outputs, durable usage records and
-independent post-trial scoring. Its scripts are source-level examples outside
-the wheel. See the [fresh v0.2.2 audit](docs/audit-022.md) and the separate
-[model experiment report](docs/ollama-experiment.md) for measured scope and limits.
+## When to use it
 
-## Install and use your own files
+Use it when permitted work depends on the material already obtained, verification
+results, prerequisites, costs or changed rules. It retains evidence, issued
+checks, failures, expenses and unresolved requirements across explicit continuation.
+
+A fixed pipeline is usually sufficient when every input and step is already
+known. The SDK does not supply agents, models, a network gateway or a scheduler.
+Tracking verification history does not guarantee semantic truth. Separate calls
+to the same model do not establish statistically independent judgments.
+
+## Install and check
 
 ```sh
-python -m pip install evidence-gap-router==0.2.3
+python -m pip install evidence-gap-router==0.2.4
 egr --version
-egr check-data --data ./orders.csv --dictionary ./rules.json --json
 egr demo --json
-egr demo --case invalid --json
-egr demo --case budget --json
-egr demo --example cause --case resolved --json
 ```
 
-`check-data` reads the two explicitly selected local files without changing them.
-It first checks the dictionary under its own obligation, then checks the orders
-using that exact verified dictionary. Each stage has its own callback and pinned
-input view. The bundled demos are **artificial examples**; local-file output has
-`artificial_data: false` and local scopes.
-
-CSV columns must be exactly `order_id,amount,currency`, in any order. Data must
-have at least one row, unique nonempty IDs, finite amounts at least the declared
-minimum, and an allowed currency. The dictionary is the following fixed contract:
-
-```json
-{
-  "required_columns": ["order_id", "amount", "currency"],
-  "primary_key": "order_id",
-  "minimum_amount": 0,
-  "allowed_currencies": ["USD", "JPY"]
-}
-```
-
-Unknown dictionary fields, duplicate JSON keys/CSV columns, blank column names,
-missing/extra row fields, nonfinite values, invalid types and invalid UTF-8 are
-rejected. Each input is limited to 1 MiB, CSV to 10,000 rows and each CSV field to
-131,072 characters; exceeding a bound
-never turns a prefix into accepted whole-file evidence. UTF-8 BOM and LF/CRLF are
-accepted. Evidence digests hash the original bytes, including BOM and line endings.
-Space and Japanese characters in paths are supported with `pathlib`; shell commands
-are never assembled from those paths. See [the data-quality example](examples/data_quality.py).
-
-JSON decimal thresholds are read from their original numeric text and compared
-exactly, including `9007199254740993.0`. The small data contract permits at most
-64 decimal coefficient digits, exponent/adjusted exponent within ±128 and
-256 numeric characters. JSON integers have at most 128 digits and nesting at
-most 64 levels. A supplied Python `float` already contains its binary rounding;
-converting that value cannot recover an earlier JSON spelling. Use an integer
-or `Decimal` when that distinction matters.
+These commands need no model or network after installation. The demo uses
+artificial data. [Getting started](docs/getting-started.md) creates actual UTF-8
+CSV/JSON files, including quoted paths with spaces and Japanese characters,
+then checks them with `egr check-data`.
 
 ## Connect a callback
 
-This complete SDK example checks an actual parsed answer. Register your own
-function in `handlers`; the helper creates a check tied to the issued basis.
+This complete ordinary-wheel example parses the supplied content, selects a
+check, records its actual result and shows the remaining blocking issues:
 
 ```python
 from hashlib import sha256
@@ -81,6 +49,7 @@ from evidence_gap_router import (
     Policy,
     Resources,
     State,
+    plan,
     run,
 )
 
@@ -137,224 +106,53 @@ def check(view: CallbackView):
     )
 
 
+budget = Budget(limits=Resources(actions=1, verifications=1))
+next_step = plan(state, (action,), budget, policy)
+assert next_step.action is not None
+print(next_step.action.id)  # check-answer
+
 report = run(
     state,
     (action,),
-    Budget(limits=Resources(actions=1, verifications=1)),
+    budget,
     policy,
     {"check": check},
     max_steps=8,
 )
+print(report.state.checks[-1].status)  # PASS
 print(report.decision.stop_reason)  # satisfied
+print([r.code for r in report.decision.residuals if r.blocking])  # []
 ```
 
-`step` invokes at most one callback. `run` defaults to a finite `max_steps=32`.
-Both return state, decisions and receipts that can be inspected and serialized;
-continue explicitly from the returned state. Runner stops such as
-`max_steps_reached`, `factory_error`, `callback_error` and `no_progress` are separate
-from the router's domain stop. Exceptions and invalid receipts retain issued
-attempts, invocation cost and uncertain effects. A pending attempt is never
-reissued. Attempt IDs avoid the entire existing history.
+The host registers checker permission; `view.check` binds the issued target,
+contract and inputs. An ID supplied by an output grants no authority.
+`step` invokes at most one callback; `run` has a finite step limit. Runner stops
+and unresolved domain requirements are separate. Pending attempts and unknown
+budgeted consumption block automatic continuation.
 
-Both accept an optional pure `selector(state, full_pool, eligible)`. It returns
-an unchanged eligible action and replaces ordering only: the complete finite
-pool, issuance, permissions/budget, receipt handling, progress and stops remain
-common. A selector error is a planning failure before invocation. Omitting it
-keeps the default routing. See the [selector example and contract](docs/api.md).
+See [Concepts](docs/design.md), [API](docs/api.md) and
+[snapshot/migration](docs/migration.md) for acquisition, invalidation, rechecking,
+selectors and retained costs. Limited callback views are application disclosures,
+not a Python sandbox. The host owns input trust, effects, costs and single-writer use.
 
-Acquisition views disclose only explicitly declared dependencies; the bundled
-independent initial reads declare none. A verification view receives its declared
-target and exact dependency material. Views are frozen
-application-level disclosures, **not a sandbox or a proof of statistical independence**.
-Host-owned candidate factories may inspect the whole state for planning.
+## Local Ollama experiment
 
-The pure SDK remains `plan`, `start` and `observe`. Planning is read-only and
-spends no budget; explicit issuance pins the basis and registered permissions.
-`observe(state, receipt, policy)` checks the receipt against that issuance and
-current host policy. Host registrations authorize roles, checker revision and
-purpose; an ID written in result text grants no permission.
+The optional [Ollama guide](docs/ollama-guide.md) uses source-level examples with
+an ordinary installed SDK and explicit local inference. Ollama is not required
+by core imports or the offline CLI. Model weights and user credentials are absent
+from the package; normal tests and release CI do not run model inference.
 
-An executable continuation example creates acquisition/check receipts, explicitly
-invalidates the issued check, saves and reloads the snapshot, and performs a new
-check without rewriting the paid history:
+The v0.2.4 campaign is in development calibration. Both existing local models
+completed six warm reader/integrator/reviewer requests. Primary A/B/C parent
+measurements have not started; those warm receipts are not routing performance.
+See the [current technical report](docs/ollama-experiment-v0.2.4.md),
+[Japanese summary](docs/ollama-experiment-v0.2.4.ja.md) and
+[archived v0.2.3 report](docs/ollama-experiment.md).
 
-```python
-from evidence_gap_router.sdk_example import run_continuation_example
+A uses EGR ordering; B uses strong verify-first ordering with the same public
+runner, pool, permissions, callbacks and budgets. C is a pooled-information
+reference. The comparison concerns extra selection value within the shared
+feasibility mechanism, not independent agent frameworks or a model ranking.
 
-report = run_continuation_example("continuation.json")
-assert report.decision.stop_reason == "satisfied"
-assert len(report.state.invalidations) == 1
-assert len(report.state.attempts) == 3
-```
-
-The supplied path stores the checkpoint after invalidation. Use
-`write_json(report.state, path)` to persist the completed recheck result.
-
-See the [small public APIs](docs/api.md) and [measured benchmark](docs/benchmark.md)
-for the scope of these guarantees and where a fixed pipeline is sufficient.
-
-## Inspect gaps without execution
-
-Save this as `INPUT.json` and run `egr plan INPUT.json --json`:
-
-```json
-{
-  "schema_version": "2",
-  "state": {
-    "schema_version": "2",
-    "obligations": [{"id": "quality", "description": "Inspect data", "scope": "orders",
-                     "acceptance": "Host checker accepts the supplied data"}]
-  },
-  "candidates": [{"id": "read-orders", "obligation_id": "quality", "scope": "orders",
-                  "kind": "investigate", "handler_id": "read", "produces_evidence_id": "orders",
-                  "source": "orders.csv", "provenance_group": "orders-file"}],
-  "budget": {"limits": {"actions": 3, "verifications": 1}},
-  "policy": {"handlers": [{"handler_id": "read", "roles": ["investigate"]}],
-             "trusted_verifiers": ["csv-check"]}
-}
-```
-
-The decision includes target-specific `gaps`, `selected_gap`, pending verification
-count, residuals, resource limits and candidate exclusion reasons. Already
-satisfied target/checker/purpose combinations are excluded by default. Missing
-required verifiers remain backlog after a partial PASS. Explicit prerequisite
-acquisition can unblock a declared pending check without letting arbitrary new
-content bypass verification capacity. Provenance-shortage routing distinguishes
-known repetition, unknown origin and a declared source/group that can fill the gap;
-only otherwise comparable candidates use stable ID order.
-
-`plan` is offline: references are never fetched and handler strings are never
-imported. Input is strict schema **2**, bounded to 1 MiB, with duplicate keys and
-unknown fields/versions rejected. `dump_json`, `load_json` and `read_json` provide
-validated round trips. Schema-1 requires [explicit migration](docs/migration.md).
-
-With `--json`, domain reports go to stdout. A malformed plan input has no JSON
-stdout and reports an error on stderr. File-input and callback failures retain
-their state/cost report on stdout and also explain the error on stderr.
-CLI JSON escapes non-ASCII characters losslessly, so redirected output also works
-with Windows legacy encodings. Parsing that JSON restores the original Unicode
-paths and content; snapshot files remain explicitly UTF-8.
-Exit 0 means an action or satisfied result; exit 2 means a valid unresolved domain
-stop or inspected nonacceptance; exit 1 means an input/execution failure. Argparse
-usage errors also use exit 2, on stderr. The report's `outcome`, domain stop and
-runner stop distinguish malformed input, callback failure, checked FAIL, missing
-material, budget exhaustion and satisfaction.
-
-## What acceptance means
-
-An obligation declares acceptance text plus a mechanical contract fingerprint.
-A check binds evidence ID/digest/scope, contract fingerprint, the finite material
-actually used, checker ID/revision and purpose. Contract fields include ID, scope,
-contract revision, acceptance, evidence/provenance requirements and required
-verifiers; display description, priority and required status are excluded.
-Unrelated evidence additions leave an applicable check reusable. Changed,
-withdrawn, expired or superseded dependencies invalidate only their dependent
-checks. A fingerprint does not understand semantic equivalence or certify truth.
-
-Normal content checks, negative-check resolution and contradiction resolution are
-separate purposes. Acquisition cannot erase FAIL/UNKNOWN or resolve contradictions.
-Resolution needs host permission and a matching target/fingerprint/basis. Generic
-content PASS cannot resolve a contradiction. All original records remain visible;
-identical receipt replay is idempotent and ID collisions fail.
-
-Contradiction resolution must target one related exact evidence ID and disclose
-every related ID in its target/dependencies. Issued, imported, reused and loaded
-grounds use the same condition. Equal digests and a matching fingerprint cannot
-substitute for missing inputs. Old readable inappropriate grounds remain history
-and cannot close the issue; a new authorized check must use the missing material.
-
-Router stops remain `satisfied`, `budget_exhausted`, `blocked` and
-`escalation_required`. Satisfaction is relative to declared required conditions
-and current host policy. Coverage reports its numerator, denominator, scopes and
-policy; it is not a correctness probability or intelligence score. States with zero required
-obligations are rejected. Actions, verifications and optional tokens remain separate
-integer dimensions; unknown budgeted/bounded actual consumption and uncertain
-execution effects stop automatic continuation.
-An execution fault, runner halt or uncertain incomplete stop is not a known safe
-abstention. Keep worker status, runner stop, domain stop and oracle outcome separate.
-
-The host owns authentic checker registration, input trust, costs, permissions,
-external effects, timeouts and single-writer consistency. Structurally valid JSON
-and a receipt are not authenticated real-world evidence. No LLM gateway, server,
-DB, distributed scheduler, cryptographic authentication or exactly-once recovery
-is provided. The [design](docs/design.md), [audit mapping](docs/audit.md),
-[migration guide](docs/migration.md) and [security policy](SECURITY.md) give the boundaries.
-
-## Explicit invalidation and continued work
-
-`invalidate(state, Invalidation(...))` appends a host-owned event for an exact
-evidence/check ID, obligation and scope. It preserves the original record,
-receipt and charged work. Replaying the same event is idempotent; a conflicting
-ID, missing target or wrong scope is rejected. There is no background TTL.
-Acquisition receipts cannot carry these host invalidations.
-
-Use `write_json(state, path)` and `read_json(path, State)` to save and continue.
-State snapshots have a separate **32 MiB** bound; files and offline `PlanInput`
-remain **1 MiB**. Writes validate the entire readable snapshot before replacing
-the destination. History and negative/unknown records are retained. Legitimate
-old schema-2 states within the current documented JSON bounds remain readable;
-older readers reject the new invalidation
-field. See [API details](docs/api.md) and [migration](docs/migration.md).
-
-## Comparison and validation
-
-`egr demo --example cause` is a separate multi-material investigation: acquisition views
-read records, specifications and exceptions separately; checks use disclosed raw
-material. Conflict, unknown provenance and verification budget cases preserve gaps.
-The [comparison](docs/comparison.md) records fixed-order and gap-routing outcomes
-from the same materials, checker, callbacks and limits. These finite model-free
-examples do not establish general AI improvement, cost savings or intelligence growth.
-
-The [preserved v0.2.1 benchmark](docs/benchmark-v0.2.1.md) adds 240 generated parents,
-strong feasible baselines, an independent oracle and retained raw results.
-In original-order runs (random seed 17), completion among 145 solvable parents
-was EGR 145, fixed 142, verify-first 143 and random 145. The 95% intervals for
-parent-mean differences over all declared orders/seeds include zero. Compared
-with the compatible old-version subset, false satisfaction changed from 9/220
-to 0/220. Selected both-success subsets used fewer callbacks but more trial CPU
-with allocation tracing enabled, including cold imports and desktop noise;
-this is not an all-task savings estimate. Simple fixed pipelines remain
-appropriate for predetermined work; the report retains ties, overhead and
-bounded old-version performance failures.
-
-The [v0.2.1 erratum](docs/benchmark-v0.2.1-erratum.md) reconstructs the original raw
-counts: the reported 80/95 versus 70/95 stop difference came from ten identical
-F7 execution meanings with different runner labels. Every main method has 75/95
-known correct abstentions, 5/95 uncertain incomplete stops and 15/95 execution
-faults under the corrected definition. Unknown verification use is still unknown.
-Completion and false-satisfaction observations are retained; old unequal-loop
-CPU values remain historical observations, not pure ranking costs.
-
-The [current experiment report](docs/benchmark.md) separates the observed old
-240-task regression set from a new frozen confirmation set. Method comparison
-uses the same public finite runner, changing only selection. Its common
-`feasible_actions` mechanism includes unmet-gap/necessity and helper eligibility,
-as well as permissions and bounds: it measures additional ordering value within
-that mechanism, not EGR versus an independent scheduler. Indexed candidate-helper
-evaluation is distinct from the existing checked-proof worklist. Fixed pipelines
-remain suitable when steps are known; routing is useful when the next permitted
-step depends on current targets, evidence, prerequisites or reopened checks.
-
-[Validation profiles](docs/validation.md) distinguish executed results from planned
-profiles. CI builds once on Linux/Python 3.12, installs the same wheel on Windows
-x64, macOS `macos-15` arm64 and `macos-15-intel` x86_64, and checks Linux 3.13/3.14.
-Native reports record actual machine, Python, imports, Pydantic/core wheel tags and
-artifact hash. Future Python versions are not implied to have been tested.
-
-```sh
-uv sync --locked --group dev
-uv run --locked ruff check .
-uv run --locked ruff format --check .
-uv run --locked mypy src
-uv run --locked pytest
-uv build --no-sources
-uv run --locked python -c 'from pathlib import Path; Path("dist/.gitignore").unlink(missing_ok=True)'
-uv run --locked twine check dist/*
-uv run --locked python scripts/package_audit.py dist
-```
-
-The lock governs development/CI, not all pip users. Check relevant changes locally,
-then combine manual CI after the changes are complete. The single workflow starts
-only on dispatch or `v*` tag push. Publication requires every native gate and an
-exact-commit successful manual run; manual runs never publish.
-[Releasing](docs/releasing.md) records configuration and recovery procedures.
+[Audit](docs/audit-024.md) · [Validation](docs/validation.md) ·
+[Releasing](docs/releasing.md) · [Security](SECURITY.md)

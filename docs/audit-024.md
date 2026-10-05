@@ -1,0 +1,78 @@
+# v0.2.4 audit
+
+The audit found experiment transport and output-contract limitations. It did
+not establish a new defect in the SDK's acceptance, permission or helper rules.
+Those rules continue to use schema 2 and the public `plan/start/observe/step/run`
+interfaces. Long-call recovery is an explicit local experiment host policy.
+
+## Executed baseline and candidate checks
+
+The unchanged v0.2.3 source (`6dae35fc9fdd3cf7d751aa73d0c72a435b47578b`)
+passed 630 tests in 23.41 seconds. A fresh official PyPI wheel was installed
+outside the repository on Windows x64 / Python 3.12.14: 296 SDK regressions,
+172 portable fake-HTTP/experiment contracts and SDK/CLI smoke passed. These
+are model-free tests, not live model results.
+
+Implementation candidate `110199863b971ca806115c27e07e961f5296a123`
+passed 648 source tests in 26.24 seconds, Ruff check/format and mypy on 14
+SDK modules. Its ordinary installed wheel passed 296 SDK regressions,
+190 portable contracts and SDK/CLI smoke. The 44-trial portable benchmark's
+actual canonical outcome matched its earlier regression signature.
+
+The third development revision passed 666 source tests in 42.70 seconds,
+Ruff check/format (117 files) and mypy (14 SDK modules). This includes a
+reproduced paid-repair resume defect and task/resource/export contracts.
+Under concurrent live inference, a Windows containment test's 0.3-second
+fixture expired before its nested interpreter wrote a heartbeat. A 2-second
+test fixture passed, still checking timeout, descendant termination and an
+unrelated process's continued lifetime. Production worker limits did not change.
+Its fresh ordinary wheel check also passed 296 SDK regressions, 203 portable
+contracts, the 44-trial benchmark and all three complete example documents.
+
+All 25 runtime files matched the candidate wheel, ordinary installation,
+working source and committed Git bytes exactly. They use LF before live
+measurement. Historical v0.2.3 wheels and raw archives retain their original
+CRLF bytes. Line-ending normalization is a new candidate byte identity;
+it does not make older artifact fingerprints interchangeable.
+
+## Findings and changes
+
+| Finding | Change | Verification |
+| --- | --- | --- |
+| A short socket wait could expire before a longer request deadline | Separate 30-second connection bound and nonstream response waits using the hard deadline | Delayed headers/body and independent hard-deadline HTTP tests |
+| Model profile and limit validators rejected the new finite envelope | Permit explicit bounded context/output, per-model request/trial deadlines and campaign limits | Profile validation, per-stage reservation and exhausted-budget tests |
+| A crash after receiving bytes but before journal settlement lost the usable receipt | Fsync a raw receipt spool before parsing; recover it without HTTP | Crash, tamper, torn journal, idempotent recovery and no-redispatch tests |
+| Unknown cost could only halt all later trials | New-campaign-only verified termination marker, retained full reservation and new server epoch | Unknown actual usage remains null; stale clients and failed-primary retry stay blocked |
+| Long review feedback conflated syntax failure with judgment | Closed compact review schema, bounded feedback, separate legacy calibration schema | Unknown fields, reason codes and feedback bounds rejected |
+| Necessary-only rules and whole-document quotation obscured scoring | New explicit necessary-and-sufficient public rules and minimal exact witnesses | Distinct development/calibration/confirmation tasks; public/gold separation |
+| Answer grounding depended on reviewer acceptance in the old metric | Separate answer grounding and verified supported completion | Correct grounded answer with failed review remains grounded, incomplete |
+| Known formatting faults were immediately terminal | Common paid one-shot format repair, maximum two per trial | Original bad output retained; both calls charged; terminal resume sends no new request |
+| A recovered paid format repair could be absent from the trial call list when its original call was already checkpointed | Independently reconcile both persisted request records | Reproduced three-call checkpoint resume; both repair and original remain charged, with no HTTP retry |
+| Wall-clock rollback or process restart could omit campaign waiting time | Durable original epoch, same-boot monotonic anchor and ledger-prefix identity | Rollback, restart, boot-change and tampered-prefix tests; original first dispatch retained |
+| Resource observations did not enforce sustained swap growth | Require known swap use; four consecutive increases totaling at least 256 MiB block a new dispatch | Windows CIM observation; unknown and threshold boundary tests |
+| Arrival rules mixed a world fact with whether it had been confirmed; several parents differed only in names | Explicit world conditions and distinct AND/OR/XOR, report thresholds, current exceptions, deadlines and destinations | Separate public/gold types; distinct normalized parent signatures; 18/6 and 12/4 task counts; minimal source/version witnesses |
+| Success-only cost summaries hid missing trials and zero-member subsets | Planned-key accounting, nullable unresolved outcomes, paired bounds and subset denominators | Missing-key, no-success-cost, independent grounding and bounded-continuation tests |
+| The export path was pinned to the previous protocol and omitted the measured wheel | Version-bound freeze, candidate wheel hash and retained development implementations | Export rejects mismatched bytes and private paths without rewriting model output; no-overwrite tests |
+
+Old FAIL/UNKNOWN, pending invocation, withdrawal, contract changes, exact-ID
+resolution, helper/proof AND/OR and grounded-cycle behavior remain covered by
+the installed regression suite. No new PASS, authority or evidence is seeded
+to make a model trial succeed.
+
+## Limits
+
+Fake HTTP checks establish local transport and ledger contracts. They do not
+establish live-model correctness or speed. Process-handle evidence is supplied
+by the trusted local host, not cryptographic authentication. Resource samples
+are observations, not a hard whole-server/GPU memory guarantee.
+
+Live-model results, calibrations, failure chains and publication evidence are
+reported separately after their actual execution. The old v0.2.3 unknown
+Qwen request remains unknown in its original campaign.
+
+Development cycles and their original prompts, answer banks, outputs and costs
+remain in the new campaign's history. The earlier arrival-rule ambiguity is a
+development limitation, not a retrospective correction to old model scores.
+The final bank uses 24 answer cases drawn from 12 underlying task parents; those
+cases are not 24 independent statistical parents. Main confirmation parents
+are unused until the frozen schedule dispatches them.
