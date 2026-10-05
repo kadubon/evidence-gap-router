@@ -1,33 +1,38 @@
 # Security policy
 
-The supported initial line is 0.1.x. Report a potential vulnerability through
-the repository's [private security-advisory form](https://github.com/kadubon/evidence-gap-router/security/advisories/new)
-when available. If private reporting is unavailable, open an issue requesting a
-private contact without including exploit details or secrets. No response-time
-or incident-response service level is promised.
+The supported current line is 0.2.x. Use the repository's
+[private security advisory form](https://github.com/kadubon/evidence-gap-router/security/advisories/new)
+when available. Otherwise request a private contact in an issue without including
+secrets or exploit details. No response-time service level is promised.
 
-The core handles bounded, strict JSON and host-selected records. Evidence
-content, source names, references and handler IDs are data. It never follows a
-URL/path reference, imports an ID as a function or derives permission from
-untrusted text. A reference's SHA-256 binds content identity only.
+Schema validation, issued-receipt consistency and authentic evidence are distinct.
+The host owns policy, checker registration, callbacks, state, resource measurement
+and credentials. A checker ID in a result is not authentication. Host registration
+binds actual Python checker identity to permitted role/revision/purpose; evidence
+text cannot change that policy or grant execution permission.
 
-The host must protect verifier records, callback registration, policy, execution
-credentials, resource measurements and state ownership. CLI planning input is
-operator-selected local material: its policy field is not an authenticated
-policy source for a remote service. A host accepting untrusted evidence must
-keep its own policy outside that evidence and call the SDK with trusted policy.
-Before constructing a `CheckResult`, the host binds the actual checker identity
-to a trusted verifier ID. An ID string is not authentication. Acquisition
-callbacks cannot introduce new checks; new checks belong to issued verification
-attempts for their exact target digest.
+Issued verification bases pin exact targets, acceptance fingerprints, finite
+used dependencies and resolution purpose. Generic PASS cannot resolve a named
+contradiction; acquisition cannot withdraw or replace negative checks. Strict,
+immutable records and validated APIs do not prevent a malicious trusted host
+from constructing or rewriting its own state. Do not describe host snapshots as
+cryptographically authenticated execution history.
 
-The packaged demo reads artificial local files. Its explicit callback mapping
-is an integration example, not a sandbox. Callbacks may have side effects; the
-host owns access control, isolation, timeouts, network restrictions and secret
-redaction. Exceptions/invalid returns leave actual cost and effects unknown and
-stop further automatic work. No exactly-once execution, concurrency reservation,
-crash recovery, semantic truth detection or statistical independence is promised.
+Callback views disclose only explicitly selected material. They do not prevent
+same-process Python code from reading globals, files or other data, and do not
+prove secrecy or statistical independence. The host must enforce real isolation,
+external authentication, access control, timeout and resource controls as needed.
+The finite runner preserves callback uncertainty and never automatically retries
+an unknown effect; it is not crash recovery or exactly-once execution.
 
-Do not pass sensitive evidence or callback exception details to a public output
-channel without host-side review. No telemetry, external model access or runtime
-network access is required by the router or packaged demo.
+CLI planning input is bounded local operator material. References are not fetched
+and handler strings are not imported. A service receiving untrusted evidence must
+supply host policy separately. `check-data` intentionally reads only selected local
+files, rejects ambiguous/bounded input and does not overwrite them. This is not a
+sandboxed filesystem service. Malformed or failed callbacks retain state and costs.
+
+Review evidence, original files, exception messages and reports before publishing
+sensitive content. No telemetry, model/API key or network service is required by
+the router, installed examples or normal offline checks. Migration preserves
+legacy uncertainty and history; it does not authenticate old records or invent
+missing verification bases.

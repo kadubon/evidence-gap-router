@@ -2,231 +2,246 @@
 
 **Route work by missing evidence, not by agent count.**
 
-A small Python SDK and offline CLI for scripts and agent applications that need
-to decide what to investigate or verify next. Declare acceptance conditions and
-finite action candidates, collect evidence through your own callbacks, and route
-the next action according to the remaining gaps. Keep unresolved work visible.
+A small Python SDK for choosing the next investigation or verification from a
+finite host-declared action set. Checks bind the actual target, acceptance
+contract and material used, so changed rules trigger the relevant recheck.
+Use it from ordinary Python callbacks or inspect recommendations with an offline CLI.
 
 Python **3.12 or newer** · Apache-2.0 · [日本語](README.ja.md)
 
-## Install and try
+## Install and use your own files
 
 ```sh
-python -m pip install evidence-gap-router
+python -m pip install evidence-gap-router==0.2.0
 egr --version
+egr check-data --data ./orders.csv --dictionary ./rules.json --json
 egr demo --json
 egr demo --case invalid --json
 egr demo --case budget --json
+egr demo --example cause --case resolved --json
 ```
 
-The installed demo reads bundled **artificial** CSV and JSON files through two
-separate acquisition callbacks, then checks actual rows and dictionary values
-with a different verification callback. Missing information changes the next
-action; checks run only after their inputs are available. `valid` satisfies the
-declaration, `invalid` retains computed failures, and `budget` stops before
-verification. No source checkout, API key, model or network is required at runtime.
+`check-data` reads the two explicitly selected local files without changing them.
+It first checks the dictionary under its own obligation, then checks the orders
+using that exact verified dictionary. Each stage has its own callback and pinned
+input view. The bundled demos are **artificial examples**; local-file output has
+`artificial_data: false` and local scopes.
 
-The [local-file example](examples/data_quality.py) shows how to point these
-callbacks at your own CSV/dictionary. Its constraints cover required columns,
-primary-key uniqueness, minimum amounts and allowed currencies. An executed
-check and accepted data are separate outcomes.
+CSV columns must be exactly `order_id,amount,currency`, in any order. Data must
+have at least one row, unique nonempty IDs, finite amounts above the declared
+minimum, and an allowed currency. The dictionary is the following fixed contract:
 
-## Connect a Python callback
+```json
+{
+  "required_columns": ["order_id", "amount", "currency"],
+  "primary_key": "order_id",
+  "minimum_amount": 0,
+  "allowed_currencies": ["USD", "JPY"]
+}
+```
 
-This runnable example verifies supplied evidence by doing actual arithmetic.
-Replace `check` with your own checker and register it in the explicit mapping.
-The example host loop records exceptions and invalid callback returns as
-uncertain attempts, including the invocation, unknown remaining cost and effects;
-it does not automatically retry them.
+Unknown dictionary fields, duplicate JSON keys/CSV columns, blank column names,
+missing/extra row fields, nonfinite values, invalid types and invalid UTF-8 are
+rejected. Each input is limited to 1 MiB and CSV to 10,000 rows; exceeding a bound
+never turns a prefix into accepted whole-file evidence. UTF-8 BOM and LF/CRLF are
+accepted. Evidence digests hash the original bytes, including BOM and line endings.
+Space and Japanese characters in paths are supported with `pathlib`; shell commands
+are never assembled from those paths. See [the data-quality example](examples/data_quality.py).
+
+## Connect a callback
+
+This complete SDK example checks an actual parsed answer. Register your own
+function in `handlers`; the helper creates a check tied to the issued basis.
 
 ```python
 from hashlib import sha256
 from evidence_gap_router import (
     ActionCandidate,
     Budget,
-    CheckResult,
+    CallbackView,
+    CheckerPermission,
     Evidence,
+    HandlerRegistration,
     Obligation,
     Policy,
     Resources,
-    Result,
     State,
+    run,
 )
-from evidence_gap_router.demo import run_host_loop
 
 content = "4"
-digest = sha256(content.encode()).hexdigest()
+evidence = Evidence(
+    id="answer",
+    obligation_id="sum",
+    scope="example",
+    digest=sha256(content.encode()).hexdigest(),
+    content=content,
+    producer="calculator",
+    source="local-calculation",
+    provenance_group="calculator",
+)
 state = State(
     obligations=(
         Obligation(
             id="sum",
-            description="Check the sum",
+            description="Check arithmetic",
             scope="example",
-            acceptance="answer equals 2 + 2",
+            acceptance="Parsed answer equals 2 + 2",
         ),
     ),
-    evidence=(
-        Evidence(
-            id="answer",
-            obligation_id="sum",
-            scope="example",
-            digest=digest,
-            content=content,
-            producer="calculator",
-            source="local calculation",
-            provenance_group="calculator",
-        ),
-    ),
+    evidence=(evidence,),
 )
 action = ActionCandidate(
-    id="check-sum",
+    id="check-answer",
     obligation_id="sum",
     scope="example",
     kind="verify",
     handler_id="check",
-    target_digest=digest,
+    target_evidence_id="answer",
+    target_digest=evidence.digest,
+    checker_id="arithmetic-check",
     resources=Resources(actions=1, verifications=1),
+)
+policy = Policy(
+    trusted_verifiers=("arithmetic-check",),
+    handlers=(
+        HandlerRegistration(
+            handler_id="check",
+            roles=("verify",),
+            checkers=(CheckerPermission(checker_id="arithmetic-check"),),
+        ),
+    ),
 )
 
 
-def check(action: ActionCandidate, attempt_id: str, state: State) -> Result:
-    answer = next(e for e in state.evidence if e.digest == action.target_digest)
-    passed = int(answer.content or "") == 2 + 2
-    return Result(
-        id=f"{attempt_id}-result",
-        attempt_id=attempt_id,
-        action_id=action.id,
-        obligation_id=action.obligation_id,
-        scope=action.scope,
-        target_digest=action.target_digest,
+def check(view: CallbackView):
+    passed = int(view.inputs[0].content or "") == 2 + 2
+    return view.result(
         actual_resources=Resources(actions=1, verifications=1),
-        checks=(
-            CheckResult(
-                id=f"{attempt_id}-check",
-                obligation_id="sum",
-                scope="example",
-                target_digest=digest,
-                verifier_id="arithmetic-check",
-                status="PASS" if passed else "FAIL",
-                reason="Compared with 2 + 2",
-            ),
-        ),
+        checks=(view.check(status="PASS" if passed else "FAIL", reason="Compared with 2 + 2"),),
     )
 
 
-run = run_host_loop(
+report = run(
     state,
     (action,),
     Budget(limits=Resources(actions=1, verifications=1)),
-    Policy(trusted_verifiers=("arithmetic-check",), executable_handlers=("check",)),
+    policy,
     {"check": check},
+    max_steps=8,
 )
-print(run.decision.stop_reason)  # satisfied
+print(report.decision.stop_reason)  # satisfied
 ```
 
-The core APIs are `plan(state, candidates, budget, policy)`,
-`start(state, action, attempt_id, budget, policy)` and `observe(state, result)`.
-Planning does not execute or spend resources. `start` records an attempt before
-the host invokes its callback; `observe` checks the result's issued attempt,
-action, target and costs. [The complete callback example](examples/callback.py)
-uses the same public API. A host may use the core transitions instead of the
-provided example loop.
+`step` invokes at most one callback. `run` defaults to a finite `max_steps=32`.
+Both return state, decisions and receipts that can be inspected and serialized;
+continue explicitly from the returned state. Runner stops such as
+`max_steps_reached`, `factory_error`, `callback_error` and `no_progress` are separate
+from the router's domain stop. Exceptions and invalid receipts retain issued
+attempts, invocation cost and uncertain effects. A pending attempt is never
+reissued. Attempt IDs avoid the entire existing history.
 
-## Offline JSON planning
+Initial acquisition views contain no other collector's evidence. A verification
+view receives its declared target and exact dependency material. Views are frozen
+application-level disclosures, **not a sandbox or a proof of statistical independence**.
+Host-owned candidate factories may inspect the whole state for planning.
 
-Save this as `INPUT.json`, then run `egr plan INPUT.json --json`. The decision
-selects `read-orders` and explains its gaps; the CLI executes nothing.
+The pure SDK remains `plan`, `start` and `observe`. Planning is read-only and
+spends no budget; explicit issuance pins the basis and registered permissions.
+`observe(state, receipt, policy)` checks the receipt against that issuance and
+current host policy. Host registrations authorize roles, checker revision and
+purpose; an ID written in result text grants no permission.
+
+## Inspect gaps without execution
+
+Save this as `INPUT.json` and run `egr plan INPUT.json --json`:
 
 ```json
 {
-  "schema_version": "1",
+  "schema_version": "2",
   "state": {
-    "schema_version": "1",
-    "obligations": [{
-      "id": "quality", "description": "Inspect order data", "scope": "orders-v1",
-      "acceptance": "Host checker accepts required columns and values"
-    }]
+    "schema_version": "2",
+    "obligations": [{"id": "quality", "description": "Inspect data", "scope": "orders",
+                     "acceptance": "Host checker accepts the supplied data"}]
   },
-  "candidates": [{
-    "id": "read-orders", "obligation_id": "quality", "scope": "orders-v1",
-    "kind": "investigate", "handler_id": "read-csv",
-    "resources": {"actions": 1, "verifications": 0},
-    "source": "orders.csv", "provenance_group": "orders-file"
-  }],
+  "candidates": [{"id": "read-orders", "obligation_id": "quality", "scope": "orders",
+                  "kind": "investigate", "handler_id": "read", "produces_evidence_id": "orders",
+                  "source": "orders.csv", "provenance_group": "orders-file"}],
   "budget": {"limits": {"actions": 3, "verifications": 1}},
-  "policy": {"executable_handlers": ["read-csv"], "trusted_verifiers": ["csv-check"]}
+  "policy": {"handlers": [{"handler_id": "read", "roles": ["investigate"]}],
+             "trusted_verifiers": ["csv-check"]}
 }
 ```
 
-SDK serialization uses `dump_json(model)`, `load_json(text, Model)` and
-`read_json(path, Model)`, for example `load_json(dump_json(state), State)`.
-JSON schema version is `"1"`. Unknown fields/versions, duplicate keys, invalid
-references, nonfinite values and silent scalar type conversions are rejected.
-CLI files are bounded to 1 MiB. A URL or path inside evidence is a reference,
-never automatically fetched. Operator-selected planning JSON includes host
-policy; a service accepting untrusted evidence must supply its policy separately.
+The decision includes target-specific `gaps`, `selected_gap`, pending verification
+count, residuals, resource limits and candidate exclusion reasons. Already
+satisfied target/checker/purpose combinations are excluded by default. Missing
+required verifiers remain backlog after a partial PASS. Explicit prerequisite
+acquisition can unblock a declared pending check without letting arbitrary new
+content bypass verification capacity. Provenance-shortage routing distinguishes
+known repetition, unknown origin and a declared source/group that can fill the gap;
+only otherwise comparable candidates use stable ID order.
 
-With `--json`, domain results go to stdout and validation/IO errors to stderr.
-Exit **0** means an action was selected or the declaration is satisfied; **2**
-means a valid unresolved domain stop (JSON remains on stdout); **1** means bad
-input/IO with no JSON stdout. Argparse usage errors also use exit 2, on stderr.
+`plan` is offline: references are never fetched and handler strings are never
+imported. Input is strict schema **2**, bounded to 1 MiB, with duplicate keys and
+unknown fields/versions rejected. `dump_json`, `load_json` and `read_json` provide
+validated round trips. Schema-1 requires [explicit migration](docs/migration.md).
 
-## Records and decisions
+With `--json`, domain reports go to stdout. A malformed plan input has no JSON
+stdout and reports an error on stderr. File-input and callback failures retain
+their state/cost report on stdout and also explain the error on stderr.
+Exit 0 means an action or satisfied result; exit 2 means a valid unresolved domain
+stop or inspected nonacceptance; exit 1 means an input/execution failure. Argparse
+usage errors also use exit 2, on stderr. The report's `outcome`, domain stop and
+runner stop distinguish malformed input, callback failure, checked FAIL, missing
+material, budget exhaustion and satisfaction.
 
-| Record | Meaning |
-| --- | --- |
-| Obligation | Host-declared requirement, scope, priority and acceptance conditions; the router does not invent or relax requirements. |
-| Evidence | Supplied content/reference, digest, producer and declared origin; it is not itself a trusted PASS. |
-| CheckResult | Host-trusted verifier's PASS, FAIL or UNKNOWN for an exact digest and scope; absent checks remain unperformed. |
-| Residual | Current missing evidence, provenance, verification, resources or unresolved negative/conflicting records. |
-| Decision | One eligible declared action or a stop reason, with selection and exclusion reasons, residuals, coverage and remaining resources. |
+## What acceptance means
 
-Stops are `satisfied`, `budget_exhausted`, `blocked`, or `escalation_required`.
-Only the first meets the declared required conditions under the supplied policy.
-Coverage reports satisfied/required counts, scopes and policy; it is not a
-probability of correctness. At least one required obligation is necessary.
+An obligation declares acceptance text plus a mechanical contract fingerprint.
+A check binds evidence ID/digest/scope, contract fingerprint, the finite material
+actually used, checker ID/revision and purpose. Contract fields include ID, scope,
+contract revision, acceptance, evidence/provenance requirements and required
+verifiers; display description, priority and required status are excluded.
+Unrelated evidence additions leave an applicable check reusable. Changed,
+withdrawn, expired or superseded dependencies invalidate only their dependent
+checks. A fingerprint does not understand semantic equivalence or certify truth.
 
-Routing favors required obligations, descending priority, action relevance to
-the current gap, then stable action ID. Existing unchecked evidence favors
-verification. Provenance shortages can favor another declared source. Every
-distinct active digest needs trusted verification; duplicated content/origins do
-not become additional independent support. Unknown origins stay unknown, and
-different IDs/models/providers do not prove independence.
-Same-source bridges also collapse declared provenance groups transitively;
-conflicting group declarations for one source remain a blocking residual.
+Normal content checks, negative-check resolution and contradiction resolution are
+separate purposes. Acquisition cannot erase FAIL/UNKNOWN or resolve contradictions.
+Resolution needs host permission and a matching target/fingerprint/basis. Generic
+content PASS cannot resolve a contradiction. All original records remain visible;
+identical receipt replay is idempotent and ID collisions fail.
 
-FAIL, UNKNOWN and explicit blocking contradictions are preserved. A later PASS
-cannot erase them without explicit, valid supersession/resolution. Expired,
-withdrawn, superseded or differently scoped evidence/checks cannot justify
-current acceptance. Expiry is explicitly marked by the host; no hidden clock
-changes a decision. Checks on old digests cannot close changed content. The
-default policy prohibits self-verification and trusts only declared verifier IDs.
+Router stops remain `satisfied`, `budget_exhausted`, `blocked` and
+`escalation_required`. Satisfaction is relative to declared required conditions
+and current host policy. Coverage reports its numerator, denominator, scopes and
+policy; it is not a correctness probability or intelligence score. States with zero required
+obligations are rejected. Actions, verifications and optional tokens remain separate
+integer dimensions; unknown budgeted/bounded actual consumption and uncertain
+execution effects stop automatic continuation.
 
-Resource limits keep action, verification and optional token counts separate.
-Estimates differ from actual consumption. Unknown constrained demand is not
-free; unknown actual use in a budgeted or bounded dimension, uncertain effects,
-or overrun stops further automatic work.
-Verification-capacity backpressure prevents acquisition from growing unchecked
-work indefinitely. Identical result replay is idempotent; an ID collision is an
-error. Candidates are not automatically repeated after failure or uncertainty.
+The host owns authentic checker registration, input trust, costs, permissions,
+external effects, timeouts and single-writer consistency. Structurally valid JSON
+and a receipt are not authenticated real-world evidence. No LLM gateway, server,
+DB, distributed scheduler, cryptographic authentication or exactly-once recovery
+is provided. The [design](docs/design.md), [audit mapping](docs/audit.md),
+[migration guide](docs/migration.md) and [security policy](SECURITY.md) give the boundaries.
 
-## Host boundary and research context
+## Small comparison and validation
 
-The host owns execution, timeouts, authorization, external credentials, exact
-cost measurement, input trust and concurrency. A recommendation grants no
-permission. Handler registration is explicit; strings are never imported as
-code. This release uses one process and writer, without a scheduler, database,
-crash recovery or exactly-once external effects. It has no LLM gateway, framework
-adapters, GUI, telemetry, learned routing or semantic truth/contradiction detector.
+`egr demo --example cause` is a separate multi-material investigation: acquisition views
+read records, specifications and exceptions separately; checks use disclosed raw
+material. Conflict, unknown provenance and verification budget cases preserve gaps.
+The [comparison](docs/comparison.md) records fixed-order and gap-routing outcomes
+from the same materials, checker, callbacks and limits. These finite model-free
+examples do not establish general AI improvement, cost savings or intelligence growth.
 
-The [research index](https://kadubon.github.io/github.io/collective-intelligence-index.html)
-and related CCR/VEK/CIO contracts informed preservation of unresolved work,
-verification capacity and authority boundaries. They are not dependencies or
-tested integrations. This release does not establish novelty, intelligence
-growth, cost savings or performance superiority. The demo is a synthetic usage
-example. See [design](docs/design.md) and [security](SECURITY.md).
-
-## Development and release
+[Validation profiles](docs/validation.md) distinguish executed results from planned
+profiles. CI builds once on Linux/Python 3.12, installs the same wheel on Windows
+x64, macOS `macos-15` arm64 and `macos-15-intel` x86_64, and checks Linux 3.13/3.14.
+Native reports record actual machine, Python, imports, Pydantic/core wheel tags and
+artifact hash. Future Python versions are not implied to have been tested.
 
 ```sh
 uv sync --locked --group dev
@@ -240,10 +255,8 @@ uv run --locked twine check dist/*
 uv run --locked python scripts/package_audit.py dist
 ```
 
-uv manages Python and the project-local `.venv`; the lockfile controls development
-and CI, not every pip user's dependency environment. Check affected changes
-locally, then combine CI validation when the changes are ready. One workflow
-does Linux/Python 3.12 quality/build/clean-install checks and Windows/Python 3.12
-smoke against the same artifact. Only tag push may publish after the exact
-commit's successful manual validation and Trusted Publisher/environment checks.
-See [releasing](docs/releasing.md) for configuration, pins and recovery steps.
+The lock governs development/CI, not all pip users. Check relevant changes locally,
+then combine manual CI after the changes are complete. The single workflow starts
+only on dispatch or `v*` tag push. Publication requires every native gate and an
+exact-commit successful manual run; manual runs never publish.
+[Releasing](docs/releasing.md) records configuration and recovery procedures.

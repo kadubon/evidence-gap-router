@@ -11,9 +11,11 @@ from evidence_gap_router import (
     ActionCandidate,
     Attempt,
     Budget,
+    CheckerPermission,
     CheckResult,
     Contradiction,
     Evidence,
+    HandlerRegistration,
     Obligation,
     PlanInput,
     Policy,
@@ -23,6 +25,7 @@ from evidence_gap_router import (
     Supersession,
     dump_json,
     load_json,
+    make_basis,
     observe,
     plan,
     start,
@@ -31,7 +34,23 @@ from evidence_gap_router import (
 DIGEST = hashlib.sha256(b"data").hexdigest()
 NEW_DIGEST = hashlib.sha256(b"updated").hexdigest()
 OBLIGATION = Obligation(id="quality", description="check data", scope="v1", acceptance="valid")
-POLICY = Policy(trusted_verifiers=("validator",), executable_handlers=("read", "check"))
+POLICY = Policy(
+    trusted_verifiers=("validator",),
+    handlers=(
+        HandlerRegistration(handler_id="read", roles=("investigate", "diversify")),
+        HandlerRegistration(
+            handler_id="check",
+            roles=("verify",),
+            checkers=(
+                CheckerPermission(
+                    checker_id="validator",
+                    purposes=("content", "check_resolution", "contradiction_resolution"),
+                ),
+                CheckerPermission(checker_id="reader", purposes=("content",)),
+            ),
+        ),
+    ),
+)
 BUDGET = Budget(limits=Resources(actions=10, verifications=10))
 ACQUIRE = ActionCandidate(
     id="read", obligation_id="quality", scope="v1", kind="investigate", handler_id="read"
@@ -44,6 +63,8 @@ VERIFY = ActionCandidate(
     handler_id="check",
     resources=Resources(actions=1, verifications=1),
     target_digest=DIGEST,
+    target_evidence_id="data",
+    checker_id="validator",
 )
 EVIDENCE = Evidence(
     id="data",
@@ -63,10 +84,24 @@ PASS = CheckResult(
     verifier_id="validator",
     status="PASS",
     reason="actual validation passed",
+    basis=make_basis(State(obligations=(OBLIGATION,), evidence=(EVIDENCE,)), VERIFY),
 )
 
 
 def changed(model, **updates):
+    if isinstance(model, CheckResult) and model.basis is not None and "basis" not in updates:
+        basis_values = model.basis.model_dump()
+        target_values = model.basis.target.model_dump()
+        for field in ("obligation_id", "scope"):
+            if field in updates:
+                basis_values[field] = updates[field]
+                target_values[field] = updates[field]
+        if "target_digest" in updates:
+            target_values["digest"] = updates["target_digest"]
+        if "verifier_id" in updates:
+            basis_values["checker_id"] = updates["verifier_id"]
+        basis_values["target"] = target_values
+        updates["basis"] = type(model.basis)(**basis_values)
     return type(model)(**{**model.model_dump(), **updates})
 
 
@@ -176,6 +211,14 @@ def test_old_failure_unknown_does_not_vanish_after_new_pass(status):
         reason="checked resolution",
     )
     resolved = changed(current, supersessions=(event,))
+    assert plan(resolved, (), BUDGET, POLICY).stop_reason != "satisfied"
+    resolution_action = changed(VERIFY, purpose="check_resolution", resolution_target_id="bad")
+    dedicated = changed(PASS, id="dedicated", basis=make_basis(current, resolution_action))
+    resolved = changed(
+        current,
+        checks=(*current.checks, dedicated),
+        supersessions=(changed(event, replacement_id="dedicated"),),
+    )
     assert plan(resolved, (), BUDGET, POLICY).stop_reason == "satisfied"
     assert resolved.checks[0] == bad
     assert resolved.supersessions[0].reason == "checked resolution"
@@ -281,7 +324,17 @@ def test_deduplication_and_declared_groups_do_not_claim_independence():
 def test_same_content_other_obligation_or_scope_not_deduplicated():
     other = changed(OBLIGATION, id="other", scope="other")
     evidence = changed(EVIDENCE, id="other-data", obligation_id="other", scope="other")
-    check = changed(PASS, id="other-pass", obligation_id="other", scope="other")
+    other_action = changed(
+        VERIFY, obligation_id="other", scope="other", target_evidence_id=evidence.id
+    )
+    temporary = State(obligations=(OBLIGATION, other), evidence=(EVIDENCE, evidence))
+    check = changed(
+        PASS,
+        id="other-pass",
+        obligation_id="other",
+        scope="other",
+        basis=make_basis(temporary, other_action),
+    )
     current = State(
         obligations=(OBLIGATION, other), evidence=(EVIDENCE, evidence), checks=(PASS, check)
     )
@@ -320,11 +373,19 @@ def test_blocking_contradiction_checked_resolution_keeps_history():
         reason="host verified resolution",
     )
     resolved = changed(current, supersessions=(event,))
+    assert plan(resolved, (), BUDGET, POLICY).stop_reason != "satisfied"
+    resolution_action = changed(
+        VERIFY, purpose="contradiction_resolution", resolution_target_id="conflict"
+    )
+    dedicated = changed(PASS, id="dedicated", basis=make_basis(current, resolution_action))
+    resolved = changed(
+        current, checks=(PASS, dedicated), supersessions=(changed(event, check_id="dedicated"),)
+    )
     assert plan(resolved, (), BUDGET, POLICY).stop_reason == "satisfied"
     assert resolved.contradictions == (conflict,)
-    untrusted = changed(PASS, verifier_id="outsider")
+    untrusted = changed(dedicated, verifier_id="outsider")
     assert (
-        plan(changed(resolved, checks=(untrusted,)), (), BUDGET, POLICY).stop_reason
+        plan(changed(resolved, checks=(PASS, untrusted)), (), BUDGET, POLICY).stop_reason
         == "escalation_required"
     )
 
@@ -404,7 +465,7 @@ def test_budget_and_blocked_are_distinct_and_plan_is_deterministic():
     no_budget = Budget(limits=Resources(actions=0, verifications=0))
     assert plan(empty, (ACQUIRE,), no_budget, POLICY).stop_reason == "budget_exhausted"
     assert plan(empty, (), no_budget, POLICY).stop_reason == "blocked"
-    missing_handler = changed(POLICY, executable_handlers=())
+    missing_handler = changed(POLICY, handlers=())
     assert plan(empty, (ACQUIRE,), no_budget, missing_handler).stop_reason == "blocked"
     z = changed(ACQUIRE, id="z")
     a = changed(ACQUIRE, id="a")
@@ -419,7 +480,10 @@ def test_preconditions_unknown_verifier_and_required_verifier_policy():
     current = State(obligations=(required,), evidence=(EVIDENCE,), checks=(PASS,))
     assert "verifier_unavailable" in codes(plan(current, (VERIFY,), BUDGET, POLICY))
     needs = changed(ACQUIRE, requires_evidence_ids=("not-observed",))
-    assert "prerequisite_missing" in plan(state(), (needs,), BUDGET, POLICY).exclusions[0].reasons
+    assert (
+        "prerequisite_missing:not-observed"
+        in plan(state(), (needs,), BUDGET, POLICY).exclusions[0].reasons
+    )
 
 
 @pytest.mark.parametrize(
@@ -460,8 +524,11 @@ def test_verify_cannot_return_other_digest_or_zero_actual_verifications():
 def test_result_supersession_cannot_resolve_another_obligation():
     other = changed(OBLIGATION, id="other")
     evidence = changed(EVIDENCE, id="other-data", obligation_id="other")
-    fail = changed(PASS, id="other-fail", obligation_id="other", status="FAIL")
-    passed = changed(PASS, id="other-pass", obligation_id="other")
+    temporary = State(obligations=(OBLIGATION, other), evidence=(evidence,))
+    other_action = changed(VERIFY, obligation_id="other", target_evidence_id=evidence.id)
+    basis = make_basis(temporary, other_action)
+    fail = changed(PASS, id="other-fail", obligation_id="other", status="FAIL", basis=basis)
+    passed = changed(PASS, id="other-pass", obligation_id="other", basis=basis)
     original = State(obligations=(OBLIGATION, other), evidence=(evidence,), checks=(fail, passed))
     issued = start(original, ACQUIRE, "attempt", BUDGET, POLICY)
     event = Supersession(
@@ -471,13 +538,16 @@ def test_result_supersession_cannot_resolve_another_obligation():
         replacement_id="other-pass",
         reason="wrong target",
     )
-    with pytest.raises(ValidationError, match="supersession does not match issued"):
+    with pytest.raises(ValidationError, match="acquisition cannot supersede"):
         observe(issued, result(supersessions=(event,)))
     assert issued.supersessions == ()
 
 
 def test_snapshot_attempt_history_requires_explicit_retry_and_single_writer():
-    attempts = (Attempt(id="attempt", action=ACQUIRE), Attempt(id="second", action=ACQUIRE))
+    attempts = (
+        Attempt(id="attempt", action=ACQUIRE, registration=POLICY.handlers[0]),
+        Attempt(id="second", action=ACQUIRE, registration=POLICY.handlers[0]),
+    )
     first = result(status="failed", evidence=())
     second = result(id="second-result", attempt_id="second", status="failed", evidence=())
     with pytest.raises(ValidationError, match="explicit retry"):
@@ -494,7 +564,11 @@ def test_conflicting_source_group_bridge_never_inflates_provenance_count():
     other = changed(
         EVIDENCE, id="other", source="other.csv", provenance_group="group-b", digest=NEW_DIGEST
     )
-    other_check = changed(PASS, id="other-pass", target_digest=NEW_DIGEST)
+    temporary = State(obligations=(obligation,), evidence=(EVIDENCE, bridge, other))
+    other_action = changed(VERIFY, target_evidence_id=other.id, target_digest=NEW_DIGEST)
+    other_check = changed(
+        PASS, id="other-pass", target_digest=NEW_DIGEST, basis=make_basis(temporary, other_action)
+    )
     current = State(
         obligations=(obligation,), evidence=(EVIDENCE, bridge, other), checks=(PASS, other_check)
     )
@@ -523,7 +597,7 @@ def test_bounded_json_duplicate_keys_schema_strictness_and_round_trip():
     raw = dump_json(input_model)
     assert load_json(raw, PlanInput) == input_model
     data = json.loads(raw)
-    data["schema_version"] = "2"
+    data["schema_version"] = "3"
     with pytest.raises(ValidationError):
         load_json(json.dumps(data), PlanInput)
     with pytest.raises(ValueError, match="duplicate JSON key"):

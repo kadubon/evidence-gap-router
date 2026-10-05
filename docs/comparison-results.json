@@ -1,0 +1,1094 @@
+{
+  "artificial_data": true,
+  "protocol": "finite matched inputs/callbacks/checker/budget",
+  "baseline": "declared order among feasible actions; allows redundant content checks",
+  "counting": "Counts and budgets start after the identical snapshots; seed checks are shown",
+  "results": [
+    {
+      "scenario": "A04_recheck",
+      "variant": "declared",
+      "identical_initial_state": {
+        "evidence": [
+          {
+            "id": "first",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "producer": "read",
+            "content": "{\"value\": 10}",
+            "reference": null,
+            "source": "origin-1",
+            "provenance_group": "origin-1",
+            "withdrawn": false,
+            "expired": false
+          },
+          {
+            "id": "second",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "digest": "2ad4ac1dec4b1aef33248c773f1275638e97efa921a60c4e63c870115c11f856",
+            "producer": "read",
+            "content": "{\"value\": 20}",
+            "reference": null,
+            "source": "origin-2",
+            "provenance_group": "origin-2",
+            "withdrawn": false,
+            "expired": false
+          }
+        ],
+        "checks": [
+          {
+            "id": "seed-check",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "target_digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "verifier_id": "positive",
+            "status": "PASS",
+            "reason": "computed 10 >= bound minimum 0",
+            "withdrawn": false,
+            "expired": false,
+            "basis": {
+              "obligation_id": "dataset",
+              "scope": "synthetic-comparison",
+              "contract_fingerprint": "57bd4035f07d428fa88af0aafa67e50fbf880fbfacc330392e8b440327c59d4f",
+              "target": {
+                "evidence_id": "first",
+                "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+                "obligation_id": "dataset",
+                "scope": "synthetic-comparison",
+                "contract_fingerprint": "57bd4035f07d428fa88af0aafa67e50fbf880fbfacc330392e8b440327c59d4f",
+                "requirement": "active"
+              },
+              "dependencies": [],
+              "checker_id": "positive",
+              "checker_revision": "1",
+              "purpose": "content",
+              "resolution_target_id": null,
+              "resolution_fingerprint": null
+            },
+            "legacy": false
+          }
+        ],
+        "seed_checker_calls": 1
+      },
+      "budget": {
+        "limits": {
+          "actions": 1,
+          "verifications": 1,
+          "tokens": null
+        }
+      },
+      "baseline": {
+        "callback_calls": 1,
+        "calls": [
+          {
+            "action": "a-first-check",
+            "handler": "check",
+            "target": "first",
+            "produces": null
+          }
+        ],
+        "verifications": 1,
+        "stop": "budget_exhausted",
+        "satisfied": 0,
+        "required": 1,
+        "unresolved": 1,
+        "residual_codes": [
+          "unverified"
+        ]
+      },
+      "router": {
+        "callback_calls": 1,
+        "calls": [
+          {
+            "action": "z-second-check",
+            "handler": "check",
+            "target": "second",
+            "produces": null
+          }
+        ],
+        "verifications": 1,
+        "stop": "satisfied",
+        "satisfied": 1,
+        "required": 1,
+        "unresolved": 0,
+        "residual_codes": []
+      }
+    },
+    {
+      "scenario": "A04_recheck",
+      "variant": "reversed",
+      "identical_initial_state": {
+        "evidence": [
+          {
+            "id": "first",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "producer": "read",
+            "content": "{\"value\": 10}",
+            "reference": null,
+            "source": "origin-1",
+            "provenance_group": "origin-1",
+            "withdrawn": false,
+            "expired": false
+          },
+          {
+            "id": "second",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "digest": "2ad4ac1dec4b1aef33248c773f1275638e97efa921a60c4e63c870115c11f856",
+            "producer": "read",
+            "content": "{\"value\": 20}",
+            "reference": null,
+            "source": "origin-2",
+            "provenance_group": "origin-2",
+            "withdrawn": false,
+            "expired": false
+          }
+        ],
+        "checks": [
+          {
+            "id": "seed-check",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "target_digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "verifier_id": "positive",
+            "status": "PASS",
+            "reason": "computed 10 >= bound minimum 0",
+            "withdrawn": false,
+            "expired": false,
+            "basis": {
+              "obligation_id": "dataset",
+              "scope": "synthetic-comparison",
+              "contract_fingerprint": "57bd4035f07d428fa88af0aafa67e50fbf880fbfacc330392e8b440327c59d4f",
+              "target": {
+                "evidence_id": "first",
+                "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+                "obligation_id": "dataset",
+                "scope": "synthetic-comparison",
+                "contract_fingerprint": "57bd4035f07d428fa88af0aafa67e50fbf880fbfacc330392e8b440327c59d4f",
+                "requirement": "active"
+              },
+              "dependencies": [],
+              "checker_id": "positive",
+              "checker_revision": "1",
+              "purpose": "content",
+              "resolution_target_id": null,
+              "resolution_fingerprint": null
+            },
+            "legacy": false
+          }
+        ],
+        "seed_checker_calls": 1
+      },
+      "budget": {
+        "limits": {
+          "actions": 1,
+          "verifications": 1,
+          "tokens": null
+        }
+      },
+      "baseline": {
+        "callback_calls": 1,
+        "calls": [
+          {
+            "action": "z-second-check",
+            "handler": "check",
+            "target": "second",
+            "produces": null
+          }
+        ],
+        "verifications": 1,
+        "stop": "satisfied",
+        "satisfied": 1,
+        "required": 1,
+        "unresolved": 0,
+        "residual_codes": []
+      },
+      "router": {
+        "callback_calls": 1,
+        "calls": [
+          {
+            "action": "z-second-check",
+            "handler": "check",
+            "target": "second",
+            "produces": null
+          }
+        ],
+        "verifications": 1,
+        "stop": "satisfied",
+        "satisfied": 1,
+        "required": 1,
+        "unresolved": 0,
+        "residual_codes": []
+      }
+    },
+    {
+      "scenario": "A04_recheck",
+      "variant": "renamed",
+      "identical_initial_state": {
+        "evidence": [
+          {
+            "id": "first",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "producer": "read",
+            "content": "{\"value\": 10}",
+            "reference": null,
+            "source": "origin-1",
+            "provenance_group": "origin-1",
+            "withdrawn": false,
+            "expired": false
+          },
+          {
+            "id": "second",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "digest": "2ad4ac1dec4b1aef33248c773f1275638e97efa921a60c4e63c870115c11f856",
+            "producer": "read",
+            "content": "{\"value\": 20}",
+            "reference": null,
+            "source": "origin-2",
+            "provenance_group": "origin-2",
+            "withdrawn": false,
+            "expired": false
+          }
+        ],
+        "checks": [
+          {
+            "id": "seed-check",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "target_digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "verifier_id": "positive",
+            "status": "PASS",
+            "reason": "computed 10 >= bound minimum 0",
+            "withdrawn": false,
+            "expired": false,
+            "basis": {
+              "obligation_id": "dataset",
+              "scope": "synthetic-comparison",
+              "contract_fingerprint": "57bd4035f07d428fa88af0aafa67e50fbf880fbfacc330392e8b440327c59d4f",
+              "target": {
+                "evidence_id": "first",
+                "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+                "obligation_id": "dataset",
+                "scope": "synthetic-comparison",
+                "contract_fingerprint": "57bd4035f07d428fa88af0aafa67e50fbf880fbfacc330392e8b440327c59d4f",
+                "requirement": "active"
+              },
+              "dependencies": [],
+              "checker_id": "positive",
+              "checker_revision": "1",
+              "purpose": "content",
+              "resolution_target_id": null,
+              "resolution_fingerprint": null
+            },
+            "legacy": false
+          }
+        ],
+        "seed_checker_calls": 1
+      },
+      "budget": {
+        "limits": {
+          "actions": 1,
+          "verifications": 1,
+          "tokens": null
+        }
+      },
+      "baseline": {
+        "callback_calls": 1,
+        "calls": [
+          {
+            "action": "renamed-2",
+            "handler": "check",
+            "target": "first",
+            "produces": null
+          }
+        ],
+        "verifications": 1,
+        "stop": "budget_exhausted",
+        "satisfied": 0,
+        "required": 1,
+        "unresolved": 1,
+        "residual_codes": [
+          "unverified"
+        ]
+      },
+      "router": {
+        "callback_calls": 1,
+        "calls": [
+          {
+            "action": "renamed-1",
+            "handler": "check",
+            "target": "second",
+            "produces": null
+          }
+        ],
+        "verifications": 1,
+        "stop": "satisfied",
+        "satisfied": 1,
+        "required": 1,
+        "unresolved": 0,
+        "residual_codes": []
+      }
+    },
+    {
+      "scenario": "A05_provenance",
+      "variant": "declared",
+      "identical_initial_state": {
+        "evidence": [
+          {
+            "id": "first",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "producer": "read",
+            "content": "{\"value\": 10}",
+            "reference": null,
+            "source": "origin-1",
+            "provenance_group": "origin-1",
+            "withdrawn": false,
+            "expired": false
+          }
+        ],
+        "checks": [
+          {
+            "id": "seed-check",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "target_digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "verifier_id": "positive",
+            "status": "PASS",
+            "reason": "computed 10 >= bound minimum 0",
+            "withdrawn": false,
+            "expired": false,
+            "basis": {
+              "obligation_id": "dataset",
+              "scope": "synthetic-comparison",
+              "contract_fingerprint": "9f9c3e43008c99a2d06226f413486f96e39cb48a2649de7db69f644bc13bcdae",
+              "target": {
+                "evidence_id": "first",
+                "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+                "obligation_id": "dataset",
+                "scope": "synthetic-comparison",
+                "contract_fingerprint": "9f9c3e43008c99a2d06226f413486f96e39cb48a2649de7db69f644bc13bcdae",
+                "requirement": "active"
+              },
+              "dependencies": [],
+              "checker_id": "positive",
+              "checker_revision": "1",
+              "purpose": "content",
+              "resolution_target_id": null,
+              "resolution_fingerprint": null
+            },
+            "legacy": false
+          }
+        ],
+        "seed_checker_calls": 1
+      },
+      "budget": {
+        "limits": {
+          "actions": 2,
+          "verifications": 1,
+          "tokens": null
+        }
+      },
+      "baseline": {
+        "callback_calls": 2,
+        "calls": [
+          {
+            "action": "a-repeat-origin",
+            "handler": "read",
+            "target": null,
+            "produces": "duplicate"
+          },
+          {
+            "action": "z-new-origin",
+            "handler": "read",
+            "target": null,
+            "produces": "second"
+          }
+        ],
+        "verifications": 0,
+        "stop": "budget_exhausted",
+        "satisfied": 0,
+        "required": 1,
+        "unresolved": 1,
+        "residual_codes": [
+          "unverified"
+        ]
+      },
+      "router": {
+        "callback_calls": 2,
+        "calls": [
+          {
+            "action": "z-new-origin",
+            "handler": "read",
+            "target": null,
+            "produces": "second"
+          },
+          {
+            "action": "verify-second",
+            "handler": "check",
+            "target": "second",
+            "produces": null
+          }
+        ],
+        "verifications": 1,
+        "stop": "satisfied",
+        "satisfied": 1,
+        "required": 1,
+        "unresolved": 0,
+        "residual_codes": []
+      }
+    },
+    {
+      "scenario": "A05_provenance",
+      "variant": "reversed",
+      "identical_initial_state": {
+        "evidence": [
+          {
+            "id": "first",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "producer": "read",
+            "content": "{\"value\": 10}",
+            "reference": null,
+            "source": "origin-1",
+            "provenance_group": "origin-1",
+            "withdrawn": false,
+            "expired": false
+          }
+        ],
+        "checks": [
+          {
+            "id": "seed-check",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "target_digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "verifier_id": "positive",
+            "status": "PASS",
+            "reason": "computed 10 >= bound minimum 0",
+            "withdrawn": false,
+            "expired": false,
+            "basis": {
+              "obligation_id": "dataset",
+              "scope": "synthetic-comparison",
+              "contract_fingerprint": "9f9c3e43008c99a2d06226f413486f96e39cb48a2649de7db69f644bc13bcdae",
+              "target": {
+                "evidence_id": "first",
+                "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+                "obligation_id": "dataset",
+                "scope": "synthetic-comparison",
+                "contract_fingerprint": "9f9c3e43008c99a2d06226f413486f96e39cb48a2649de7db69f644bc13bcdae",
+                "requirement": "active"
+              },
+              "dependencies": [],
+              "checker_id": "positive",
+              "checker_revision": "1",
+              "purpose": "content",
+              "resolution_target_id": null,
+              "resolution_fingerprint": null
+            },
+            "legacy": false
+          }
+        ],
+        "seed_checker_calls": 1
+      },
+      "budget": {
+        "limits": {
+          "actions": 2,
+          "verifications": 1,
+          "tokens": null
+        }
+      },
+      "baseline": {
+        "callback_calls": 2,
+        "calls": [
+          {
+            "action": "z-new-origin",
+            "handler": "read",
+            "target": null,
+            "produces": "second"
+          },
+          {
+            "action": "verify-second",
+            "handler": "check",
+            "target": "second",
+            "produces": null
+          }
+        ],
+        "verifications": 1,
+        "stop": "satisfied",
+        "satisfied": 1,
+        "required": 1,
+        "unresolved": 0,
+        "residual_codes": []
+      },
+      "router": {
+        "callback_calls": 2,
+        "calls": [
+          {
+            "action": "z-new-origin",
+            "handler": "read",
+            "target": null,
+            "produces": "second"
+          },
+          {
+            "action": "verify-second",
+            "handler": "check",
+            "target": "second",
+            "produces": null
+          }
+        ],
+        "verifications": 1,
+        "stop": "satisfied",
+        "satisfied": 1,
+        "required": 1,
+        "unresolved": 0,
+        "residual_codes": []
+      }
+    },
+    {
+      "scenario": "A05_provenance",
+      "variant": "renamed",
+      "identical_initial_state": {
+        "evidence": [
+          {
+            "id": "first",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "producer": "read",
+            "content": "{\"value\": 10}",
+            "reference": null,
+            "source": "origin-1",
+            "provenance_group": "origin-1",
+            "withdrawn": false,
+            "expired": false
+          }
+        ],
+        "checks": [
+          {
+            "id": "seed-check",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "target_digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "verifier_id": "positive",
+            "status": "PASS",
+            "reason": "computed 10 >= bound minimum 0",
+            "withdrawn": false,
+            "expired": false,
+            "basis": {
+              "obligation_id": "dataset",
+              "scope": "synthetic-comparison",
+              "contract_fingerprint": "9f9c3e43008c99a2d06226f413486f96e39cb48a2649de7db69f644bc13bcdae",
+              "target": {
+                "evidence_id": "first",
+                "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+                "obligation_id": "dataset",
+                "scope": "synthetic-comparison",
+                "contract_fingerprint": "9f9c3e43008c99a2d06226f413486f96e39cb48a2649de7db69f644bc13bcdae",
+                "requirement": "active"
+              },
+              "dependencies": [],
+              "checker_id": "positive",
+              "checker_revision": "1",
+              "purpose": "content",
+              "resolution_target_id": null,
+              "resolution_fingerprint": null
+            },
+            "legacy": false
+          }
+        ],
+        "seed_checker_calls": 1
+      },
+      "budget": {
+        "limits": {
+          "actions": 2,
+          "verifications": 1,
+          "tokens": null
+        }
+      },
+      "baseline": {
+        "callback_calls": 2,
+        "calls": [
+          {
+            "action": "renamed-3",
+            "handler": "read",
+            "target": null,
+            "produces": "duplicate"
+          },
+          {
+            "action": "renamed-2",
+            "handler": "read",
+            "target": null,
+            "produces": "second"
+          }
+        ],
+        "verifications": 0,
+        "stop": "budget_exhausted",
+        "satisfied": 0,
+        "required": 1,
+        "unresolved": 1,
+        "residual_codes": [
+          "unverified"
+        ]
+      },
+      "router": {
+        "callback_calls": 2,
+        "calls": [
+          {
+            "action": "renamed-2",
+            "handler": "read",
+            "target": null,
+            "produces": "second"
+          },
+          {
+            "action": "renamed-1",
+            "handler": "check",
+            "target": "second",
+            "produces": null
+          }
+        ],
+        "verifications": 1,
+        "stop": "satisfied",
+        "satisfied": 1,
+        "required": 1,
+        "unresolved": 0,
+        "residual_codes": []
+      }
+    },
+    {
+      "scenario": "dependency_recheck",
+      "variant": "declared",
+      "identical_initial_state": {
+        "evidence": [
+          {
+            "id": "first",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "producer": "read",
+            "content": "{\"value\": 10}",
+            "reference": null,
+            "source": "origin-1",
+            "provenance_group": "origin-1",
+            "withdrawn": false,
+            "expired": false
+          },
+          {
+            "id": "old-rules",
+            "obligation_id": "rules",
+            "scope": "synthetic-comparison",
+            "digest": "598979e18cafc4b5a0f3471e13e06a674377dd38e11e708287fc77e2c5fffb28",
+            "producer": "read",
+            "content": "{\"value\": 0}",
+            "reference": null,
+            "source": "rule-origin",
+            "provenance_group": "rule-origin",
+            "withdrawn": false,
+            "expired": true
+          }
+        ],
+        "checks": [
+          {
+            "id": "old-dataset-pass",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "target_digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "verifier_id": "positive",
+            "status": "PASS",
+            "reason": "computed 10 >= bound minimum 0",
+            "withdrawn": false,
+            "expired": false,
+            "basis": {
+              "obligation_id": "dataset",
+              "scope": "synthetic-comparison",
+              "contract_fingerprint": "e531d4aa77eab446c4bc4a54b18b53565fe20d1f2d404ab81dcb9141776a5bef",
+              "target": {
+                "evidence_id": "first",
+                "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+                "obligation_id": "dataset",
+                "scope": "synthetic-comparison",
+                "contract_fingerprint": "e531d4aa77eab446c4bc4a54b18b53565fe20d1f2d404ab81dcb9141776a5bef",
+                "requirement": "active"
+              },
+              "dependencies": [
+                {
+                  "evidence_id": "old-rules",
+                  "digest": "598979e18cafc4b5a0f3471e13e06a674377dd38e11e708287fc77e2c5fffb28",
+                  "obligation_id": "rules",
+                  "scope": "synthetic-comparison",
+                  "contract_fingerprint": "87fd699c1e724dd58dc6a339e2e39d06093cb662011653c5a93172bd778198eb",
+                  "requirement": "active"
+                }
+              ],
+              "checker_id": "positive",
+              "checker_revision": "1",
+              "purpose": "content",
+              "resolution_target_id": null,
+              "resolution_fingerprint": null
+            },
+            "legacy": false
+          }
+        ],
+        "seed_checker_calls": 1
+      },
+      "budget": {
+        "limits": {
+          "actions": 3,
+          "verifications": 2,
+          "tokens": null
+        }
+      },
+      "baseline": {
+        "callback_calls": 3,
+        "calls": [
+          {
+            "action": "read-new-rules",
+            "handler": "read",
+            "target": null,
+            "produces": "new-rules"
+          },
+          {
+            "action": "verify-new-rules",
+            "handler": "check",
+            "target": "new-rules",
+            "produces": null
+          },
+          {
+            "action": "a-dataset-recheck",
+            "handler": "check",
+            "target": "first",
+            "produces": null
+          }
+        ],
+        "verifications": 2,
+        "stop": "satisfied",
+        "satisfied": 2,
+        "required": 2,
+        "unresolved": 0,
+        "residual_codes": []
+      },
+      "router": {
+        "callback_calls": 3,
+        "calls": [
+          {
+            "action": "read-new-rules",
+            "handler": "read",
+            "target": null,
+            "produces": "new-rules"
+          },
+          {
+            "action": "verify-new-rules",
+            "handler": "check",
+            "target": "new-rules",
+            "produces": null
+          },
+          {
+            "action": "a-dataset-recheck",
+            "handler": "check",
+            "target": "first",
+            "produces": null
+          }
+        ],
+        "verifications": 2,
+        "stop": "satisfied",
+        "satisfied": 2,
+        "required": 2,
+        "unresolved": 0,
+        "residual_codes": []
+      }
+    },
+    {
+      "scenario": "dependency_recheck",
+      "variant": "reversed",
+      "identical_initial_state": {
+        "evidence": [
+          {
+            "id": "first",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "producer": "read",
+            "content": "{\"value\": 10}",
+            "reference": null,
+            "source": "origin-1",
+            "provenance_group": "origin-1",
+            "withdrawn": false,
+            "expired": false
+          },
+          {
+            "id": "old-rules",
+            "obligation_id": "rules",
+            "scope": "synthetic-comparison",
+            "digest": "598979e18cafc4b5a0f3471e13e06a674377dd38e11e708287fc77e2c5fffb28",
+            "producer": "read",
+            "content": "{\"value\": 0}",
+            "reference": null,
+            "source": "rule-origin",
+            "provenance_group": "rule-origin",
+            "withdrawn": false,
+            "expired": true
+          }
+        ],
+        "checks": [
+          {
+            "id": "old-dataset-pass",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "target_digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "verifier_id": "positive",
+            "status": "PASS",
+            "reason": "computed 10 >= bound minimum 0",
+            "withdrawn": false,
+            "expired": false,
+            "basis": {
+              "obligation_id": "dataset",
+              "scope": "synthetic-comparison",
+              "contract_fingerprint": "e531d4aa77eab446c4bc4a54b18b53565fe20d1f2d404ab81dcb9141776a5bef",
+              "target": {
+                "evidence_id": "first",
+                "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+                "obligation_id": "dataset",
+                "scope": "synthetic-comparison",
+                "contract_fingerprint": "e531d4aa77eab446c4bc4a54b18b53565fe20d1f2d404ab81dcb9141776a5bef",
+                "requirement": "active"
+              },
+              "dependencies": [
+                {
+                  "evidence_id": "old-rules",
+                  "digest": "598979e18cafc4b5a0f3471e13e06a674377dd38e11e708287fc77e2c5fffb28",
+                  "obligation_id": "rules",
+                  "scope": "synthetic-comparison",
+                  "contract_fingerprint": "87fd699c1e724dd58dc6a339e2e39d06093cb662011653c5a93172bd778198eb",
+                  "requirement": "active"
+                }
+              ],
+              "checker_id": "positive",
+              "checker_revision": "1",
+              "purpose": "content",
+              "resolution_target_id": null,
+              "resolution_fingerprint": null
+            },
+            "legacy": false
+          }
+        ],
+        "seed_checker_calls": 1
+      },
+      "budget": {
+        "limits": {
+          "actions": 3,
+          "verifications": 2,
+          "tokens": null
+        }
+      },
+      "baseline": {
+        "callback_calls": 3,
+        "calls": [
+          {
+            "action": "read-new-rules",
+            "handler": "read",
+            "target": null,
+            "produces": "new-rules"
+          },
+          {
+            "action": "verify-new-rules",
+            "handler": "check",
+            "target": "new-rules",
+            "produces": null
+          },
+          {
+            "action": "a-dataset-recheck",
+            "handler": "check",
+            "target": "first",
+            "produces": null
+          }
+        ],
+        "verifications": 2,
+        "stop": "satisfied",
+        "satisfied": 2,
+        "required": 2,
+        "unresolved": 0,
+        "residual_codes": []
+      },
+      "router": {
+        "callback_calls": 3,
+        "calls": [
+          {
+            "action": "read-new-rules",
+            "handler": "read",
+            "target": null,
+            "produces": "new-rules"
+          },
+          {
+            "action": "verify-new-rules",
+            "handler": "check",
+            "target": "new-rules",
+            "produces": null
+          },
+          {
+            "action": "a-dataset-recheck",
+            "handler": "check",
+            "target": "first",
+            "produces": null
+          }
+        ],
+        "verifications": 2,
+        "stop": "satisfied",
+        "satisfied": 2,
+        "required": 2,
+        "unresolved": 0,
+        "residual_codes": []
+      }
+    },
+    {
+      "scenario": "dependency_recheck",
+      "variant": "renamed",
+      "identical_initial_state": {
+        "evidence": [
+          {
+            "id": "first",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "producer": "read",
+            "content": "{\"value\": 10}",
+            "reference": null,
+            "source": "origin-1",
+            "provenance_group": "origin-1",
+            "withdrawn": false,
+            "expired": false
+          },
+          {
+            "id": "old-rules",
+            "obligation_id": "rules",
+            "scope": "synthetic-comparison",
+            "digest": "598979e18cafc4b5a0f3471e13e06a674377dd38e11e708287fc77e2c5fffb28",
+            "producer": "read",
+            "content": "{\"value\": 0}",
+            "reference": null,
+            "source": "rule-origin",
+            "provenance_group": "rule-origin",
+            "withdrawn": false,
+            "expired": true
+          }
+        ],
+        "checks": [
+          {
+            "id": "old-dataset-pass",
+            "obligation_id": "dataset",
+            "scope": "synthetic-comparison",
+            "target_digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+            "verifier_id": "positive",
+            "status": "PASS",
+            "reason": "computed 10 >= bound minimum 0",
+            "withdrawn": false,
+            "expired": false,
+            "basis": {
+              "obligation_id": "dataset",
+              "scope": "synthetic-comparison",
+              "contract_fingerprint": "e531d4aa77eab446c4bc4a54b18b53565fe20d1f2d404ab81dcb9141776a5bef",
+              "target": {
+                "evidence_id": "first",
+                "digest": "a26f8c452f6121cce2e026be362d205112bd0ed73f71da10d7a51a966c0ae04d",
+                "obligation_id": "dataset",
+                "scope": "synthetic-comparison",
+                "contract_fingerprint": "e531d4aa77eab446c4bc4a54b18b53565fe20d1f2d404ab81dcb9141776a5bef",
+                "requirement": "active"
+              },
+              "dependencies": [
+                {
+                  "evidence_id": "old-rules",
+                  "digest": "598979e18cafc4b5a0f3471e13e06a674377dd38e11e708287fc77e2c5fffb28",
+                  "obligation_id": "rules",
+                  "scope": "synthetic-comparison",
+                  "contract_fingerprint": "87fd699c1e724dd58dc6a339e2e39d06093cb662011653c5a93172bd778198eb",
+                  "requirement": "active"
+                }
+              ],
+              "checker_id": "positive",
+              "checker_revision": "1",
+              "purpose": "content",
+              "resolution_target_id": null,
+              "resolution_fingerprint": null
+            },
+            "legacy": false
+          }
+        ],
+        "seed_checker_calls": 1
+      },
+      "budget": {
+        "limits": {
+          "actions": 3,
+          "verifications": 2,
+          "tokens": null
+        }
+      },
+      "baseline": {
+        "callback_calls": 3,
+        "calls": [
+          {
+            "action": "renamed-2",
+            "handler": "read",
+            "target": null,
+            "produces": "new-rules"
+          },
+          {
+            "action": "renamed-1",
+            "handler": "check",
+            "target": "new-rules",
+            "produces": null
+          },
+          {
+            "action": "renamed-3",
+            "handler": "check",
+            "target": "first",
+            "produces": null
+          }
+        ],
+        "verifications": 2,
+        "stop": "satisfied",
+        "satisfied": 2,
+        "required": 2,
+        "unresolved": 0,
+        "residual_codes": []
+      },
+      "router": {
+        "callback_calls": 3,
+        "calls": [
+          {
+            "action": "renamed-2",
+            "handler": "read",
+            "target": null,
+            "produces": "new-rules"
+          },
+          {
+            "action": "renamed-1",
+            "handler": "check",
+            "target": "new-rules",
+            "produces": null
+          },
+          {
+            "action": "renamed-3",
+            "handler": "check",
+            "target": "first",
+            "produces": null
+          }
+        ],
+        "verifications": 2,
+        "stop": "satisfied",
+        "satisfied": 2,
+        "required": 2,
+        "unresolved": 0,
+        "residual_codes": []
+      }
+    }
+  ],
+  "limitation": "Small synthetic cases; no claim of general cost, truth, or AI improvement"
+}

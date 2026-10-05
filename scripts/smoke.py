@@ -1,26 +1,34 @@
 """Verify an installed distribution; run outside the source checkout."""
 
+import argparse
 import importlib.metadata
 import json
 import subprocess
 import sys
+import tempfile
+from importlib.resources import files
 from pathlib import Path
 
 import evidence_gap_router as egr
-from evidence_gap_router.demo import run_demo
+from evidence_gap_router.demo import run_cause_demo, run_demo
 from evidence_gap_router.models import State
+from evidence_gap_router.sdk_example import run_callback_example
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--expected-version", required=True)
+    expected_version = parser.parse_args().expected_version
     package_path = Path(egr.__file__).resolve()
     source = Path(__file__).resolve().parents[1] / "src"
     assert not package_path.is_relative_to(source), package_path
-    assert egr.__version__ == importlib.metadata.version("evidence-gap-router") == "0.1.0"
+    assert egr.__version__ == importlib.metadata.version("evidence-gap-router") == expected_version
+    assert package_path.is_relative_to(Path(sys.prefix)), package_path
     command = Path(sys.executable).with_name("egr.exe" if sys.platform == "win32" else "egr")
     version = subprocess.run(
         [str(command), "--version"], capture_output=True, text=True, check=True
     )
-    assert "0.1.0" in version.stdout
+    assert version.stdout.strip() == expected_version
     expected = {
         "valid": "satisfied",
         "invalid": "escalation_required",
@@ -42,6 +50,115 @@ def main() -> None:
         assert not completed.stderr, completed.stderr
         payload = json.loads(completed.stdout)
         assert payload["decision"]["stop_reason"] == stop
+        assert state.schema_version == "2"
+
+    sdk = run_callback_example()
+    assert sdk.decision.stop_reason == "satisfied", sdk
+    assert egr.load_json(egr.dump_json(sdk.state), State) == sdk.state
+    for case in ("resolved", "conflict", "unknown", "provenance", "budget"):
+        report = run_cause_demo(case)
+        assert report["artificial_data"] is True
+        assert (report["decision"]["stop_reason"] == "satisfied") == (case == "resolved"), report
+        state = egr.load_json(json.dumps(report["state"]), State)
+        assert egr.load_json(egr.dump_json(state), State) == state
+
+    # The installed CLI reads actual host-selected files, with complete input
+    # validation, distinct real-data scope, and Unicode/space/BOM/CRLF handling.
+    with tempfile.TemporaryDirectory(prefix="egr-installed-smoke-") as temporary:
+        directory = Path(temporary) / "日本語 path"
+        directory.mkdir()
+        dataset = directory / "受注 data.csv"
+        dictionary = directory / "規則 rules.json"
+        fixture = files("evidence_gap_router").joinpath("data")
+        csv = fixture.joinpath("orders_valid.csv").read_text(encoding="utf-8")
+        dataset.write_bytes(
+            b"\xef\xbb\xbf" + csv.replace("\r\n", "\n").replace("\n", "\r\n").encode()
+        )
+        dictionary.write_bytes(
+            b"\xef\xbb\xbf" + fixture.joinpath("data_dictionary.json").read_bytes()
+        )
+        completed = subprocess.run(
+            [
+                str(command),
+                "check-data",
+                "--data",
+                str(dataset),
+                "--dictionary",
+                str(dictionary),
+                "--json",
+            ],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=False,
+        )
+        assert completed.returncode == 0 and not completed.stderr, completed
+        payload = json.loads(completed.stdout)
+        assert payload["artificial_data"] is False
+        assert payload["decision"]["stop_reason"] == "satisfied", payload
+        assert all("artificial" not in o["scope"] for o in payload["state"]["obligations"])
+        dataset.write_text("order_id,amount,amount,currency\nA,-999,10,USD\n", encoding="utf-8")
+        rejected = subprocess.run(
+            [
+                str(command),
+                "check-data",
+                "--data",
+                str(dataset),
+                "--dictionary",
+                str(dictionary),
+                "--json",
+            ],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=False,
+        )
+        assert rejected.returncode == 1 and rejected.stderr, rejected
+        assert json.loads(rejected.stdout)["outcome"] == "input_error"
+
+    # A legacy PASS is retained without manufacturing its missing verification
+    # contract. This snapshot comes from the documented v1 schema.
+    legacy = {
+        "schema_version": "1",
+        "obligations": [
+            {
+                "id": "legacy",
+                "description": "display",
+                "scope": "v1",
+                "acceptance": "old",
+                "required": True,
+            }
+        ],
+        "evidence": [
+            {
+                "id": "old",
+                "obligation_id": "legacy",
+                "scope": "v1",
+                "digest": "a" * 64,
+                "producer": "reader",
+                "content": "old",
+            }
+        ],
+        "checks": [
+            {
+                "id": "old-pass",
+                "obligation_id": "legacy",
+                "scope": "v1",
+                "target_digest": "a" * 64,
+                "verifier_id": "checker",
+                "status": "PASS",
+                "reason": "old check lacks a recorded contract",
+            }
+        ],
+    }
+    migrated = egr.migrate_v1_json(json.dumps(legacy))
+    assert migrated.schema_version == "2" and migrated.checks[0].legacy
+    assert migrated.checks[0].basis is None and migrated.legacy_schema1 is not None
+    assert egr.load_json(egr.dump_json(migrated), State) == migrated
+    assert (
+        egr.plan(migrated, (), egr.Budget(limits=egr.Resources()), egr.Policy()).stop_reason
+        != "satisfied"
+    )
     print(json.dumps({"version": egr.__version__, "package": str(package_path), "smoke": "passed"}))
 
 

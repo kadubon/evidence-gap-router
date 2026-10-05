@@ -1,13 +1,13 @@
 # Release procedure
 
 Source publication, GitHub Release, PyPI upload and public-install verification
-are four separate outcomes. A tag or pending publisher alone establishes none
-of the later outcomes. Do not move a public tag, overwrite uploaded files or
-describe unexecuted checks as passing.
+are separate outcomes. Do not move a public tag, replace public bytes, weaken
+environment protection or describe unexecuted checks as passed. This updates an
+existing project; v0.1.0 remains unchanged.
 
-## Local and manual validation
+## Local and exact-commit manual validation
 
-Run the checks from the repository root using a project-local `.venv`:
+From the repository root, with uv-managed Python and project-local `.venv`:
 
 ```sh
 uv sync --locked --group dev
@@ -21,20 +21,27 @@ uv run --locked twine check dist/*
 uv run --locked python scripts/package_audit.py dist
 ```
 
-uv's build-generated `dist/.gitignore` is removed specifically before auditing;
-do not silently ignore other unexpected files. The artifact audit checks exactly
-one wheel and sdist, authoritative version,
-Python/license metadata, Apache license, typing marker and packaged CSV/JSON
-fixtures. Test the wheel in a new environment outside the repository with an
-ordinary noneditable install. Build and install from the sdist as well. The
-repository's `scripts/smoke.py` checks the installed SDK, CLI and bundled demo;
-run it with the clean environment's Python from that external directory.
+Remove only uv's generated `dist/.gitignore`; other unexpected files remain errors.
+Start with no stale distributions, without deleting unrelated files. Archive audit
+requires exactly one wheel/sdist, authoritative version/Python/SPDX metadata, the
+full unchanged Apache LICENSE, typing marker, implementation modules, migration
+reader and all packaged example fixtures. Inspect git status and archives for
+credentials, unrelated files, caches or local/editable dependencies.
 
-Review `git status`, tracked and untracked files, archives and metadata. Exclude
-credentials, personal data, `.venv`, caches and unrelated project files. Commit
-and push `main` normally, without force push. There is one workflow file:
-`.github/workflows/workflow.yml`. It starts only by dispatch or a `v*` tag push.
-Run a combined manual check after local changes are complete:
+Test the existing wheel from a new environment outside the checkout, for example:
+
+```sh
+uv run --no-project --python 3.12 python scripts/native_check.py --wheel dist/evidence_gap_router-0.2.0-py3-none-any.whl --version 0.2.0 --python 3.12 --platform Linux --architecture x86_64 --report /tmp/egr-native-linux.json
+```
+
+On Windows use `--platform Windows --architecture x86_64` and an external report
+path. The helper creates a clean venv, installs the actual wheel with locked
+runtime constraints and pytest, copies regressions outside the source, verifies
+import locations and runs installed smoke. Build/install the sdist separately.
+`scripts/smoke.py --expected-version 0.2.0` receives the actual expected version;
+it must run with that clean environment's isolated Python outside the repository.
+
+Commit/push `main` normally, then dispatch combined CI only after changes are ready:
 
 ```sh
 gh workflow run workflow.yml --repo kadubon/evidence-gap-router --ref main
@@ -42,113 +49,118 @@ gh run list --repo kadubon/evidence-gap-router --workflow workflow.yml --event w
 gh run view RUN_ID --repo kadubon/evidence-gap-router
 ```
 
-Record the successful run ID and exact `head_sha`. Manual checks never publish,
-including dispatches targeting tag refs. Linux Python 3.12 runs the complete
-locked gate and builds the wheel/sdist. Linux clean-wheel and clean-sdist smoke
-and Windows Python 3.12 installation smoke must pass. Windows consumes the same
-Linux-built wheel artifact. Fix causes before rerunning failed CI.
+Record exact `head_sha` and run ID. All six native jobs must complete successfully:
+Linux 3.12, Windows x64 3.12, macOS arm64 3.12, macOS Intel 3.12, Linux 3.13 and
+Linux 3.14. Skipped/missing jobs are not success. Manual runs, including a dispatch
+at a tag ref, never publish. Any changed commit needs a new successful manual run.
 
-## Trusted Publishing configuration
+There is one workflow, `.github/workflows/workflow.yml`, triggered only by dispatch
+or `v*` tag pushes. Linux 3.12 builds the release distributions once after locked
+gates. The other profiles install that same uploaded wheel. A separate sdist
+rebuild tests source distribution usability without replacing the release wheel.
+Native JSON reports record actual platform/architecture/interpreter/imports,
+dependency versions/native wheel tags and the original release-wheel hash.
 
-Use GitHub Actions OIDC through the official `pypa/gh-action-pypi-publish`
-release. Do not create a long-lived PyPI token as a fallback. GitHub CLI
-authentication does not authenticate the PyPI account.
+## Existing Trusted Publisher and environment
 
-For a new project, sign into [PyPI account publishing](https://pypi.org/manage/account/publishing/)
-and register a pending GitHub publisher with these exact values:
+Inspect the existing project's PyPI publishing settings; do not unconditionally
+create a new Pending Publisher or use a long-lived token as a fallback. GitHub CLI
+authentication does not authenticate PyPI. Keep these existing values:
 
 | PyPI field | Value |
 | --- | --- |
-| PyPI project name | `evidence-gap-router` |
+| Project | `evidence-gap-router` |
 | Owner | `kadubon` |
-| Repository name | `evidence-gap-router` |
+| Repository | `evidence-gap-router` |
 | Workflow filename | `workflow.yml` |
-| Environment name | `pypi` |
+| Environment | `pypi` |
 
-For an already owned project use that project's publishing settings instead.
-Do not reuse a third-party project. A pending publisher neither creates the
-project nor reserves its name. The project is created by its first successful
-trusted upload. [PyPI documents this distinction](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/).
+Use the official `pypa/gh-action-pypi-publish` action with GitHub OIDC. Verify
+[GitHub environment `pypi`](https://github.com/kadubon/evidence-gap-router/settings/environments)
+and complete any required review normally. Preserve existing tag restrictions,
+reviewers and protections. If authentication, publisher or required approval is
+actually unavailable, finish implementation/local/manual verification, record
+the exact remaining operation and do not bypass it.
 
-Verify the [GitHub `pypi` environment](https://github.com/kadubon/evidence-gap-router/settings/environments),
-restrict deployments to release tags where supported, and preserve existing
-reviewers and protection rules. Required review must be completed normally.
-Check the actual publisher and environment before pushing the first release
-tag. If PyPI login or publisher registration is unavailable, finish source,
-build and manual CI, report PyPI as unpublished, and leave the tag unpushed.
+Check official PyPI for 0.2.0 before tagging. If it already exists, compare its
+actual files/hashes and report the collision; do not change version silently,
+replace files or use `skip-existing` to turn conflict into success.
 
-## Tag release and public verification
+## Tag admission, upload and public verification
 
-Once external configuration is confirmed and manual CI passed for the unchanged
-commit, verify version and main history and push the annotated tag:
+Once configuration is confirmed and manual CI passed for the unchanged commit:
 
 ```sh
 git switch main
 git status --short
 git rev-parse HEAD
-git tag -a v0.1.0 -m "evidence-gap-router 0.1.0"
-git push origin v0.1.0
+git tag -a v0.2.0 -m "evidence-gap-router 0.2.0"
+git push origin v0.2.0
 gh run list --repo kadubon/evidence-gap-router --workflow workflow.yml --event push --limit 5
 gh run view RELEASE_RUN_ID --repo kadubon/evidence-gap-router
 ```
 
-If `main` changed after manual validation, validate the new exact commit before
-tagging. Use the authenticated user push path: a tag created with a workflow's
-`GITHUB_TOKEN` can be subject to event suppression. Confirm that the tag workflow
-actually started, rather than inferring execution from tag existence.
+Use authenticated user push, and confirm the tag run actually started; workflows
+using `GITHUB_TOKEN` can suppress subsequent events. The guard requires exact
+repository, tag-push event, `vVERSION`, source/distribution versions, tag target
+in `main` history, and a completed successful exact-commit manual run whose six
+required native jobs also succeeded. Manual/tag concurrency groups are separate.
 
-The release guard requires the exact repository, tag push, exact `vVERSION`,
-matching source/distribution versions, tag target in `main` history and a prior
-successful manual run for the same commit. Linux and Windows gates precede
-upload. Only the publish job has `id-token: write`, uses environment `pypi`, and
-runs the official action on the existing wheel/sdist. It runs no project scripts
-and performs no rebuild. Manual concurrency is separate from tag concurrency,
-so a manual run cannot cancel publication.
+Publish directly needs all native jobs in the tag run. Only publish has
+`id-token: write`, uses environment `pypi`, and downloads the fixed distribution
+artifact before the pinned official upload action. It performs no checkout,
+build, test or project-script execution. Default permissions are `contents: read`;
+only the final verified GitHub Release job has `contents: write`.
 
-After upload, the workflow makes a bounded check of official PyPI JSON and
-downloads both actual files to compare SHA-256 with the build artifacts. It
-uses a new environment outside the repository and performs:
+After upload, `scripts/verify_pypi.py` polls official PyPI JSON within a finite
+bound, downloads the actual wheel and sdist, and compares each SHA-256 against
+the original workflow artifact. A new outside-repository environment then runs:
 
 ```sh
-python -m pip --isolated install --no-cache-dir --index-url https://pypi.org/simple evidence-gap-router==0.1.0
+python -m pip --isolated install --no-cache-dir --index-url https://pypi.org/simple evidence-gap-router==0.2.0
 ```
 
-It then runs installed-package SDK/CLI/demo smoke and creates a GitHub Release
-containing the same wheel, sdist and `SHA256SUMS`. Only this final job has
-`contents: write`. Hash equality demonstrates equality of those observed bytes,
-not a completely reproducible source build or product performance.
+Installed isolated smoke verifies version, SDK, CLI, data/cause examples and
+migration. The final job requires six matching passed native reports, generates
+v0.2-specific release notes and attaches the original wheel/sdist, `SHA256SUMS`
+and native JSON reports. Tagged docs do not anticipate these future outcomes.
+Hash equality establishes equality of observed bytes, not a completely
+reproducible source build or general product performance.
 
-Do not use `skip-existing` to mask collisions or partial publication. If upload
-partly succeeded, download the original workflow artifact, compare existing
-PyPI filenames/hashes using `scripts/verify_pypi.py`, and report which files are
-present. Do not rerun upload blindly. If public smoke fails, report **uploaded,
-post-publication verification failed**. Published bytes are never replaced;
-changes require a new version. If only the final verification/release job failed,
-resolve its cause and rerun only that job after checking for an existing release.
+## Partial publication and recovery
 
-## Initial external-setting status
+Do not rerun an upload blindly. If any upload succeeded, report the package as
+published (or partially published), download the original run's artifact to a
+new directory, and compare public filenames/bytes before choosing the next action:
 
-At setup inspection on 2026-10-05, the PyPI publishing page required account
-login, so a pending publisher was not confirmed through the available session.
-This records an inspection, not a permanent status assertion. The operator must
-confirm login and the five fields above before the first tag push. Successful
-publication is established only by actual upload and public-byte/install checks.
+```sh
+gh run download RELEASE_RUN_ID --repo kadubon/evidence-gap-router --name distributions-COMMIT_SHA --dir EXTERNAL_ARTIFACT_DIR
+python scripts/verify_pypi.py EXTERNAL_ARTIFACT_DIR 0.2.0
+```
 
-## Primary documentation and action pins
+If public verification fails after upload, report **published; post-publication
+verification failed**. Never delete/re-upload to hide it. Changes to published
+bytes require another authorized version. If only the final verification/release
+job failed, inspect logs and existing assets first; after resolving the actual
+cause, rerun only failed jobs rather than the successful upload. A pre-existing
+GitHub Release or asset is not overwritten. Required approval is not bypassed.
 
-Checked on 2026-10-05:
+## Primary documentation and pinned tools
+
+Checked 2026-10-05:
 
 - [uv package build and publish](https://docs.astral.sh/uv/guides/package/)
 - [Add a PyPI publisher](https://docs.pypi.org/trusted-publishers/adding-a-publisher/)
 - [Use a PyPI publisher](https://docs.pypi.org/trusted-publishers/using-a-publisher/)
 - [GitHub workflow events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows)
 - [GitHub concurrency](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)
+- [Native hosted runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
 
-Official release refs were checked through GitHub's release and Git-ref APIs;
-the workflow pins the resolved commits. The PyPI action's annotated release tag
-was dereferenced to its commit. uv is explicitly pinned to the observed 0.12.19.
+The existing official release pins were checked through GitHub release/ref APIs,
+including dereferencing the PyPI action's annotated tag. They remain unchanged;
+uv is pinned to the installed/observed 0.12.19.
 
-| Action | Official release | Commit |
+| Action | Official release | Resolved commit |
 | --- | --- | --- |
 | actions/checkout | v7.0.1 | `3d3c42e5aac5ba805825da76410c181273ba90b1` |
 | astral-sh/setup-uv | v10.2.0 | `c18668ad3cf93ea998bef934396af7bb5c839dc7` |

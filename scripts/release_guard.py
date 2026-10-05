@@ -11,6 +11,41 @@ from pathlib import Path
 
 from package_audit import source_version
 
+REQUIRED_JOBS = frozenset(
+    {
+        "build",
+        "windows",
+        "macos-arm64",
+        "macos-intel",
+        "python-compat (3.13)",
+        "python-compat (3.14)",
+    }
+)
+
+
+def successful_required_jobs(jobs: list[dict[str, object]]) -> bool:
+    """A successful overall run cannot replace an omitted/skipped native gate."""
+    by_name = {job.get("name"): job for job in jobs}
+    return all(
+        name in by_name
+        and by_name[name].get("status") == "completed"
+        and by_name[name].get("conclusion") == "success"
+        for name in REQUIRED_JOBS
+    )
+
+
+def github_json(url: str, token: str) -> dict:
+    request = urllib.request.Request(
+        url,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=30) as response:
+        return json.load(response)
+
 
 def git(*arguments: str) -> str:
     return subprocess.check_output(["git", *arguments], text=True).strip()
@@ -23,16 +58,7 @@ def validated_manual_run(commit: str) -> int:
             "https://api.github.com/repos/kadubon/evidence-gap-router/actions/workflows/"
             f"workflow.yml/runs?event=workflow_dispatch&status=success&per_page=100&page={page}"
         )
-        request = urllib.request.Request(
-            url,
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Accept": "application/vnd.github+json",
-                "X-GitHub-Api-Version": "2022-11-28",
-            },
-        )
-        with urllib.request.urlopen(request, timeout=30) as response:
-            runs = json.load(response)["workflow_runs"]
+        runs = github_json(url, token)["workflow_runs"]
         for run in runs:
             if (
                 run["head_sha"] == commit
@@ -40,7 +66,13 @@ def validated_manual_run(commit: str) -> int:
                 and run["conclusion"] == "success"
                 and run["status"] == "completed"
             ):
-                return int(run["id"])
+                jobs = github_json(
+                    "https://api.github.com/repos/kadubon/evidence-gap-router/actions/runs/"
+                    f"{run['id']}/jobs?per_page=100",
+                    token,
+                )
+                if jobs["total_count"] <= 100 and successful_required_jobs(jobs["jobs"]):
+                    return int(run["id"])
         if len(runs) < 100:
             break
     raise ValueError("No successful manual workflow.yml run for this exact commit")

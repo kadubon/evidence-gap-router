@@ -54,25 +54,31 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: uv run --locked python scripts/release_guard.py
-      - name: Clean Linux wheel installation and SDK/CLI smoke
+      - name: Native Linux installed regressions and SDK/CLI smoke
+        env:
+          VERSION: ${{ steps.guard.outputs.version }}
         run: |
-          uv venv --seed --python 3.12 "$RUNNER_TEMP/egr-wheel"
-          "$RUNNER_TEMP/egr-wheel/bin/python" -m pip --isolated install --no-cache-dir dist/*.whl
-          cd "$RUNNER_TEMP"
-          "$RUNNER_TEMP/egr-wheel/bin/python" -I "$GITHUB_WORKSPACE/scripts/smoke.py"
+          uv run --no-project --python 3.12 python scripts/native_check.py --wheel dist/*.whl --version "$VERSION" --python 3.12 --platform Linux --architecture x86_64 --report "$RUNNER_TEMP/native/linux-3.12.json"
       - name: Build a wheel from the sdist outside the source checkout
+        env:
+          VERSION: ${{ steps.guard.outputs.version }}
         run: |
           uv build --no-sources --wheel dist/*.tar.gz --out-dir "$RUNNER_TEMP/egr-sdist-wheel"
           uv venv --seed --python 3.12 "$RUNNER_TEMP/egr-sdist"
           "$RUNNER_TEMP/egr-sdist/bin/python" -m pip --isolated install --no-cache-dir "$RUNNER_TEMP"/egr-sdist-wheel/*.whl
           cd "$RUNNER_TEMP"
-          "$RUNNER_TEMP/egr-sdist/bin/python" -I "$GITHUB_WORKSPACE/scripts/smoke.py"
+          "$RUNNER_TEMP/egr-sdist/bin/python" -I "$GITHUB_WORKSPACE/scripts/smoke.py" --expected-version "$VERSION"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: distributions-${{ github.sha }}
           path: dist/
           if-no-files-found: error
           retention-days: 14
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-linux-3.12-${{ github.sha }}
+          path: ${{ runner.temp }}/native/linux-3.12.json
+          if-no-files-found: error
 
   windows:
     needs: build
@@ -93,23 +99,116 @@ jobs:
         with:
           name: distributions-${{ github.sha }}
           path: dist/
-      - name: Clean Windows installation of the same wheel
+      - name: Native Windows installed regressions and Unicode file smoke
         shell: pwsh
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
         run: |
-          $cleanEnv = Join-Path $env:RUNNER_TEMP 'egr-wheel'
-          uv venv --seed --python 3.12 $cleanEnv
-          if ($LASTEXITCODE -ne 0) { throw 'venv creation failed' }
-          $cleanPython = Join-Path $cleanEnv 'Scripts/python.exe'
           $wheel = @(Get-ChildItem -LiteralPath dist -Filter '*.whl')
           if ($wheel.Count -ne 1) { throw 'Expected exactly one wheel' }
-          & $cleanPython -m pip --isolated install --no-cache-dir $wheel[0].FullName
-          if ($LASTEXITCODE -ne 0) { throw 'wheel install failed' }
-          Set-Location -LiteralPath $env:RUNNER_TEMP
-          & $cleanPython -I (Join-Path $env:GITHUB_WORKSPACE 'scripts/smoke.py')
-          if ($LASTEXITCODE -ne 0) { throw 'clean Windows smoke failed' }
+          uv run --no-project --python 3.12 python scripts/native_check.py --wheel $wheel[0].FullName --version $env:VERSION --python 3.12 --platform Windows --architecture x86_64 --report (Join-Path $env:RUNNER_TEMP 'native/windows-3.12.json')
+          if ($LASTEXITCODE -ne 0) { throw 'native Windows validation failed' }
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-windows-3.12-${{ github.sha }}
+          path: ${{ runner.temp }}/native/windows-3.12.json
+          if-no-files-found: error
+
+  macos-arm64:
+    needs: build
+    runs-on: macos-15
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: '0.12.19'
+          python-version: '3.12'
+          enable-cache: true
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: distributions-${{ github.sha }}
+          path: dist/
+      - name: Native Apple Silicon installed regressions and Unicode file smoke
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: uv run --no-project --python 3.12 python scripts/native_check.py --wheel dist/*.whl --version "$VERSION" --python 3.12 --platform Darwin --architecture arm64 --report "$RUNNER_TEMP/native/macos-arm64-3.12.json"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-macos-arm64-3.12-${{ github.sha }}
+          path: ${{ runner.temp }}/native/macos-arm64-3.12.json
+          if-no-files-found: error
+
+  macos-intel:
+    needs: build
+    runs-on: macos-15-intel
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: '0.12.19'
+          python-version: '3.12'
+          enable-cache: true
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: distributions-${{ github.sha }}
+          path: dist/
+      - name: Native Intel Mac installed regressions and Unicode file smoke
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: uv run --no-project --python 3.12 python scripts/native_check.py --wheel dist/*.whl --version "$VERSION" --python 3.12 --platform Darwin --architecture x86_64 --report "$RUNNER_TEMP/native/macos-intel-3.12.json"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-macos-intel-3.12-${{ github.sha }}
+          path: ${{ runner.temp }}/native/macos-intel-3.12.json
+          if-no-files-found: error
+
+  python-compat:
+    name: python-compat (${{ matrix.python }})
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.13', '3.14']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: '0.12.19'
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: distributions-${{ github.sha }}
+          path: dist/
+      - name: Supported Python installed core/runner/CLI regressions
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+          PYTHON: ${{ matrix.python }}
+        run: uv run --no-project --python "$PYTHON" python scripts/native_check.py --wheel dist/*.whl --version "$VERSION" --python "$PYTHON" --platform Linux --architecture x86_64 --report "$RUNNER_TEMP/native/linux-$PYTHON.json"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-linux-${{ matrix.python }}-${{ github.sha }}
+          path: ${{ runner.temp }}/native/linux-${{ matrix.python }}.json
+          if-no-files-found: error
 
   publish:
-    needs: [build, windows]
+    needs: [build, windows, macos-arm64, macos-intel, python-compat]
     if: >-
       github.repository == 'kadubon/evidence-gap-router' &&
       github.event_name == 'push' &&
@@ -135,7 +234,7 @@ jobs:
           skip-existing: false
 
   verify-and-release:
-    needs: [build, windows, publish]
+    needs: [build, windows, macos-arm64, macos-intel, python-compat, publish]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -164,7 +263,12 @@ jobs:
           uv venv --seed --python 3.12 "$RUNNER_TEMP/egr-pypi"
           cd "$RUNNER_TEMP"
           "$RUNNER_TEMP/egr-pypi/bin/python" -m pip --isolated install --no-cache-dir --index-url https://pypi.org/simple "evidence-gap-router==$VERSION"
-          "$RUNNER_TEMP/egr-pypi/bin/python" -I "$GITHUB_WORKSPACE/scripts/smoke.py"
+          "$RUNNER_TEMP/egr-pypi/bin/python" -I "$GITHUB_WORKSPACE/scripts/smoke.py" --expected-version "$VERSION"
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: native-*-${{ github.sha }}
+          path: release/native/
+          merge-multiple: true
       - name: Create GitHub Release after successful public verification
         env:
           GH_TOKEN: ${{ github.token }}
@@ -172,24 +276,5 @@ jobs:
           COMMIT: ${{ needs.build.outputs.commit }}
           MANUAL_RUN: ${{ needs.build.outputs.manual_run }}
         run: |
-          python - <<'PY'
-          import os
-          from pathlib import Path
-          Path('release/notes.md').write_text(
-              'Initial evidence-gap router SDK and offline CLI.\n\n'
-              'Python 3.12 or newer; Apache-2.0. Deterministic routing from declared '
-              'obligations, explicit verification, provenance and separate resource limits. '
-              'Includes real offline CSV/JSON callback demos.\n\n'
-              'Single process and writer. No semantic truth or independence inference, '
-              'external execution, crash recovery, or exactly-once guarantee.\n\n'
-              f"Commit: {os.environ['COMMIT']}\n\n"
-              f"Manual validation: https://github.com/kadubon/evidence-gap-router/actions/runs/{os.environ['MANUAL_RUN']}\n\n"
-              f"Release validation: https://github.com/kadubon/evidence-gap-router/actions/runs/{os.environ['GITHUB_RUN_ID']}\n\n"
-              'The official PyPI file digests and actual downloaded wheel/sdist bytes '
-              'matched these artifacts. A clean official-index installation passed the '
-              'SDK, CLI and bundled demo smoke. This is artifact equality, not a claim '
-              'of fully reproducible builds or real-world performance.\n',
-              encoding='utf-8',
-          )
-          PY
-          gh release create "v$VERSION" dist/*.whl dist/*.tar.gz release/SHA256SUMS --repo kadubon/evidence-gap-router --verify-tag --title "v$VERSION" --notes-file release/notes.md
+          uv run --no-project --python 3.12 python scripts/release_notes.py --version "$VERSION" --commit "$COMMIT" --manual-run "$MANUAL_RUN" --release-run "$GITHUB_RUN_ID" --profiles release/native --dist dist --output release/notes.md
+          gh release create "v$VERSION" dist/*.whl dist/*.tar.gz release/SHA256SUMS release/native/*.json --repo kadubon/evidence-gap-router --verify-tag --title "v$VERSION" --notes-file release/notes.md

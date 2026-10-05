@@ -78,3 +78,65 @@ def test_validated_exact_tag_is_admitted(guard):
     module.main()
     assert "release=true" in output.read_text()
     assert "manual_run=42" in output.read_text()
+
+
+def required_jobs(module):
+    return [
+        {"name": name, "status": "completed", "conclusion": "success"}
+        for name in module.REQUIRED_JOBS
+    ]
+
+
+def test_all_native_profiles_required_for_manual_admission(guard):
+    module, _ = guard
+    jobs = required_jobs(module)
+    assert module.successful_required_jobs(jobs)
+    for missing in module.REQUIRED_JOBS:
+        assert not module.successful_required_jobs([job for job in jobs if job["name"] != missing])
+
+
+@pytest.mark.parametrize("conclusion", ["skipped", "failure", "cancelled", None])
+def test_overall_success_cannot_mask_nonpassing_native_job(guard, conclusion):
+    module, _ = guard
+    jobs = required_jobs(module)
+    for job in jobs:
+        if job["name"] == "macos-intel":
+            job["conclusion"] = conclusion
+    assert not module.successful_required_jobs(jobs)
+
+
+def test_manual_run_api_requires_completed_native_jobs_for_exact_commit(guard, monkeypatch):
+    module, _ = guard
+    monkeypatch.setenv("GH_TOKEN", "test-placeholder-not-a-real-token")
+    # Restore the implementation replaced by the outer fixture, using a fresh source module.
+    source = Path(module.__file__).read_text(encoding="utf-8")
+    namespace = {"__name__": "guard_test_copy", "__file__": module.__file__}
+    exec(compile(source, module.__file__, "exec"), namespace)
+    requests = []
+
+    def responses(url, token):
+        requests.append(url)
+        if "/jobs?" in url:
+            return {"total_count": 6, "jobs": required_jobs(module)}
+        return {
+            "workflow_runs": [
+                {
+                    "id": 7,
+                    "head_sha": "other-commit",
+                    "event": "workflow_dispatch",
+                    "status": "completed",
+                    "conclusion": "success",
+                },
+                {
+                    "id": 8,
+                    "head_sha": "verified",
+                    "event": "workflow_dispatch",
+                    "status": "completed",
+                    "conclusion": "success",
+                },
+            ]
+        }
+
+    namespace["github_json"] = responses
+    assert namespace["validated_manual_run"]("verified") == 8
+    assert not any("/runs/7/jobs" in url for url in requests)

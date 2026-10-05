@@ -11,16 +11,21 @@ import pytest
 from evidence_gap_router import (
     ActionCandidate,
     Budget,
+    Evidence,
+    HandlerRegistration,
     Obligation,
     PlanInput,
     Policy,
     Resources,
     Result,
     State,
+    __version__,
 )
 from evidence_gap_router.cli import main
-from evidence_gap_router.demo import run_demo, run_host_loop
+from evidence_gap_router.demo import run_cause_demo, run_demo
 from evidence_gap_router.jsonio import dump_json
+from evidence_gap_router.runner import CallbackView
+from evidence_gap_router.runner import run as run_host_loop
 
 
 def request() -> PlanInput:
@@ -36,7 +41,10 @@ def request() -> PlanInput:
             ),
         ),
         budget=Budget(limits=Resources(actions=1, verifications=1)),
-        policy=Policy(executable_handlers=("reader",), trusted_verifiers=("checker",)),
+        policy=Policy(
+            handlers=(HandlerRegistration(handler_id="reader", roles=("investigate",)),),
+            trusted_verifiers=("checker",),
+        ),
     )
 
 
@@ -45,9 +53,9 @@ def test_demo_success_uses_two_file_acquisitions_and_bound_real_checks() -> None
     assert report["artificial_data"] is True
     assert report["decision"]["stop_reason"] == "satisfied"
     assert report["callback_calls"] == [
-        "read-csv",
         "read-dictionary",
         "verify-quality",
+        "read-csv",
         "verify-quality",
     ]
     state = report["state"]
@@ -56,8 +64,16 @@ def test_demo_success_uses_two_file_acquisitions_and_bound_real_checks() -> None
     assert all(check["status"] == "PASS" for check in state["checks"])
     targets = {item["digest"] for item in state["evidence"]}
     assert {check["target_digest"] for check in state["checks"]} == targets
-    assert {item["producer"] for item in state["evidence"]} == {"csv-reader", "dictionary-reader"}
-    assert {check["verifier_id"] for check in state["checks"]} == {"quality-validator"}
+    assert {item["producer"] for item in state["evidence"]} == {"read-csv", "read-dictionary"}
+    assert {check["verifier_id"] for check in state["checks"]} == {
+        "dictionary-checker",
+        "orders-checker",
+    }
+    dataset_check = next(
+        check for check in state["checks"] if check["verifier_id"] == "orders-checker"
+    )
+    assert dataset_check["basis"]["dependencies"][0]["evidence_id"] == "dictionary"
+    assert dataset_check["basis"]["dependencies"][0]["requirement"] == "verified"
     dataset = next(item for item in state["evidence"] if item["id"] == "dataset")
     assert json.loads(dataset["content"])["rows"][1]["amount"] == "25"
     assert files("evidence_gap_router").joinpath("data", "orders_valid.csv").is_file()
@@ -75,14 +91,15 @@ def test_demo_invalid_preserves_computed_failures() -> None:
     assert "duplicate primary key" in failed[0]["reason"]
     assert "amount is below" in failed[0]["reason"]
     assert "currency is not" in failed[0]["reason"]
-    assert report["decision"]["coverage"]["satisfied"] == 0
+    assert report["decision"]["coverage"]["satisfied"] == 1
+    assert report["decision"]["coverage"]["required"] == 2
     assert any(item["code"] == "check_failed" for item in report["decision"]["residuals"])
 
 
 def test_demo_budget_stops_acquisition_without_claiming_verification() -> None:
     report = run_demo("budget")
     assert report["decision"]["stop_reason"] == "budget_exhausted"
-    assert report["callback_calls"] == ["read-csv", "read-dictionary"]
+    assert report["callback_calls"] == ["read-dictionary", "read-csv"]
     assert report["state"]["checks"] == []
     assert report["decision"]["coverage"]["ratio"] == 0
     assert report["decision"]["remaining_resources"]["actions"] == 0
@@ -102,15 +119,15 @@ def test_host_callback_uncertainty_is_charged_recorded_and_not_retried(mode: str
     inp = request()
     calls = []
 
-    def callback(action: ActionCandidate, attempt_id: str, state: State) -> Any:
-        calls.append(action.id)
+    def callback(view: CallbackView) -> Any:
+        calls.append(view.action.id)
         if mode == "exception":
             raise TimeoutError("external outcome unknown")
         if mode == "malformed":
             return {"status": "PASS"}
         return Result(
             id="bad",
-            attempt_id=attempt_id,
+            attempt_id=view.attempt_id,
             action_id="other",
             obligation_id="o",
             scope="s",
@@ -140,23 +157,30 @@ def test_host_mapping_restricts_execution_to_actual_registered_callbacks() -> No
     assert run.state.attempts == ()
     assert run.callback_calls == ()
     assert run.decision.stop_reason == "blocked"
-    assert "handler_unavailable" in run.decision.exclusions[0].reasons
+    assert any("handler" in reason for reason in run.decision.exclusions[0].reasons)
 
 
 def test_host_replayed_receipt_cannot_hide_a_new_callback_invocation() -> None:
     inp = request()
     receipts: list[Result] = []
 
-    def callback(action: ActionCandidate, attempt_id: str, state: State) -> Result:
+    def callback(view: CallbackView) -> Result:
         if receipts:
             return receipts[0]
-        receipt = Result(
-            id="first-receipt",
-            attempt_id=attempt_id,
-            action_id=action.id,
-            obligation_id=action.obligation_id,
-            scope=action.scope,
+        receipt = view.result(
             actual_resources=Resources(actions=1, verifications=0),
+            evidence=(
+                Evidence(
+                    id="first",
+                    obligation_id="o",
+                    scope="s",
+                    digest="a" * 64,
+                    content="first material",
+                    producer="reader",
+                    source="source",
+                    provenance_group="group",
+                ),
+            ),
         )
         receipts.append(receipt)
         return receipt
@@ -181,7 +205,7 @@ def test_cli_version(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit) as exc:
         main(["--version"])
     assert exc.value.code == 0
-    assert capsys.readouterr().out.strip() == "0.1.0"
+    assert capsys.readouterr().out.strip() == __version__
 
 
 @pytest.mark.parametrize(
@@ -212,7 +236,13 @@ def test_cli_plan_is_offline_read_only(
     inp = inp.model_copy(
         update={
             "candidates": (action,),
-            "policy": inp.policy.model_copy(update={"executable_handlers": ("os.system",)}),
+            "policy": inp.policy.model_copy(
+                update={
+                    "handlers": (
+                        HandlerRegistration(handler_id="os.system", roles=("investigate",)),
+                    )
+                }
+            ),
         }
     )
     path = tmp_path / "plan.json"
@@ -238,7 +268,7 @@ def test_cli_plan_is_offline_read_only(
     "invalid",
     [
         '{"schema_version":"1","schema_version":"1"}',
-        '{"schema_version":"2"}',
+        '{"schema_version":"3"}',
         '{"state":NaN}',
         '{"state":Infinity}',
         '{"state":',
@@ -268,8 +298,57 @@ def test_cli_strict_schema_rejects_coercion_and_unknown_fields(
     elif mutation == "bool-count":
         value["budget"]["limits"]["actions"] = True
     else:
-        value["schema_version"] = "2"
+        value["schema_version"] = "3"
     path = tmp_path / "bad.json"
     path.write_text(json.dumps(value), encoding="utf-8")
     assert main(["plan", str(path), "--json"]) == 1
     assert capsys.readouterr().err.startswith("egr:")
+
+
+@pytest.mark.parametrize(
+    "case,stop",
+    [
+        ("resolved", "satisfied"),
+        ("invalid", "escalation_required"),
+        ("conflict", "escalation_required"),
+        ("unknown", "blocked"),
+        ("provenance", "blocked"),
+        ("budget", "budget_exhausted"),
+    ],
+)
+def test_cause_materials_compute_outcomes_and_disclose_only_needed_inputs(
+    case: str, stop: str
+) -> None:
+    report = run_cause_demo(case)
+    assert report["decision"]["stop_reason"] == stop
+    assert report["artificial_data"] is True
+    acquisitions = [item for item in report["disclosures"] if item["handler"].startswith("read-")]
+    assert len(acquisitions) == 3
+    assert all(item["input_ids"] == [] for item in acquisitions)
+    checks = report["state"]["checks"]
+    assert all(check["basis"]["target"]["evidence_id"] for check in checks)
+    if case == "resolved":
+        reading = next(
+            check for check in checks if check["basis"]["target"]["evidence_id"] == "reading"
+        )
+        assert {item["evidence_id"] for item in reading["basis"]["dependencies"]} == {
+            "specification",
+            "exceptions",
+        }
+        assert "applicable limit 20" in reading["reason"]
+    elif case == "conflict":
+        assert report["state"]["contradictions"]
+        assert any(check["status"] == "UNKNOWN" for check in checks)
+    elif case == "unknown":
+        assert any(check["status"] == "UNKNOWN" for check in checks)
+    elif case == "invalid":
+        assert any(check["status"] == "FAIL" for check in checks)
+    elif case == "provenance":
+        assert any(item["code"] == "unknown_provenance" for item in report["decision"]["residuals"])
+
+
+def test_cli_cause_example(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["demo", "--example", "cause", "--case", "resolved", "--json"]) == 0
+    output = capsys.readouterr()
+    assert output.err == ""
+    assert json.loads(output.out)["decision"]["stop_reason"] == "satisfied"

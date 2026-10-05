@@ -1,98 +1,115 @@
-# Design and boundaries
+# Design and trust boundaries
 
-## Problem and loop
+## Small responsibility
 
-The host declares required obligations and a finite set of investigation,
-verification and diversification actions. The router exposes the current gaps,
-selects at most one eligible action, and lets an explicit host callback produce
-new evidence, checks and measured resource use. Replanning changes the next
-action as those gaps change. The router does not discover every requirement.
+The host declares obligations, acceptance contracts, finite action candidates,
+handler permissions and resource limits. The router derives target-specific gaps
+and recommends at most one eligible action. The explicit local runner calls a
+registered Python function and replans from its receipt. It does not discover all
+requirements, grant execution rights or implement a new agent framework.
 
-`plan` is read-only. `start` records a host-issued attempt before a callback;
-`observe` validates that result against its attempt and target. Frozen, strict
-Pydantic records and versioned JSON snapshots are the public data interface.
-The JSON format rejects extra fields, duplicate keys, nonfinite numbers, invalid
-types and unsupported schema versions. Python APIs use tuples for record lists;
-JSON naturally uses arrays. At least one required obligation must be declared.
+State remains strict, typed, frozen and single-writer. `plan` is pure; `start`
+pins an issued attempt; `observe` validates its receipt and host permissions.
+`step`/`run` add a finite host loop and immutable input disclosure views without
+changing that separation. Factory and callback failures preserve the latest state.
+Snapshot continuation is explicit, with no crash-safe exactly-once claim.
 
-## Policy and applicability
+## Mechanical acceptance and actual used material
 
-Host policy chooses executable handler IDs and trusted verifier IDs. Evidence
-text is data; it cannot add authority or alter policy. Acceptance text describes
-what a host checker must actually test. The router evaluates supplied records
-against structural policy; it does not interpret arbitrary natural-language
-acceptance conditions or verify that a declared source told the truth.
+An obligation's fingerprint includes ID, scope, contract revision, acceptance,
+minimum evidence/provenance groups and required verifiers. Description, priority
+and required status are display/selection fields and do not change that check
+contract. String hashes are mechanical bindings, not semantic interpretation.
 
-Evidence applies only to its declared obligation, scope and digest. Repeated
-content/source groups count once within that target and scope. Unknown
-provenance stays unknown. Distinct declared groups or producer/verifier IDs do
-not prove real-world or statistical independence. A digest identifies supplied
-content bytes; it does not establish authenticity or correctness.
-Observed same-source/group bridges collapse transitively; conflicting provenance
-groups declared for one source are a blocking residual for that obligation.
+A `VerificationBasis` identifies the target evidence ID/digest/obligation/scope,
+current acceptance fingerprint, finite dependency bindings, checker revision and
+purpose. Issuance fixes these values; the callback receives that material in its
+view and its receipt must echo the basis. Cross-obligation dependencies explicitly
+name the owner/scope and required condition (`exists`, `active`, `verified`).
+Presence does not imply active or checked. Finite cyclic verification dependencies
+are rejected/blocked rather than scheduled through a general graph runtime.
+`exists` allows explicit historical inspection; a PASS used for current acceptance
+still requires every referenced target/dependency to be active and contract-matching.
+`verified` evaluates the referenced target's required checkers, rather than requiring
+the whole dependency obligation to have complete evidence/provenance coverage.
 
-Checks distinguish PASS, FAIL, UNKNOWN and absence. Expiry is a host-supplied
-flag; there is no implicit wall-clock expiry. Current acceptance needs
-trusted PASS for the active evidence digests and required verifiers. Withdrawal,
-supersession, scope mismatch and old digests remove current applicability while
-retaining the records. A later PASS does not silently erase FAIL/UNKNOWN or a
-blocking contradiction. Supersession records identify the replaced record and
-reason; contradiction resolution additionally references a trusted matching
-PASS. Contradictions are explicit relations, not detected semantic conflicts.
+Only material actually declared and used is bound: unrelated additions leave
+applicable checks reusable. A changed contract, replaced target or inapplicable
+used dependency does not reuse the old PASS. Expiry/withdrawal are explicit host
+flags; there is no hidden wall-clock change. The raw record and history remain.
+The host/checker is trusted to use the declared material; hidden Python reads,
+external checker dishonesty and authenticity are not detected.
 
-## Deterministic selection and resources
+## Permission and historical resolution
 
-Eligibility is checked before ranking: target and scope, handler policy, previous
-attempts, prerequisites, available resources and verification capacity. Every
-excluded candidate retains its reasons. Remaining eligible actions are ordered
-by required status, descending obligation priority, relevance to the current gap,
-then stable action ID. Unverified evidence favors verification; missing evidence
-favors investigation; provenance shortage favors diversification. This rule is
-an explainable default, not an optimality claim.
+Host registrations fix allowed action roles, checker ID/revision and purpose.
+`Policy.available_handlers` optionally restricts current execution availability;
+it does not alter registered checker trust or invalidate an earlier applicable
+check just because its Python callback is absent. The runner intersects its
+explicit callback mapping with host execution restrictions. An empty intersection
+permits no execution rather than broadening the allowlist.
+The core distinguishes content verification, negative-check resolution and
+contradiction resolution. A collected result cannot grant itself checker power,
+replace FAIL/UNKNOWN with an arbitrary old PASS or resolve a contradiction.
+Resolution binds the actual record fingerprint, involved evidence and current
+contract, and requires matching authorized basis. Generic content PASS is
+insufficient. Matching authorized resolution evidence may be reused; identical
+receipt replay charges no second cost. Earlier records are never silently erased.
 
-Actions, verifications and optional tokens are separate nonnegative integer
-dimensions. Candidate estimates and observed costs are distinct. Unknown demand
-on a constrained dimension is not treated as free. Unknown actual consumption
-in a budgeted or bounded dimension, uncertain callback effects or consumption
-above the declared bound stops further
-automatic work. Verification backpressure suppresses new acquisition when the
-declared pending-check capacity is reached.
+Schema 2 expresses these meanings. Schema-1 migration preserves the strict old
+snapshot and historical records but leaves unsupported old check bases legacy/
+unassessed; it does not infer contracts or dependencies. The host must declare
+current contracts and reconcile pending execution before new work.
 
-`satisfied` means the declared required conditions are currently met under this
-policy. `budget_exhausted`, `blocked` and `escalation_required` preserve unresolved
-work. Coverage includes numerator, denominator, scopes and policy; it is neither
-a correctness probability nor an intelligence score.
+## Gaps, capacity and separate costs
 
-## Responsibility relative to neighboring OSS
+Eligibility checks target, dependency applicability, prerequisites, registration,
+previous attempt IDs and resource bounds before ranking. Required status and
+priority lead, followed by the specific missing target/checker/purpose or an
+explicit material prerequisite; stable IDs resolve otherwise comparable ties.
+Current satisfied content targets are excluded from redundant rechecks by default.
+Provenance fit separates known repetition, unknown origin and declared new
+source/group material. Same-source/group bridges collapse transitively; source
+names and groups do not prove statistical independence.
+Positive evidence/provenance deduplication does not suppress a duplicate alias's
+applicable FAIL or UNKNOWN. Such records remain blocking and expose a resolution
+gap for the exact alias target; a PASS on another alias does not silently erase them.
 
-The following primary documentation was read on 2026-10-05. These are design
-references, not runtime dependencies or interoperability qualifications.
+Pending capacity counts unfilled required target/checker work, including a
+partial required-verifier PASS and UNKNOWN, while retaining FAIL as a distinct
+negative result. Explicit prerequisite acquisition can unblock a pending check
+within the declared finite pool; arbitrary acquisition cannot bypass backpressure.
+Decisions expose typed gaps, selected gap, pending count, residuals and exclusions.
 
-| Reference and checked revision | Observed contract | This package's boundary |
+Action, verification and optional token counts remain separate nonnegative
+integers. Bounds/estimates are distinct from actual observations. Unknown demand
+in a constrained dimension is not zero. Unknown budgeted/bounded actual use,
+overrun or uncertain side effects prevents safe automatic continuation.
+
+## Neighbors and research
+
+The following source contracts were read; their main revisions were rechecked on
+2026-10-05 and unchanged. They are references, not dependencies or qualified adapters.
+
+| Reference | Observed responsibility | Boundary here |
 | --- | --- | --- |
-| [CCR workcells](https://github.com/kadubon/collective-capability-runtime/blob/d6806b158ffb9ff76937c6c3eb3f9391a1fcf21a/docs/collective-workcells.md) | Staged contributions, provenance-group deduplication, blocking contradictions and verified residual resolution; leases and fencing belong to its runtime. | Retain evidence, gaps and issued attempts in a single writer; provide no leases, worker scheduler or CCR adapter. |
-| [VEK data model](https://github.com/kadubon/verification-ecology-kit/blob/4008e311ceb16edd6e74d9f71341a90120c0d046/docs/data_model.md) and [README](https://github.com/kadubon/verification-ecology-kit/blob/4008e311ceb16edd6e74d9f71341a90120c0d046/README.md) | Structured verification records, residual history, explicit authority and a bounded formal VET-Core claim. | Consume host checks with target binding; provide neither VEK conformance nor a formal proof. |
-| [CIO lifecycle interface](https://github.com/kadubon/collective-intelligence-overlay/blob/46276b4080dadd70ffa2608533139e8df6dcf75d/docs/lifecycle-reference.md) | Finite read-only lifecycle views keep original identity, costs, unknowns and receiver-local assessment distinct; references do not fetch material. | Recommend the next declared action; do not assess CIO admission, transport records or claim schema compatibility. |
+| [CCR workcells](https://github.com/kadubon/collective-capability-runtime/blob/d6806b158ffb9ff76937c6c3eb3f9391a1fcf21a/docs/collective-workcells.md) | Staged contributions, provenance deduplication, verified residual resolution, runtime leases/fencing. | Finite recommendations and local receipts; no CCR coordination service or adapter. |
+| [VEK model](https://github.com/kadubon/verification-ecology-kit/blob/4008e311ceb16edd6e74d9f71341a90120c0d046/docs/data_model.md) | Structured verification records, non-erasing residual history, explicit authority and bounded formal VET-Core. | Bound host check applicability; no VEK conformance or formal proof. |
+| [CIO lifecycle](https://github.com/kadubon/collective-intelligence-overlay/blob/46276b4080dadd70ffa2608533139e8df6dcf75d/docs/lifecycle-reference.md) | Read-only lifecycle observations distinguish exact identity, costs, unknowns and receiver assessment. | Action selection; no lifecycle admission, transport or schema compatibility claim. |
 
 The [research index](https://kadubon.github.io/github.io/collective-intelligence-index.html)
 distinguishes interaction, checked reusable capability and stronger acceleration
-claims. It emphasizes observable completion, preserved unknown effects and finite
-verification capacity. These boundaries motivate the design; this release has
-no evidence establishing novelty, collective-intelligence improvement, causal
-growth or cost savings. No numerical research result is used as a product claim.
+claims. Preserving residuals and authority boundaries follows those cautions.
+This implementation does not establish a complete theory, novelty, general cost
+reduction, collective-intelligence gain or causal capability growth. Numerical
+research claims are not used as product evidence. The small matched comparison
+records synthetic observed calls/outcomes, including equal-result cases.
 
-## Assumptions and omissions
+## Not implemented
 
-The trusted host supplies authentic verifier records, correct digests, policy,
-measurements, declared source groups and a finite callback mapping. State has a
-single process and writer. No core operation fetches references, imports handler
-strings or invokes an LLM. The example host loop records callback exceptions and
-invalid return values as uncertain attempts and never automatically retries them.
-
-No agent framework, model gateway, server, database, distributed scheduler,
-authentication system, lease, reservation service, GUI, telemetry, learning,
-solver, semantic truth/contradiction detector or plugin discovery is implemented.
-No exactly-once side effects or crash recovery is guaranteed. Execution,
-timeouts, external credentials, authorization, concurrency and external resource
-limits remain host responsibilities. Explicit retries need a new attempt ID and
-budget; an uncertain effect needs host reconciliation first.
+No server, database, scheduler, lease, reservation service, authentication system,
+cryptographic signing, model gateway, framework adapter suite, GUI, telemetry,
+learning, optimizer, semantic truth/contradiction detector or automatic plugin
+loading is included. References are data, never automatic fetches. Host access
+control, credentials, external effects, strong isolation, measurement, timeouts
+and concurrency remain outside the router. Limited views are not a sandbox.

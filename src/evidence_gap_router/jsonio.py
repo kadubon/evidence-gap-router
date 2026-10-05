@@ -7,6 +7,8 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from .models import State
+
 MAX_JSON_BYTES = 1_048_576
 
 
@@ -45,3 +47,34 @@ def read_json[T: BaseModel](path: str | Path, model_type: type[T]) -> T:
 
 def dump_json(model: BaseModel) -> str:
     return model.model_dump_json(indent=2)
+
+
+def migrate_v1_json(text: str | bytes) -> State:
+    """Preserve a strictly valid schema-1 snapshot without inventing check foundations."""
+    from ._legacy import State as LegacyState
+
+    old = load_json(text, LegacyState)
+    values = old.model_dump(mode="json")
+    values["schema_version"] = "2"
+    values["legacy_schema1"] = text.decode("utf-8") if isinstance(text, bytes) else text
+    for name in ("checks", "supersessions", "attempts"):
+        for record in values[name]:
+            record["legacy"] = True
+    for receipt in values["results"]:
+        receipt["legacy"] = True
+        for name in ("checks", "supersessions"):
+            for record in receipt[name]:
+                record["legacy"] = True
+    migrated = State.model_validate_json(json.dumps(values, ensure_ascii=False))
+    if len(dump_json(migrated).encode("utf-8")) > MAX_JSON_BYTES:
+        raise ValueError(
+            "migrated snapshot exceeds the JSON byte limit including its original archive; "
+            "input is unchanged and needs explicit host migration/archive handling"
+        )
+    return migrated
+
+
+def migrate_v1_file(path: str | Path) -> State:
+    """Read-only migration; the original input file is never overwritten."""
+    with Path(path).open("rb") as stream:
+        return migrate_v1_json(stream.read(MAX_JSON_BYTES + 1))

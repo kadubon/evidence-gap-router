@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
@@ -30,6 +32,31 @@ class Obligation(IdentifiedRecord):
     min_evidence: PositiveCount = 1
     min_provenance_groups: PositiveCount = 1
     required_verifiers: tuple[Text, ...] = ()
+    contract_revision: Text = "1"
+
+    @property
+    def contract_fingerprint(self) -> str:
+        return contract_fingerprint(self)
+
+
+def _fingerprint(value: object) -> str:
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def contract_fingerprint(obligation: Obligation) -> str:
+    """Mechanical contract identity; excludes display text and routing preferences."""
+    return _fingerprint(
+        {
+            "id": obligation.id,
+            "scope": obligation.scope,
+            "contract_revision": obligation.contract_revision,
+            "acceptance": obligation.acceptance,
+            "min_evidence": obligation.min_evidence,
+            "min_provenance_groups": obligation.min_provenance_groups,
+            "required_verifiers": sorted(set(obligation.required_verifiers)),
+        }
+    )
 
 
 class Evidence(IdentifiedRecord):
@@ -46,6 +73,55 @@ class Evidence(IdentifiedRecord):
     expired: bool = False
 
 
+class DependencyRequirement(Record):
+    evidence_id: Text
+    obligation_id: Text
+    scope: Text
+    requirement: Literal["exists", "active", "verified"] = "active"
+    digest: Digest | None = None
+    contract_fingerprint: Digest | None = None
+
+
+class EvidenceBinding(Record):
+    evidence_id: Text
+    digest: Digest
+    obligation_id: Text
+    scope: Text
+    contract_fingerprint: Digest
+    requirement: Literal["exists", "active", "verified"] = "active"
+
+
+class VerificationBasis(Record):
+    obligation_id: Text
+    scope: Text
+    contract_fingerprint: Digest
+    target: EvidenceBinding
+    dependencies: tuple[EvidenceBinding, ...] = ()
+    checker_id: Text
+    checker_revision: Text = "1"
+    purpose: Literal["content", "check_resolution", "contradiction_resolution"] = "content"
+    resolution_target_id: Text | None = None
+    resolution_fingerprint: Digest | None = None
+
+    @model_validator(mode="after")
+    def targets(self) -> Self:
+        if (self.obligation_id, self.scope, self.contract_fingerprint) != (
+            self.target.obligation_id,
+            self.target.scope,
+            self.target.contract_fingerprint,
+        ):
+            raise ValueError("basis target must match its obligation, scope, and contract")
+        identifiers = [d.evidence_id for d in self.dependencies]
+        if len(identifiers) != len(set(identifiers)) or self.target.evidence_id in identifiers:
+            raise ValueError("basis dependencies must be unique and exclude its target")
+        if self.purpose == "content":
+            if self.resolution_target_id is not None or self.resolution_fingerprint is not None:
+                raise ValueError("content verification cannot declare a resolution")
+        elif self.resolution_target_id is None or self.resolution_fingerprint is None:
+            raise ValueError("resolution needs a target ID and fingerprint")
+        return self
+
+
 class CheckResult(IdentifiedRecord):
     id: Text
     obligation_id: Text
@@ -56,6 +132,26 @@ class CheckResult(IdentifiedRecord):
     reason: Text
     withdrawn: bool = False
     expired: bool = False
+    basis: VerificationBasis | None = None
+    legacy: bool = False
+
+    @model_validator(mode="after")
+    def binding(self) -> Self:
+        if self.basis is not None and (
+            self.obligation_id,
+            self.scope,
+            self.target_digest,
+            self.verifier_id,
+        ) != (
+            self.basis.obligation_id,
+            self.basis.scope,
+            self.basis.target.digest,
+            self.basis.checker_id,
+        ):
+            raise ValueError("check fields must match its verification basis")
+        if self.legacy and self.basis is not None:
+            raise ValueError("legacy checks cannot invent a verification basis")
+        return self
 
 
 class Contradiction(IdentifiedRecord):
@@ -82,6 +178,7 @@ class Supersession(IdentifiedRecord):
     reason: Text
     replacement_id: Text | None = None
     check_id: Text | None = None
+    legacy: bool = False
 
     @model_validator(mode="after")
     def shape(self) -> Self:
@@ -107,11 +204,42 @@ class Budget(Record):
     limits: Resources
 
 
+class CheckerPermission(Record):
+    checker_id: Text
+    revision: Text = "1"
+    purposes: tuple[Literal["content", "check_resolution", "contradiction_resolution"], ...] = (
+        "content",
+    )
+
+
+class HandlerRegistration(Record):
+    handler_id: Text
+    roles: tuple[Literal["investigate", "verify", "diversify"], ...]
+    checkers: tuple[CheckerPermission, ...] = ()
+
+    def allows(self, basis: VerificationBasis) -> bool:
+        return "verify" in self.roles and any(
+            permission.checker_id == basis.checker_id
+            and permission.revision == basis.checker_revision
+            and basis.purpose in permission.purposes
+            for permission in self.checkers
+        )
+
+
 class Policy(Record):
     trusted_verifiers: tuple[Text, ...] = ()
     executable_handlers: tuple[Text, ...] = ()
     prohibit_self_verification: bool = True
     max_pending_verifications: PositiveCount = 10
+    handlers: tuple[HandlerRegistration, ...] = ()
+    available_handlers: tuple[Text, ...] | None = None
+
+    @model_validator(mode="after")
+    def unique_handlers(self) -> Self:
+        ids = [h.handler_id for h in self.handlers]
+        if len(set(ids)) != len(ids):
+            raise ValueError("duplicate handler registrations")
+        return self
 
 
 class ActionCandidate(IdentifiedRecord):
@@ -125,6 +253,13 @@ class ActionCandidate(IdentifiedRecord):
     requires_evidence_ids: tuple[Text, ...] = ()
     source: Text | None = None
     provenance_group: Text | None = None
+    target_evidence_id: Text | None = None
+    checker_id: Text | None = None
+    checker_revision: Text = "1"
+    purpose: Literal["content", "check_resolution", "contradiction_resolution"] = "content"
+    dependencies: tuple[DependencyRequirement, ...] = ()
+    resolution_target_id: Text | None = None
+    produces_evidence_id: Text | None = None
 
     @model_validator(mode="after")
     def resource_shape(self) -> Self:
@@ -136,6 +271,21 @@ class ActionCandidate(IdentifiedRecord):
             and self.resources.verifications < 1
         ):
             raise ValueError("verification needs a digest and at least one verification")
+        if self.kind != "verify" and (
+            self.checker_id is not None
+            or self.purpose != "content"
+            or self.resolution_target_id is not None
+        ):
+            raise ValueError("acquisition cannot declare checker or resolution authority")
+        if self.purpose == "content" and self.resolution_target_id is not None:
+            raise ValueError("content action cannot declare a resolution target")
+        if self.purpose != "content" and self.resolution_target_id is None:
+            raise ValueError("resolution action needs a target ID")
+        dependency_ids = [d.evidence_id for d in self.dependencies]
+        if len(dependency_ids) != len(set(dependency_ids)):
+            raise ValueError("duplicate dependency requirements")
+        if len(self.requires_evidence_ids) != len(set(self.requires_evidence_ids)):
+            raise ValueError("duplicate prerequisite IDs")
         return self
 
 
@@ -143,6 +293,10 @@ class Attempt(IdentifiedRecord):
     id: Text
     action: ActionCandidate
     retry: bool = False
+    basis: VerificationBasis | None = None
+    registration: HandlerRegistration | None = None
+    inputs: tuple[EvidenceBinding, ...] = ()
+    legacy: bool = False
 
 
 class Result(IdentifiedRecord):
@@ -160,6 +314,7 @@ class Result(IdentifiedRecord):
     checks: tuple[CheckResult, ...] = ()
     contradictions: tuple[Contradiction, ...] = ()
     supersessions: tuple[Supersession, ...] = ()
+    legacy: bool = False
 
     @model_validator(mode="after")
     def actual_shape(self) -> Self:
@@ -179,7 +334,7 @@ def _unique(records: tuple[IdentifiedRecord, ...], label: str) -> None:
 
 
 class State(Record):
-    schema_version: Literal["1"] = "1"
+    schema_version: Literal["2"] = "2"
     obligations: tuple[Obligation, ...]
     evidence: tuple[Evidence, ...] = ()
     checks: tuple[CheckResult, ...] = ()
@@ -187,6 +342,7 @@ class State(Record):
     supersessions: tuple[Supersession, ...] = ()
     attempts: tuple[Attempt, ...] = ()
     results: tuple[Result, ...] = ()
+    legacy_schema1: str | None = None
 
     @model_validator(mode="after")
     def references(self) -> Self:
@@ -224,6 +380,34 @@ class State(Record):
                 for e in self.evidence
             ):
                 raise ValueError(f"check {check.id} targets an unrecorded digest/scope")
+        bindings = [
+            binding
+            for c in self.checks
+            if c.basis is not None
+            for binding in (c.basis.target, *c.basis.dependencies)
+        ]
+        bindings.extend(binding for a in self.attempts for binding in a.inputs)
+        for binding in bindings:
+            target_evidence = evidence.get(binding.evidence_id)
+            if target_evidence is None or (
+                target_evidence.digest,
+                target_evidence.obligation_id,
+                target_evidence.scope,
+            ) != (binding.digest, binding.obligation_id, binding.scope):
+                raise ValueError(
+                    "basis references an unrecorded or mismatched evidence ID/digest/scope"
+                )
+        for checked in self.checks:
+            basis = checked.basis
+            if basis is None or basis.purpose == "content":
+                continue
+            resolution_records = checks if basis.purpose == "check_resolution" else contradictions
+            resolution_target = resolution_records.get(basis.resolution_target_id or "")
+            if resolution_target is None or (
+                resolution_target.obligation_id,
+                resolution_target.scope,
+            ) != (basis.obligation_id, basis.scope):
+                raise ValueError("verification basis references an invalid resolution target")
         for contradiction in self.contradictions:
             for identifier in contradiction.evidence_ids:
                 e = evidence.get(identifier)
@@ -232,11 +416,11 @@ class State(Record):
                     contradiction.scope,
                 ):
                     raise ValueError("contradiction evidence target mismatch")
-        superseded: set[tuple[str, str]] = set()
+        superseded: set[tuple[str, str, bool]] = set()
         for event in self.supersessions:
-            if (event.kind, event.target_id) in superseded:
+            if (event.kind, event.target_id, event.legacy) in superseded:
                 raise ValueError("a record may be explicitly superseded only once")
-            superseded.add((event.kind, event.target_id))
+            superseded.add((event.kind, event.target_id, event.legacy))
             if event.kind == "contradiction":
                 target = contradictions.get(event.target_id)
                 resolution_check = checks.get(event.check_id or "")
@@ -291,6 +475,76 @@ class State(Record):
                 if not attempt.retry:
                     raise ValueError("repeated action requires explicit retry attempt")
             prior_actions[attempt.action.id] = attempt.action
+            if not attempt.legacy:
+                if (
+                    attempt.registration is None
+                    or attempt.action.kind not in attempt.registration.roles
+                ):
+                    raise ValueError("issued attempt needs a matching host handler registration")
+                if attempt.registration.handler_id != attempt.action.handler_id:
+                    raise ValueError("attempt handler registration mismatch")
+                if attempt.action.kind == "verify":
+                    if attempt.basis is None or not attempt.registration.allows(attempt.basis):
+                        raise ValueError("issued verification needs an authorized fixed basis")
+                    if (
+                        attempt.basis.obligation_id,
+                        attempt.basis.scope,
+                        attempt.basis.target.evidence_id,
+                        attempt.basis.target.digest,
+                        attempt.basis.checker_id,
+                        attempt.basis.checker_revision,
+                        attempt.basis.purpose,
+                        attempt.basis.resolution_target_id,
+                    ) != (
+                        attempt.action.obligation_id,
+                        attempt.action.scope,
+                        attempt.action.target_evidence_id,
+                        attempt.action.target_digest,
+                        attempt.action.checker_id,
+                        attempt.action.checker_revision,
+                        attempt.action.purpose,
+                        attempt.action.resolution_target_id,
+                    ):
+                        raise ValueError("issued action and verification basis mismatch")
+                    if attempt.inputs != (attempt.basis.target, *attempt.basis.dependencies):
+                        raise ValueError("issued verification inputs must equal its fixed basis")
+                elif attempt.basis is not None:
+                    raise ValueError("acquisition attempt cannot carry verification authority")
+                declared_ids = list(
+                    dict.fromkeys(
+                        (
+                            *(d.evidence_id for d in attempt.action.dependencies),
+                            *attempt.action.requires_evidence_ids,
+                        )
+                    )
+                )
+                if attempt.basis is not None:
+                    declared_ids = [
+                        i for i in declared_ids if i != attempt.basis.target.evidence_id
+                    ]
+                    disclosed = attempt.basis.dependencies
+                else:
+                    disclosed = attempt.inputs
+                if [b.evidence_id for b in disclosed] != declared_ids:
+                    raise ValueError("issued inputs must match the finite declared dependencies")
+                for dependency in attempt.action.dependencies:
+                    binding = next(
+                        b for b in attempt.inputs if b.evidence_id == dependency.evidence_id
+                    )
+                    if (binding.obligation_id, binding.scope, binding.requirement) != (
+                        dependency.obligation_id,
+                        dependency.scope,
+                        dependency.requirement,
+                    ):
+                        raise ValueError("issued dependency binding does not match its declaration")
+                    if dependency.digest is not None and dependency.digest != binding.digest:
+                        raise ValueError("issued dependency digest does not match its declaration")
+                    if dependency.contract_fingerprint is not None and (
+                        dependency.contract_fingerprint != binding.contract_fingerprint
+                    ):
+                        raise ValueError(
+                            "issued dependency contract does not match its declaration"
+                        )
         for result in self.results:
             issued = attempts.get(result.attempt_id)
             if issued is None:
@@ -306,6 +560,8 @@ class State(Record):
             if result.attempt_id in observed:
                 raise ValueError("attempt already has a result")
             observed.add(result.attempt_id)
+            if result.legacy != issued.legacy:
+                raise ValueError("result legacy status does not match its issued attempt")
             result_entries: tuple[Evidence | CheckResult | Contradiction, ...] = (
                 *result.evidence,
                 *result.checks,
@@ -314,12 +570,38 @@ class State(Record):
             for item in result_entries:
                 if (item.obligation_id, item.scope) != (action.obligation_id, action.scope):
                     raise ValueError("result record does not match issued obligation/scope")
+            if (
+                not issued.legacy
+                and action.produces_evidence_id is not None
+                and any(e.id != action.produces_evidence_id for e in result.evidence)
+            ):
+                raise ValueError("receipt evidence does not match its declared acquisition target")
             if action.kind == "verify" and any(
                 c.target_digest != action.target_digest for c in result.checks
             ):
                 raise ValueError("verification result digest does not match issued target")
             if result.checks and action.kind != "verify":
                 raise ValueError("reported checks require an issued verify action")
+            if not issued.legacy:
+                for checked in result.checks:
+                    if checked.basis is None or checked.basis != issued.basis:
+                        raise ValueError("receipt basis does not match the issued verification")
+                if action.kind != "verify" and any(
+                    event.kind != "evidence" for event in result.supersessions
+                ):
+                    raise ValueError(
+                        "acquisition cannot supersede checks or resolve contradictions"
+                    )
+                for event in result.supersessions:
+                    if event.legacy:
+                        raise ValueError("new receipts cannot introduce legacy supersession")
+                    if event.kind == "check" and action.purpose != "check_resolution":
+                        raise ValueError("check supersession requires check_resolution authority")
+                    if (
+                        event.kind == "contradiction"
+                        and action.purpose != "contradiction_resolution"
+                    ):
+                        raise ValueError("contradiction resolution requires dedicated authority")
             if action.kind == "verify" and result.actual_resources.verifications == 0:
                 raise ValueError("a called verification must consume a verification")
             if result.checks and result.actual_resources.verifications == 0:
@@ -349,6 +631,18 @@ class State(Record):
                     resolution = checks[event.check_id or ""]
                     if resolution.target_digest != action.target_digest:
                         raise ValueError("resolution check digest does not match issued target")
+                if not issued.legacy and event.kind in ("check", "contradiction"):
+                    resolution_id = (
+                        event.replacement_id if event.kind == "check" else event.check_id
+                    )
+                    resolution_check = checks[resolution_id or ""]
+                    if (
+                        resolution_check.status != "PASS"
+                        or resolution_check.basis != issued.basis
+                        or issued.basis is None
+                        or issued.basis.resolution_target_id != event.target_id
+                    ):
+                        raise ValueError("resolution receipt must match the dedicated issued basis")
         pending_attempts = [a.id for a in self.attempts if a.id not in observed]
         if len(pending_attempts) > 1 or (
             pending_attempts and pending_attempts[0] != self.attempts[-1].id
@@ -365,6 +659,28 @@ class Residual(Record):
     blocking: bool = True
 
 
+class Gap(Record):
+    id: Text
+    obligation_id: Text
+    scope: Text
+    kind: Literal[
+        "missing_evidence",
+        "provenance",
+        "content_check",
+        "failed_check",
+        "unknown_check",
+        "dependency",
+        "contradiction",
+    ]
+    target_evidence_id: Text | None = None
+    target_digest: Digest | None = None
+    checker_id: Text | None = None
+    dependency_id: Text | None = None
+    purpose: Literal["content", "check_resolution", "contradiction_resolution"] = "content"
+    record_ids: tuple[Text, ...] = ()
+    reason: Text
+
+
 class Exclusion(Record):
     action_id: Text
     reasons: tuple[Text, ...]
@@ -379,7 +695,7 @@ class Coverage(Record):
 
 
 class Decision(Record):
-    schema_version: Literal["1"] = "1"
+    schema_version: Literal["2"] = "2"
     action: ActionCandidate | None
     reason: Text
     exclusions: tuple[Exclusion, ...]
@@ -387,10 +703,13 @@ class Decision(Record):
     coverage: Coverage
     remaining_resources: Resources
     stop_reason: Literal["satisfied", "budget_exhausted", "blocked", "escalation_required"] | None
+    gaps: tuple[Gap, ...] = ()
+    selected_gap: Gap | None = None
+    pending_verifications: Count = 0
 
 
 class PlanInput(Record):
-    schema_version: Literal["1"] = "1"
+    schema_version: Literal["2"] = "2"
     state: State
     candidates: tuple[ActionCandidate, ...]
     budget: Budget

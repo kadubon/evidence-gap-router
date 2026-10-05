@@ -1,0 +1,64 @@
+{
+  "baseline_commit": "76b9f40f42f3fc13fb535032bb06fdd762d5bffa",
+  "version": "0.1.0",
+  "python": "3.12.14",
+  "os": "Windows-11-10.0.26300-SP0",
+  "pydantic": "2.13.5",
+  "probes": {
+    "A01": {
+      "issue_reproduced": true,
+      "stop": "satisfied",
+      "new_minimum_amount": 1000,
+      "dataset_rechecked": false
+    },
+    "A02": {
+      "issue_reproduced": true,
+      "stop": "satisfied",
+      "new_verifications": 0
+    },
+    "A03": {
+      "issue_reproduced": true,
+      "stop": "satisfied"
+    },
+    "A04": {
+      "issue_reproduced": true,
+      "selected": "a-checked"
+    },
+    "A05": {
+      "issue_reproduced": true,
+      "selected": "a-same"
+    },
+    "A06": {
+      "issue_reproduced": true,
+      "selected": "read",
+      "missing_verifier": "v2"
+    },
+    "A07": {
+      "issue_reproduced": true,
+      "reasons": [
+        "prerequisite_missing"
+      ]
+    },
+    "A08": {
+      "issue_reproduced": true,
+      "stop": "satisfied"
+    },
+    "A09": {
+      "issue_reproduced": true,
+      "stop": "satisfied"
+    },
+    "A10": {
+      "issue_reproduced": true,
+      "callback_calls": 8,
+      "termination": "audit callback injected safety exception"
+    },
+    "A11": {
+      "issue_reproduced": true,
+      "error": "attempt ID collision"
+    },
+    "A12": {
+      "issue_reproduced": true,
+      "stop": "satisfied"
+    }
+  }
+}
