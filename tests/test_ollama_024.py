@@ -746,3 +746,69 @@ def test_explicit_request_for_known_copy_is_retained_in_common_catalogue():
 
     task, _ = next((t, g) for t, g in confirmation_tasks("024") if t.task_id.endswith("L2-1"))
     assert "document-3" in {d.source_id for d in _retrieval_documents(task, {"document-3"})}
+
+
+@pytest.mark.parametrize(
+    "form,changed_copy",
+    [
+        ("scoped_short_fact", None),
+        ("equivalent_reprint", None),
+        ("equivalent_reprint", "origin"),
+        ("equivalent_reprint", "version"),
+        ("equivalent_reprint", "content"),
+    ],
+)
+def test_oracle_accepts_equivalent_minimal_witnesses_with_actual_bound_receipts(form, changed_copy):
+    from experiments.ollama.harness import run_trial
+    from experiments.ollama.oracle import evaluate
+
+    family = "L1" if form == "scoped_short_fact" else "L2"
+    task, gold = next(
+        (t, g) for t, g in confirmation_tasks("024") if t.task_id.endswith(family + "-1")
+    )
+    if changed_copy:
+        changes = {
+            "origin": {"origin": "unrelated-origin"},
+            "version": {"version": "2"},
+            "content": {"text": task.documents[2].text.replace("は適合", "は不適合")},
+        }
+        other = replace(task.documents[2], **changes[changed_copy])
+        task = replace(task, documents=(*task.documents[:2], other, *task.documents[3:]))
+    fake = _CompactFake()
+    original = fake.chat
+
+    def changed(**kwargs):
+        record = original(**kwargs)
+        if kwargs["schema"]["title"] == "Answer":
+            if form == "scoped_short_fact":
+                record["parsed"]["citations"] = [
+                    {
+                        "source_id": "document-1",
+                        "version": "1",
+                        "quote": task.documents[0].text.split("。", 1)[0] + "。",
+                    },
+                    {"source_id": "document-1", "version": "1", "quote": "条件Pは真と確認した。"},
+                    {"source_id": "document-2", "version": "1", "quote": "条件Qは真と確認した。"},
+                ]
+            else:
+                record["parsed"]["citations"] = [
+                    c for c in record["parsed"]["citations"] if c["source_id"] != "document-2"
+                ]
+            kwargs["validator"](record["parsed"])
+            record["content"] = json.dumps(record["parsed"], ensure_ascii=False)
+        return record
+
+    fake.chat = changed
+    result = run_trial(
+        task,
+        arm="C",
+        model="fake",
+        model_digest="a" * 64,
+        seed=17,
+        client=fake,
+        settings=TrialSettings(),
+    )
+    scored = evaluate(task, gold, result)
+    assert scored["verified_supported_completion"] == (changed_copy is None), scored["errors"]
+    if changed_copy:
+        assert "missing_witness:document-2" in scored["errors"]

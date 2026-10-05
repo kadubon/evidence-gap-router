@@ -54,6 +54,7 @@ it does not make older artifact fingerprints interchangeable.
 | Success-only cost summaries hid missing trials and zero-member subsets | Planned-key accounting, nullable unresolved outcomes, paired bounds and subset denominators | Missing-key, no-success-cost, independent grounding and bounded-continuation tests |
 | The export path was pinned to the previous protocol and omitted the measured wheel | Version-bound freeze, candidate wheel hash and retained development implementations | Export rejects mismatched bytes and private paths without rewriting model output; no-overwrite tests |
 | Catalogue ordering forced an explicitly identical same-origin reprint | Common A/B retrieval catalogue omits only declared copies with identical full content, topic, origin and version | Reproduced forced-copy candidate; both selectors retain different information/versions/origins and any specifically requested copy |
+| A single spelling/source of a witness rejected equivalent minimal support | Evaluation-only alternatives allow the same signed fact without its redundant scoped target label and an explicitly equivalent copy | Actual bound fake receipts reproduce the rejection; altered copy origin/version/content remains rejected |
 
 Old FAIL/UNKNOWN, pending invocation, withdrawal, contract changes, exact-ID
 resolution, helper/proof AND/OR and grounded-cycle behavior remain covered by
@@ -82,3 +83,10 @@ The final common-catalogue change passed 668 source tests in 43.61 seconds,
 Ruff check/format and mypy. It does not alter core feasibility or acceptance.
 The pooled reference still receives all public records. Review requests can
 explicitly restore a copy to A/B retrieval, retaining that real extra cost.
+
+Witness alternatives are finite, authored scoring keys, not a general language
+entailment checker. Exact literal quotations, scope, source versions, current
+issued receipts, relevant inputs and independent-origin requirements still
+apply. Public inputs, canonical calibration quotations and task answers remain
+unchanged by these evaluation-only alternatives. No main result was observed
+when the alternatives were defined; v0.2.3's default witness rules stay unchanged.

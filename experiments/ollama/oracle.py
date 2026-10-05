@@ -126,12 +126,38 @@ def evaluate(task: PublicTask, gold: GoldTask, trial: dict[str, Any]) -> dict[st
             errors.append("wrong_source_version")
         quoted.setdefault(source, []).append(quote)
     for witness in gold.witnesses:
-        # Full short witness records are preregistered. Splitting one record
-        # across multiple exact citations is allowed; irrelevant true quotes do
-        # not substitute for an omitted condition or exception.
-        joined = "".join(quoted.get(witness.source_id, []))
-        clauses = tuple(clause for clause in witness.quote.split("。") if clause)
-        if not all(clause in joined for clause in clauses):
+        # Finite equivalent support is declared in evaluation-only gold, before
+        # confirmation. Exact literals and task scope remain mandatory. A copy
+        # can substitute only for the same declared origin/version/topic/content.
+        primary = documents[witness.source_id]
+        sources = [witness.source_id]
+        for source in witness.equivalent_sources:
+            other = documents.get(source)
+            if other is None:
+                continue
+            header, separator, body = other.text.partition("。")
+            copied = other.text == primary.text or (
+                separator
+                and header.startswith("以下は")
+                and header.endswith("の転載である")
+                and body == primary.text
+            )
+            if (
+                copied
+                and other.origin == primary.origin
+                and other.version == primary.version
+                and other.topic == primary.topic
+            ):
+                sources.append(source)
+        supported = any(
+            text.strip("。")
+            and all(
+                clause in "".join(quoted.get(source, [])) for clause in text.split("。") if clause
+            )
+            for source in sources
+            for text in (witness.quote, *witness.alternative_quotes)
+        )
+        if not supported:
             errors.append(f"missing_witness:{witness.source_id}")
     origins = {documents[source].origin for source in quoted}
     if len(origins) < gold.minimum_origins:

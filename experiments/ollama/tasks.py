@@ -36,6 +36,8 @@ class PublicTask:
 class Witness:
     source_id: str
     quote: str
+    alternative_quotes: tuple[str, ...] = ()
+    equivalent_sources: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -789,6 +791,10 @@ def _new_tasks(
                     Witness(
                         docs[i].source_id,
                         quote.split("。", 1)[0] + "。" if quote == rule else quote,
+                        alternative_quotes=(quote[len(ident) + 1 :],)
+                        if quote.startswith((ident + "の", ident + "は"))
+                        else (),
+                        equivalent_sources=("document-3",) if family == "L2" and i == 1 else (),
                     )
                     for i, quote in witnesses
                 ),
