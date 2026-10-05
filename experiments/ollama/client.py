@@ -21,7 +21,7 @@ import threading
 import time
 from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -151,6 +151,8 @@ class ModelProfile:
     temperature: float = 0.0
     keep_alive: str = "5m"
     local_verified: bool = True
+    request_wall_seconds: float | None = None
+    trial_wall_seconds: float | None = None
 
     def __post_init__(self) -> None:
         if (
@@ -170,7 +172,7 @@ class ModelProfile:
             type(self.think) is type(item) and self.think == item for item in self.thinking_values
         ):
             raise ValueError("unsupported think value; no silent fallback")
-        for name, maximum in (("num_ctx", 4096), ("num_predict", 512)):
+        for name, maximum in (("num_ctx", 16384), ("num_predict", 4096)):
             value = getattr(self, name)
             if type(value) is not int or not 0 < value <= maximum:
                 raise ValueError(f"{name} must be an integer in 1..{maximum}")
@@ -180,6 +182,10 @@ class ModelProfile:
             r"[0-9]+[smh]?", self.keep_alive
         ):
             raise ValueError("keep_alive must be an explicit bounded duration")
+        if self.request_wall_seconds is not None:
+            _positive(self.request_wall_seconds, "model request deadline", 3600)
+        if self.trial_wall_seconds is not None:
+            _positive(self.trial_wall_seconds, "model trial deadline", 14400)
 
 
 @dataclass(frozen=True)
@@ -197,22 +203,25 @@ class Limits:
     max_response_bytes: int = 1_048_576
     max_request_bytes: int = 262_144
     max_disk_bytes: int = 536_870_912
+    connect_timeout_seconds: float = 30
+    read_until_deadline: bool = False
 
     def __post_init__(self) -> None:
         maximums = {
-            "global_wall_seconds": 28_800,
-            "global_calls": 1200,
-            "global_generated_tokens": 600_000,
-            "global_total_tokens": 5_000_000,
-            "trial_wall_seconds": 600,
-            "trial_calls": 6,
-            "trial_total_tokens": 27_648,
-            "request_wall_seconds": 120,
-            "maximum_request_wall_seconds": 180,
-            "socket_timeout_seconds": 180,
+            "global_wall_seconds": 172_800,
+            "global_calls": 4000,
+            "global_generated_tokens": 4_000_000,
+            "global_total_tokens": 40_000_000,
+            "trial_wall_seconds": 14400,
+            "trial_calls": 12,
+            "trial_total_tokens": 245760,
+            "request_wall_seconds": 3600,
+            "maximum_request_wall_seconds": 3600,
+            "socket_timeout_seconds": 3600,
             "max_response_bytes": 1_048_576,
             "max_request_bytes": 262_144,
-            "max_disk_bytes": 536_870_912,
+            "max_disk_bytes": 4_294_967_296,
+            "connect_timeout_seconds": 30,
         }
         for name, maximum in maximums.items():
             value = getattr(self, name)
@@ -221,6 +230,8 @@ class Limits:
                 raise ValueError(f"{name} must be an integer")
         if self.request_wall_seconds > self.maximum_request_wall_seconds:
             raise ValueError("normal request deadline exceeds its maximum")
+        if type(self.read_until_deadline) is not bool:
+            raise ValueError("read_until_deadline must be explicit boolean")
 
 
 _DEFAULT_LIMITS = Limits()
@@ -324,6 +335,8 @@ class OllamaClient:
         limits: Limits = _DEFAULT_LIMITS,
         disk_root: Path | None = None,
         server_version: str = SUPPORTED_SERVER_VERSION,
+        server_epoch: str | None = None,
+        termination_policy: bool = False,
     ) -> None:
         self.host, self.port = _endpoint(base_url)
         if server_version != SUPPORTED_SERVER_VERSION:
@@ -359,6 +372,11 @@ class OllamaClient:
                 "enforcement": "pinned server rejects over-context input; no local token estimate",
             },
         }
+        if termination_policy:
+            if not run_id.startswith("egr-024-") or not server_epoch:
+                raise ValueError("termination recovery requires a new v0.2.4 campaign")
+            self.config["termination_policy"] = "retain-full-reservation-max-two-v1"
+            self.config["server_epoch"] = server_epoch
         with self._locked():
             rows = self._rows()
             if not rows:
@@ -470,6 +488,23 @@ class OllamaClient:
             "retained_budget_state",
         }
         for index, row in enumerate(rows[1:], start=1):
+            if row.get("event") == "server_epoch":
+                new_config = {**effective, "server_epoch": row.get("server_epoch")}
+                prior = self._summary(rows[:index])
+                if (
+                    effective.get("termination_policy") != "retain-full-reservation-max-two-v1"
+                    or not prior.get("terminated_unmetered")
+                    or row.get("prior_events_canonical_sha256") != _canonical_sha256(rows[:index])
+                    or row.get("from_config_sha256") != _canonical_sha256(effective)
+                    or not isinstance(row.get("server_epoch"), str)
+                    or not row["server_epoch"]
+                    or row["server_epoch"] == effective.get("server_epoch")
+                    or row.get("stop_request_id") != prior["terminated_unmetered"][-1]
+                    or any(r.get("stop_request_id") == row["stop_request_id"] for r in rows[:index])
+                ):
+                    raise ClientBlocked("invalid server epoch transition")
+                effective = new_config
+                continue
             if row.get("event") != "wall_budget_amendment":
                 continue
             try:
@@ -561,8 +596,9 @@ class OllamaClient:
         effective_config = self._effective_config(rows)
         reservations: dict[str, dict[str, Any]] = {}
         responses: dict[str, dict[str, Any]] = {}
+        terminated: dict[str, dict[str, Any]] = {}
         for row in rows[1:]:
-            if row.get("event") == "wall_budget_amendment":
+            if row.get("event") in ("wall_budget_amendment", "server_epoch"):
                 continue
             key = row.get("request_id")
             if not isinstance(key, str) or not key:
@@ -572,9 +608,52 @@ class OllamaClient:
                 reservations[key] = row
             elif event == "response" and key in reservations and key not in responses:
                 responses[key] = row["record"]
+            elif event == "terminated_unmetered" and key in reservations and key not in terminated:
+                reserve = reservations[key]
+                proof = row.get("proof", {})
+                if (
+                    not effective_config.get("termination_policy")
+                    or len(terminated) >= 2
+                    or (key in responses and not responses[key].get("unknown_consumption"))
+                    or proof.get("tree_stopped") is not True
+                    or not proof.get("identities")
+                    or proof.get("proof_method") != "held-native-process-handles"
+                    or row.get("server_epoch") != reserve.get("server_epoch")
+                    or proof.get("server_epoch") != row.get("server_epoch")
+                    or row.get("charged_generated_tokens") != reserve["reserved_generated_tokens"]
+                    or row.get("charged_total_tokens") != reserve["reserved_total_tokens"]
+                    or row.get("actual_usage") is not None
+                    or row.get("bound_evidence") != "ollama-0.35.0-no-shift-explicit-ctx-predict"
+                ):
+                    raise ClientBlocked("unproven termination or consumption bound")
+                identities = proof["identities"]
+                if (
+                    not isinstance(identities, list)
+                    or len({i.get("pid") for i in identities}) != len(identities)
+                    or any(
+                        type(i.get("pid")) is not int
+                        or i["pid"] < 1
+                        or type(i.get("creation_filetime")) is not int
+                        or i["creation_filetime"] < 1
+                        or not isinstance(i.get("executable_sha256"), str)
+                        or re.fullmatch(r"[0-9a-f]{64}", i["executable_sha256"]) is None
+                        or i.get("executable_name", "").lower()
+                        not in ("ollama.exe", "llama-server.exe")
+                        for i in identities
+                    )
+                ):
+                    raise ClientBlocked("invalid termination identity proof")
+                terminated[key] = row
             else:
                 raise ClientBlocked("ledger request/response order or identity collision")
-        pending = [key for key in reservations if key not in responses or responses[key]["pending"]]
+        uncertain = [
+            key for key in reservations if key not in responses or responses[key]["pending"]
+        ]
+        pending = [key for key in uncertain if key not in terminated]
+        needs_epoch = bool(terminated) and (
+            terminated[next(reversed(terminated))]["server_epoch"]
+            == effective_config.get("server_epoch")
+        )
         generated = 0
         total = 0
         reserved_generated = 0
@@ -616,17 +695,22 @@ class OllamaClient:
             "started_epoch": next(iter(reservations.values()))["started_epoch"]
             if reservations
             else None,
-            "generated_tokens": None if pending else generated,
-            "total_tokens": None if pending else total,
+            "generated_tokens": None if uncertain else generated,
+            "total_tokens": None if uncertain else total,
+            "charged_generated_tokens": generated + reserved_generated,
+            "charged_total_tokens": total + reserved_total,
             "observed_generated_tokens": generated,
             "observed_total_tokens": total,
-            "usage_assessed": not bool(pending),
+            "usage_assessed": not bool(uncertain),
             "reserved_generated_tokens": reserved_generated,
             "reserved_total_tokens": reserved_total,
-            "unknown_consumption": bool(pending),
+            "unknown_consumption": bool(uncertain),
+            "terminated_unmetered": list(terminated),
+            "terminated_trial_ids": [reservations[k]["trial_id"] for k in terminated],
             "pending": pending,
             "halted": halted,
-            "blocked": bool(pending or halted),
+            "needs_server_epoch": needs_epoch,
+            "blocked": bool(pending or halted or needs_epoch),
             "request_ids": list(reservations),
             "completed_request_ids": [key for key in responses if not responses[key]["pending"]],
             "trials": trials,
@@ -667,13 +751,15 @@ class OllamaClient:
         metadata: dict[str, Any] | None = None,
         validator: Callable[[dict[str, Any]], Any] | None = None,
         wall_seconds: float | None = None,
+        num_predict: int | None = None,
+        preload: bool = False,
     ) -> dict[str, Any]:
         if model not in self.profiles:
             raise ValueError("model was not verified in the frozen profile set")
         profile = self.profiles[model]
         if not request_id or not trial_id or type(seed) is not int or seed < 0:
             raise ValueError("request/trial identity and nonnegative integer seed are required")
-        if not messages or any(
+        if (not messages and not preload) or any(
             set(message) != {"role", "content"}
             or message["role"] not in ("system", "user", "assistant")
             or not isinstance(message["content"], str)
@@ -684,8 +770,18 @@ class OllamaClient:
             raise ValueError("an explicit object JSON schema is required")
         if validator is None:
             _check_schema_subset(schema)
-        requested_wall = self.limits.request_wall_seconds if wall_seconds is None else wall_seconds
+        requested_wall = (
+            profile.request_wall_seconds or self.limits.request_wall_seconds
+            if wall_seconds is None
+            else wall_seconds
+        )
         _positive(requested_wall, "request wall deadline", self.limits.maximum_request_wall_seconds)
+        if num_predict is not None:
+            if type(num_predict) is not int or not 0 < num_predict <= profile.num_predict:
+                raise ValueError("stage output cap must fit the frozen profile")
+            profile = replace(profile, num_predict=num_predict)
+        if type(preload) is not bool or (preload and messages):
+            raise ValueError("preload requires an explicit empty message list")
         request = {
             "model": profile.tag,
             "messages": messages,
@@ -715,6 +811,8 @@ class OllamaClient:
                 raise ClientBlocked(
                     "request identity already issued; use record(), not a live retry"
                 )
+            if trial_id in summary["terminated_trial_ids"]:
+                raise ClientBlocked("terminated primary trial cannot be retried")
             now = max(time.time(), self._created_epoch + time.monotonic() - self._created_monotonic)
             start = summary["started_epoch"] if summary["started_epoch"] is not None else now
             if now < start:
@@ -722,16 +820,24 @@ class OllamaClient:
             trial = summary["trials"].get(trial_id, {})
             remaining_wall = min(
                 self.limits.global_wall_seconds - (now - start),
-                self.limits.trial_wall_seconds - (now - trial.get("started_epoch", now)),
+                min(
+                    self.limits.trial_wall_seconds,
+                    profile.trial_wall_seconds or self.limits.trial_wall_seconds,
+                )
+                - (now - trial.get("started_epoch", now)),
             )
             gen_reserve = profile.num_predict
             total_reserve = profile.num_ctx + profile.num_predict
             if (
                 summary["calls"] >= self.limits.global_calls
                 or trial.get("calls", 0) >= self.limits.trial_calls
-                or summary["generated_tokens"] + gen_reserve > self.limits.global_generated_tokens
-                or summary["total_tokens"] + total_reserve > self.limits.global_total_tokens
-                or trial.get("total_tokens", 0) + total_reserve > self.limits.trial_total_tokens
+                or summary["charged_generated_tokens"] + gen_reserve
+                > self.limits.global_generated_tokens
+                or summary["charged_total_tokens"] + total_reserve > self.limits.global_total_tokens
+                or trial.get("total_tokens", 0)
+                + trial.get("reserved_total_tokens", 0)
+                + total_reserve
+                > self.limits.trial_total_tokens
                 or remaining_wall <= 0
             ):
                 raise ClientBlocked("global or trial wall/call/token envelope exhausted")
@@ -754,6 +860,8 @@ class OllamaClient:
                 "request_sha256": hashlib.sha256(body).hexdigest(),
                 "metadata": metadata or {},
                 "wall_seconds": min(requested_wall, remaining_wall),
+                "operation": "preload" if preload else "generation",
+                "server_epoch": self.config.get("server_epoch"),
             }
             self._append(
                 reservation
@@ -784,11 +892,20 @@ class OllamaClient:
             value = deadline - time.monotonic()
             if value <= 0:
                 raise TimeoutError("request wall deadline")
-            return min(self.limits.socket_timeout_seconds, value)
+            return (
+                value
+                if self.limits.read_until_deadline
+                else min(self.limits.socket_timeout_seconds, value)
+            )
 
         try:
             # http.client connects directly and ignores all environment proxy variables.
-            connection = http.client.HTTPConnection(self.host, self.port, timeout=remaining())
+            connection = http.client.HTTPConnection(
+                self.host, self.port, timeout=min(self.limits.connect_timeout_seconds, remaining())
+            )
+            connection.connect()
+            assert connection.sock is not None
+            connection.sock.settimeout(remaining())
             connection.request(
                 "POST",
                 "/api/chat",
@@ -836,14 +953,76 @@ class OllamaClient:
         finally:
             if connection is not None:
                 connection.close()
+        capture = {
+            "request_id": reservation["request_id"],
+            "request_sha256": reservation["request_sha256"],
+            "raw_base64": base64.b64encode(raw).decode("ascii"),
+            "raw_sha256": hashlib.sha256(raw).hexdigest(),
+            "http_status": http_status,
+            "transport_error": transport_error,
+            "headers": headers,
+            "client_wall_seconds": time.monotonic() - began,
+            "ended_at": _stamp(),
+        }
+        path = self._capture_path(reservation["request_id"])
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("xb") as handle:
+            handle.write(_bytes(capture))
+            handle.flush()
+            os.fsync(handle.fileno())
+        return self._captured_record(capture, reservation, profile, validator)
+
+    def _capture_path(self, request_id: str) -> Path:
+        return (
+            self.path.parent
+            / "receipts"
+            / (hashlib.sha256(request_id.encode()).hexdigest() + ".json")
+        )
+
+    def _captured_record(
+        self,
+        capture: dict[str, Any],
+        reservation: dict[str, Any],
+        profile: ModelProfile,
+        validator: Callable[[dict[str, Any]], Any] | None,
+    ) -> dict[str, Any]:
+        raw = base64.b64decode(capture["raw_base64"], validate=True)
+        if (
+            capture["request_id"] != reservation["request_id"]
+            or capture["request_sha256"] != reservation["request_sha256"]
+            or hashlib.sha256(raw).hexdigest() != capture["raw_sha256"]
+        ):
+            raise ClientBlocked("durable receipt identity differs")
         record = self._interpret(
-            bytes(raw),
-            http_status,
-            transport_error,
+            raw,
+            capture["http_status"],
+            capture["transport_error"],
             profile,
             reservation["request"]["format"],
             validator,
         )
+        # The pinned ChatHandler returns before Completion for an empty preload.
+        # Missing counters on an ordinary generation response are never zero.
+        if (
+            reservation.get("operation") == "preload"
+            and record["done_reason"] == "load"
+            and record["done"] is True
+            and record["returned_model"] == profile.tag
+            and capture["http_status"] == 200
+            and capture["transport_error"] is None
+            and record["content"] in (None, "")
+            and not record["thinking"]
+            and all(v in (None, 0) for v in record["server_counters"].values())
+        ):
+            record.update(
+                status="loaded",
+                issues=[],
+                parsed=None,
+                pending=False,
+                unknown_consumption=False,
+                usage={"prompt_tokens": 0, "generated_tokens": 0, "total_tokens": 0},
+                usage_basis="pinned-empty-ChatHandler-before-Completion",
+            )
         record.update(
             {
                 "request_id": reservation["request_id"],
@@ -851,15 +1030,91 @@ class OllamaClient:
                 "model": profile.tag,
                 "model_digest": profile.digest,
                 "started_at": reservation["started_at"],
-                "ended_at": _stamp(),
-                "client_wall_seconds": time.monotonic() - began,
-                "http_headers": headers,
+                "ended_at": capture["ended_at"],
+                "client_wall_seconds": capture["client_wall_seconds"],
+                "http_headers": capture["headers"],
                 "request_sha256": reservation["request_sha256"],
                 "reserved_generated_tokens": reservation["reserved_generated_tokens"],
                 "reserved_total_tokens": reservation["reserved_total_tokens"],
             }
         )
         return record
+
+    def recover_receipt(
+        self,
+        request_id: str,
+        *,
+        validator: Callable[[dict[str, Any]], Any] | None = None,
+    ) -> dict[str, Any]:
+        """Settle an already captured final response without a network call."""
+        with self._locked():
+            rows = self._rows()
+            self._assert_identity(rows)
+            summary = self._summary(rows)
+            if request_id in summary["terminated_unmetered"]:
+                raise ClientBlocked("terminated primary cannot be relabeled as recovered")
+            existing = summary["responses"].get(request_id)
+            if existing is not None:
+                return existing
+            reserve = next(
+                r for r in rows if r.get("event") == "reserve" and r["request_id"] == request_id
+            )
+            path = self._capture_path(request_id)
+            if path.stat().st_size > 3 * self.limits.max_response_bytes + 16384:
+                raise ClientBlocked("captured response exceeds envelope")
+            capture = strict_json(path.read_text("utf-8"))
+            profile = replace(
+                self.profiles[reserve["request"]["model"]],
+                num_predict=reserve["request"]["options"]["num_predict"],
+            )
+            record = self._captured_record(capture, reserve, profile, validator)
+            self._append({"event": "response", "request_id": request_id, "record": record})
+            return record
+
+    def terminate_unmetered(self, request_id: str, proof: dict[str, Any]) -> dict[str, Any]:
+        """Retain unknown actual usage and its full bound after verified process death."""
+        with self._locked():
+            rows = self._rows()
+            self._assert_identity(rows)
+            summary = self._summary(rows)
+            if not self.config.get("termination_policy") or request_id not in summary["pending"]:
+                raise ClientBlocked("no recoverable new-campaign pending request")
+            reserve = next(
+                r for r in rows if r.get("event") == "reserve" and r["request_id"] == request_id
+            )
+            marker = {
+                "event": "terminated_unmetered",
+                "request_id": request_id,
+                "server_epoch": reserve["server_epoch"],
+                "proof": proof,
+                "actual_usage": None,
+                "charged_generated_tokens": reserve["reserved_generated_tokens"],
+                "charged_total_tokens": reserve["reserved_total_tokens"],
+                "bound_evidence": "ollama-0.35.0-no-shift-explicit-ctx-predict",
+                "created_at": _stamp(),
+            }
+            self._summary([*rows, marker])
+            self._append(marker)
+            return marker
+
+    def advance_server_epoch(self, server_epoch: str) -> None:
+        with self._locked():
+            rows = self._rows()
+            self._assert_identity(rows)
+            summary = self._summary(rows)
+            if summary["pending"] or summary["halted"] or not summary["terminated_unmetered"]:
+                raise ClientBlocked("unproven termination prevents an epoch change")
+            event = {
+                "event": "server_epoch",
+                "server_epoch": server_epoch,
+                "stop_request_id": summary["terminated_unmetered"][-1],
+                "prior_events_canonical_sha256": _canonical_sha256(rows),
+                "from_config_sha256": _canonical_sha256(self.config),
+                "created_at": _stamp(),
+            }
+            config = self._effective_config([*rows, event])
+            self._append(event)
+            self.config = config
 
     def _interpret(
         self,

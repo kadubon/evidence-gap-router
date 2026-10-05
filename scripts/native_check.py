@@ -26,6 +26,7 @@ SOURCE_ONLY_TESTS = {
     "test_ollama_experiment.py",
     "test_ollama_controller.py",
     "test_ollama_environment.py",
+    "test_ollama_024.py",
 }
 V022_INSTALLED_TESTS = {
     "test_v022_helpers.py",
@@ -126,7 +127,7 @@ def main() -> None:
         ]
         if not selected:
             raise ValueError("No installed regression tests selected")
-        if args.version in {"0.2.2", "0.2.3"} and not V022_INSTALLED_TESTS.issubset(
+        if args.version in {"0.2.2", "0.2.3", "0.2.4"} and not V022_INSTALLED_TESTS.issubset(
             {test.name for test in selected}
         ):
             raise ValueError("All v0.2.2 runtime regressions must run against the installed wheel")
@@ -160,18 +161,24 @@ def main() -> None:
         if benchmark.get("benchmark_smoke") != "passed" or benchmark.get("trials", 0) < 1:
             raise ValueError("Installed benchmark smoke did not pass")
         experiment_contract = None
-        if args.version == "0.2.3":
+        if args.version in {"0.2.3", "0.2.4"}:
             experiment = clean / "experiments" / "ollama"
             experiment.mkdir(parents=True)
             for source in (root / "experiments" / "ollama").glob("*.py"):
                 shutil.copyfile(source, experiment / source.name)
             shutil.copyfile(root / "experiments/ollama/protocol.json", experiment / "protocol.json")
+            if args.version == "0.2.4":
+                shutil.copyfile(
+                    root / "experiments/ollama/protocol-v0.2.4.json",
+                    experiment / "protocol-v0.2.4.json",
+                )
             contract_tests = clean / "contract-tests"
             contract_tests.mkdir()
             contract_names = (
                 "test_ollama_client.py",
                 "test_ollama_experiment.py",
                 "test_ollama_environment.py",
+                *(["test_ollama_024.py"] if args.version == "0.2.4" else []),
             )
             for name in contract_names:
                 shutil.copyfile(root / "tests" / name, contract_tests / name)

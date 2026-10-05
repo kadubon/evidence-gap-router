@@ -94,7 +94,10 @@ def verify_benchmark_package(wheel: Path, freeze: Path) -> None:
     if package_fingerprint(wheel) != manifest["candidate_package_sha256"]:
         raise ValueError("Release package bytes differ from the measured frozen candidate")
     directory = freeze.resolve().parents[1]
-    actual = hashlib.sha256((directory / "protocol.json").read_bytes()).hexdigest()
+    protocol_file = manifest.get("protocol_file", "protocol.json")
+    if Path(protocol_file).name != protocol_file:
+        raise ValueError("Freeze protocol must be a file in the experiment directory")
+    actual = hashlib.sha256((directory / protocol_file).read_bytes()).hexdigest()
     if actual != manifest["manifest_sha256"]:
         raise ValueError("Benchmark protocol differs from the measured freeze")
     content = b"".join(

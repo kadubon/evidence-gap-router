@@ -48,6 +48,22 @@ class Review(Output):
     requested_sources: Annotated[tuple[str, ...], Field(max_length=4)]
 
 
+class CompactReview(Output):
+    status: Literal["PASS", "FAIL", "UNKNOWN"]
+    reason_code: Literal[
+        "supported",
+        "wrong_decision",
+        "missing_material",
+        "bad_quote",
+        "stale_version",
+        "insufficient_origins",
+        "unsupported_claim",
+        "cannot_judge",
+    ]
+    requested_sources: Annotated[tuple[str, ...], Field(max_length=4)]
+    feedback: Annotated[str, Field(max_length=160)] = ""
+
+
 def validate_output(parsed: dict[str, object], model: type[Output]) -> Output:
     # Strict JSON mode converts arrays to immutable tuples without relaxing scalar types.
     return model.model_validate_json(json.dumps(parsed, ensure_ascii=False, allow_nan=False))
@@ -115,9 +131,17 @@ def integration_messages(
     feedback: dict[str, object] | None = None,
     previous_answer: dict[str, object] | None = None,
 ) -> list[dict[str, str]]:
-    return _messages(
-        task,
+    instruction = (
         (
+            "公開規則の必要十分条件・権限・現行版・例外を用いてdecision=yes/no/unknownを判断してください。"
+            "必要条件だけの充足から十分性を推測しない。未記録の事実は偽としない。"
+            "独立originと転載を区別する。answerとreasoningは各160字以内。"
+            "citationsは結論を支える最小の連続原文とsource_id/version。全文の反復は不要。"
+            "明示された未記録を根拠にしたunknownは正しい回答になり得ます。"
+            "feedbackがあれば資料を用いて実際に訂正してください。"
+        )
+        if "024-" in task.task_id
+        else (
             "条件を統合して質問へ回答してください。decisionはyes/no/unknown。answerは結論、reasoningは理由です。"
             "必要条件の充足を観測した場合はyes、不充足または反証を観測した場合はnoです。"
             "必要な観測や独立発行元の裏付けが足りない場合はunknownであり、欠落をnoとしないでください。"
@@ -126,7 +150,11 @@ def integration_messages(
             "citationsには結論と全ての必要条件を支える原文、正しいsource_id、versionを列挙してください。"
             "資料が短いので、引用する資料は原文全体をquoteに入れてください。"
             "feedbackがあれば実際に訂正し、根拠のない完成を宣言しないでください。"
-        ),
+        )
+    )
+    return _messages(
+        task,
+        instruction,
         {
             "documents": _documents(documents),
             "extractions": list(extractions),
@@ -141,6 +169,8 @@ def review_messages(
     documents: tuple[Document, ...],
     answer: dict[str, object],
     extractions: tuple[dict[str, object], ...] = (),
+    *,
+    compact: bool = False,
 ) -> list[dict[str, str]]:
     return _messages(
         task,
@@ -150,6 +180,14 @@ def review_messages(
             "誤りや欠落にはFAIL、判定不能にはUNKNOWN。引用一致だけで意味の正しさを認定しないでください。"
             "資料不足を解消するため必要なら公開catalogue内のsource_idをrequested_sourcesへ入れてください。"
             "未提示資料の内容を推測しないでください。feedbackに具体的な欠落または訂正を書いてください。"
+            + (
+                "根拠付きunknown回答もPASSにできる。reviewer UNKNOWNは判断能力の不足を表す。"
+                "未提示だが取得できる重要資料が残るときはPASSにしない。"
+                "reason_codeは指定された有限列挙値。feedbackは任意、160字以内。"
+                "同じ文章や資料を反復しない。"
+                if compact
+                else ""
+            )
         ),
         {"documents": _documents(documents), "extractions": list(extractions), "answer": answer},
     )

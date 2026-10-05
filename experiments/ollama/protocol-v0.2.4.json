@@ -1,0 +1,32 @@
+{
+  "protocol_id": "egr-024-local-ollama-v1",
+  "package_version": "0.2.4",
+  "models": ["qwen3.6:35b-a3b", "gemma4:e4b"],
+  "arms": ["A", "B", "C"],
+  "development_parents": 4,
+  "confirmation_profiles": [24, 16],
+  "profile_parent_numbers": {
+    "24": {"L1": [1,2,3,4,5,6], "L2": [1,2,3,4,5,6], "L3": [1,2,3,4,5,6], "L4": [1,2,3,4,5,6]},
+    "16": {"L1": [1,2,3,6], "L2": [1,2,3,6], "L3": [1,2,3,6], "L4": [1,2,3,6]}
+  },
+  "seed": 24041017,
+  "development_seed": 24041003,
+  "schedule_seed": 24041029,
+  "bootstrap_seed": 24041041,
+  "bootstrap_replicates": 2000,
+  "global_limits": {"wall_seconds":172800,"calls":4000,"generated_tokens":4000000,"total_tokens":40000000,"disk_bytes":4294967296},
+  "trial_limits": {"calls":10,"qwen_wall_seconds":7200,"gemma_wall_seconds":3600,"tokens":97280,"actions":32,"verifications":16},
+  "request": {"num_ctx":8192,"num_predict":4096,"temperature":0.0,"think":false,"stream":false,"truncate":false,"shift":false,"qwen_wall_seconds":1800,"gemma_wall_seconds":900,"preload_wall_seconds":1800,"maximum_request_wall_seconds":3600,"connect_timeout_seconds":30,"read_until_deadline":true,"keep_alive":"60m"},
+  "stage_limits": {"context":8192,"reader_cap":1024,"integrator_cap":1536,"reviewer_cap":768,"repair_cap":1024,"calls":10,"actions":32,"verifications":16,"format_repairs":2},
+  "server": {"version":"0.35.0","parallel":1,"maximum_loaded_models":1,"maximum_queue":1,"cloud_disabled":true,"keep_alive":"60m","load_timeout":"30m","automatic_model_downloads":false},
+  "recovery": {"maximum_automatic_recoveries":2,"actual_unknown_usage":null,"retain_full_original_reservation":true,"proof":"held-native-process-handles","bound":"ollama-0.35.0-no-shift-explicit-ctx-predict","retry_primary":false,"maximum_separate_diagnostics_per_failed_trial":1},
+  "calibration": {"parents":24,"schemas":["old","compact"],"caps":[512,2048],"maximum_cycles":3,"minimum_final_review_syntax_valid":"19/20","minimum_warm_final_receipts":6,"choice_basis":["syntax stability","false PASS","speed","resources"],"primary_outcomes_used":false},
+  "pilot": {"maximum_trials":24,"maximum_common_prompt_adjustment_cycles":3},
+  "auxiliary": {"maximum_generation_calls":640,"maximum_extra_callbacks_per_trial":2,"selected_parent_numbers":[1,6],"selected_families":["L1","L2","L3","L4"],"fresh_trials":64,"policy":"Fresh eight-parent A/B both-model strict and bounded continuation pairs, same base budgets; at most two additional unused public step callbacks after known no_progress or format fault. Preserve primary state/history/costs. No unknown retry."},
+  "budget_allocation": {"main_minimum_fraction":0.60,"development_maximum_fraction":0.25,"sensitivity_fraction":0.15},
+  "primary":"Within model, answerable parent paired verified_supported_completion A minus B. Grounded world-unknown abstention and reviewer-unknown are distinct. Small N is descriptive.",
+  "profile_selection":"Largest 24/16 balanced new profile fitting a speed/resource-only forecast, including separate sensitivity and margin. Never select by A minus B.",
+  "public_gold_separation":"Only new PublicTask reaches prompts, factories and selectors. Minimal exact GoldTask witnesses are evaluation-only. Same review and repair rules across A/B/C.",
+  "post_confirmation_changes":"Measured bytes are immutable. Any change needs an explicit new protocol, unused confirmatory parents and retained cumulative campaign costs.",
+  "release_authorization":"The user authorizes 0.2.4 publication; old tags and public assets stay immutable."
+}

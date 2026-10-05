@@ -77,8 +77,12 @@ def _task(
     return task, gold
 
 
-def confirmation_tasks() -> tuple[tuple[PublicTask, GoldTask], ...]:
+def confirmation_tasks(edition: str = "023") -> tuple[tuple[PublicTask, GoldTask], ...]:
     """24 separately worded parents; exactly six have no determined yes/no answer."""
+    if edition == "024":
+        return _new_tasks(development=False)
+    if edition != "023":
+        raise ValueError("unknown task edition")
     recipes = (
         (
             "L1",
@@ -467,8 +471,12 @@ def confirmation_tasks() -> tuple[tuple[PublicTask, GoldTask], ...]:
     )
 
 
-def development_tasks() -> tuple[tuple[PublicTask, GoldTask], ...]:
+def development_tasks(edition: str = "023") -> tuple[tuple[PublicTask, GoldTask], ...]:
     """Four pilot-only parents; no document text is reused in confirmation."""
+    if edition == "024":
+        return _new_tasks(development=True)
+    if edition != "023":
+        raise ValueError("unknown task edition")
     return (
         _task(
             "L1",
@@ -526,3 +534,116 @@ def development_tasks() -> tuple[tuple[PublicTask, GoldTask], ...]:
             development=True,
         ),
     )
+
+
+def calibration_tasks() -> tuple[tuple[PublicTask, GoldTask], ...]:
+    return _new_tasks(development=False, calibration=True)
+
+
+def _new_tasks(
+    *, development: bool, calibration: bool = False
+) -> tuple[tuple[PublicTask, GoldTask], ...]:
+    """New finite rule parents, independent of every v0.2.3 document.
+
+    Every permission rule is explicitly necessary AND sufficient. Gold records
+    minimal exact spans derived from those public rules, rather than full-document
+    memorization. Unknown denotes absent world information after the relevant
+    record is retrieved, not a failure to retrieve an available document.
+    """
+    result = []
+    for family in ("L1", "L2", "L3", "L4"):
+        for number in (1,) if development else range(1, 7):
+            prefix = "校正" if calibration else ("予備" if development else "新規")
+            ident = f"{prefix}-{family}-{number}"
+            unknown = (family, number) in {
+                ("L1", 6),
+                ("L2", 5),
+                ("L2", 6),
+                ("L3", 6),
+                ("L4", 5),
+                ("L4", 6),
+            } or (development and family == "L4")
+            decision = "unknown" if unknown else ("yes" if number % 2 else "no")
+            rule = "条件Pと条件Qが両方真である場合に限り許可する。他の条件や例外はない。"
+            fact_p = f"{ident}の条件Pは真と確認した。"
+            fact_q = f"{ident}の条件Qは{'真' if decision == 'yes' else '偽'}と確認した。"
+            if unknown:
+                fact_q = f"{ident}の条件Qの真偽は未記録である。"
+            question = f"公開規則に従い、対象{ident}を許可できるか。未記録は偽とせずunknownとする。"
+            material = [
+                ("規則当局", "1", "規則当局", rule + fact_p),
+                ("観測当局", "1", "観測当局", fact_q + "備品の色は白である。"),
+            ]
+            witnesses = [(0, rule), (0, fact_p), (1, fact_q)]
+            minimum, historical = 1, ()
+            if family == "L2":
+                rule = (
+                    "独立した二発行元が適合と報告した場合に限り許可する。転載は独立発行元でない。"
+                )
+                p = f"{ident}は適合と検査甲が報告した。"
+                q = (
+                    f"{ident}の適合性は検査乙では未確認である。"
+                    if unknown
+                    else f"{ident}は{'適合' if decision == 'yes' else '不適合'}と検査乙が報告した。"
+                )
+                material = [
+                    ("規則当局", "1", "規則", rule),
+                    ("検査甲", "1", "独立甲", p),
+                    ("広報", "1", "独立甲", "以下は検査甲の転載である。" + p),
+                    ("検査乙", "1", "独立乙", q),
+                ]
+                witnesses, minimum = [(0, rule), (1, p), (3, q)], 3
+                question += "発行元の同一性は公開originで判定する。"
+            elif family == "L3":
+                rule = (
+                    "現行版2で条件Pが真かつ禁止例外Qが偽の場合に限り許可する。旧版1は失効している。"
+                )
+                q = (
+                    f"{ident}の禁止例外Qは未確認である。"
+                    if unknown
+                    else f"{ident}の禁止例外Qは{'偽' if decision == 'yes' else '真'}である。"
+                )
+                current = fact_p + q
+                material = [
+                    ("規則当局", "2", "規則", rule),
+                    ("記録当局", "1", "記録", f"旧版1では{ident}は許可された。"),
+                    ("記録当局", "2", "記録", current),
+                ]
+                witnesses, historical = [(0, rule), (2, fact_p), (2, q)], ("document-2",)
+                question += "記録当局の現行版2を用いる。"
+            elif family == "L4":
+                rule = (
+                    "記録当局が当日到着済みと確認した場合に限り許可する。"
+                    "発送だけでは到着を意味しない。"
+                )
+                fact = (
+                    f"{ident}の当日到着状況は未確認である。"
+                    if unknown
+                    else f"{ident}は当日{'到着済み' if decision == 'yes' else '未到着'}と確認した。"
+                )
+                material = [
+                    ("規則当局", "1", "規則", rule),
+                    ("記録当局", "1", "記録", fact + f"{ident}は発送済みである。"),
+                    ("倉庫", "1", "倉庫", "棚番号は七である。"),
+                ]
+                witnesses = [(0, rule), (1, fact)]
+            prefix = (
+                "calibration024"
+                if calibration
+                else ("development024" if development else "confirmation024")
+            )
+            task_id = f"{prefix}-{family}-{number}"
+            docs = tuple(
+                Document(f"document-{i + 1}", owner, family, version, origin, text)
+                for i, (owner, version, origin, text) in enumerate(material)
+            )
+            task = PublicTask(task_id, family, question, docs, development)
+            gold = GoldTask(
+                task_id,
+                decision,
+                tuple(Witness(docs[i].source_id, quote) for i, quote in witnesses),
+                minimum,
+                historical,
+            )
+            result.append((task, gold))
+    return tuple(result)

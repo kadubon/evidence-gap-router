@@ -1,14 +1,16 @@
 # Preserve the exact bytes of newly recorded experiment artifacts.
-# The installed v0.2.3 experiment candidate contains CRLF package files.
-# Pin those measured bytes on every checkout without changing the Git blobs.
-src/evidence_gap_router/** text eol=crlf
+# v0.2.4 starts a new campaign with canonical LF bytes on every native checkout.
+# Historical tags, wheels and raw archives retain their original bytes.
+src/evidence_gap_router/** text eol=lf
 benchmarks/results/freeze-v0.2.2.json -text
 benchmarks/results/v0.2.2/*.json -text
 benchmarks/results/v0.2.1-erratum/*.json -text
 experiments/ollama/*.py text eol=lf
 experiments/ollama/protocol.json text eol=lf
+experiments/ollama/protocol-v0.2.4.json text eol=lf
 experiments/ollama/results/**/*.json -text
 experiments/ollama/results/freeze-v0.2.3.json -text
+experiments/ollama/results/freeze-v0.2.4.json -text
 experiments/ollama/results/**/*.csv -text
 scripts/recount_ollama_023.py text eol=lf
 scripts/pack_ollama.py text eol=lf

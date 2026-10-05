@@ -7,6 +7,7 @@ import itertools
 import json
 import os
 from collections.abc import Mapping
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Literal, Protocol
 
@@ -35,6 +36,7 @@ from evidence_gap_router import (
 
 from .prompts import (
     Answer,
+    CompactReview,
     Extraction,
     Output,
     Review,
@@ -48,6 +50,54 @@ from .tasks import Document, PublicTask
 Arm = Literal["A", "B", "C"]
 RESERVATION = 4096 + 512
 TRIAL_BUDGET = Budget(limits=Resources(actions=16, verifications=8, tokens=6 * RESERVATION))
+
+
+@dataclass(frozen=True)
+class TrialSettings:
+    context: int = 8192
+    reader_cap: int = 1024
+    integrator_cap: int = 1536
+    reviewer_cap: int = 768
+    repair_cap: int = 1024
+    calls: int = 10
+    actions: int = 32
+    verifications: int = 16
+    format_repairs: int = 2
+
+    def __post_init__(self) -> None:
+        for name, maximum in (
+            ("context", 16384),
+            ("reader_cap", 4096),
+            ("integrator_cap", 4096),
+            ("reviewer_cap", 4096),
+            ("repair_cap", 4096),
+            ("calls", 12),
+            ("actions", 32),
+            ("verifications", 16),
+            ("format_repairs", 2),
+        ):
+            value = getattr(self, name)
+            if type(value) is not int or not 0 < value <= maximum:
+                raise ValueError(f"invalid finite trial setting: {name}")
+
+    def cap(self, stage: str) -> int:
+        return {
+            "read": self.reader_cap,
+            "integrate": self.integrator_cap,
+            "review": self.reviewer_cap,
+            "repair": self.repair_cap,
+        }[stage]
+
+    @property
+    def budget(self) -> Budget:
+        cap = max(self.reader_cap, self.integrator_cap, self.reviewer_cap, self.repair_cap)
+        return Budget(
+            limits=Resources(
+                actions=self.actions,
+                verifications=self.verifications,
+                tokens=self.calls * (self.context + cap),
+            )
+        )
 
 
 class ChatClient(Protocol):
@@ -203,9 +253,15 @@ class _Trial:
         seed: int,
         client: ChatClient,
         checkpoint: Path | None,
+        settings: TrialSettings | None = None,
     ) -> None:
         self.task, self.arm, self.model, self.digest, self.seed = task, arm, model, digest, seed
         self.client, self.checkpoint = client, checkpoint
+        self.settings = settings
+        self.budget = settings.budget if settings else TRIAL_BUDGET
+        self.maximum_calls = settings.calls if settings else 6
+        self.maximum_actions = settings.actions if settings else 16
+        self.review_type = CompactReview if settings else Review
         self.state = initial_state(task)
         self.policy = policy_for(digest)
         self.pool: tuple[ActionCandidate, ...] = ()
@@ -250,6 +306,8 @@ class _Trial:
             if saved.get(key) != expected:
                 raise ValueError(f"resume identity mismatch: {key}")
         self.state = load_json(_json(saved["state"]), State)
+        if saved.get("trial_settings") != (asdict(self.settings) if self.settings else None):
+            raise ValueError("resume cannot change trial settings")
         self.calls = saved["calls"]
         self.decisions = saved.get("decisions", [])
         self.fault = saved.get("fault")
@@ -265,6 +323,12 @@ class _Trial:
             record = next((item for item in self.calls if item["request_id"] == request_id), None)
             if record is None:
                 record = self.client.lookup(request_id)
+            callback_calls = [record] if record is not None else []
+            if self.settings:
+                repaired = self.client.lookup(request_id + ":format-repair-1")
+                if repaired is not None:
+                    callback_calls.append(repaired)
+                    record = repaired
             if record is None or record.get("unknown_consumption") or record.get("pending"):
                 self.fault = "pending_or_unknown_dispatch"
                 return
@@ -274,7 +338,19 @@ class _Trial:
                 "stage_provenance": "host_action_id",
             }
             if all(item["request_id"] != request_id for item in self.calls):
-                self.calls.append(record)
+                self.calls.extend(
+                    c
+                    for c in callback_calls
+                    if c is not None
+                    and all(old["request_id"] != c["request_id"] for old in self.calls)
+                )
+            if self.settings and len(callback_calls) > 1:
+                record = {
+                    **record,
+                    "callback_total_tokens": sum(
+                        c["usage"]["total_tokens"] for c in callback_calls
+                    ),
+                }
             view = CallbackView(
                 action=attempt.action,
                 attempt_id=attempt.id,
@@ -305,7 +381,7 @@ class _Trial:
             "unknown_consumption",
             "callback_exception",
         )
-        llm_available = len(self.calls) < 6 and not blocked
+        llm_available = len(self.calls) < self.maximum_calls and not blocked
         if self.arm != "C":
             for document in self.task.documents:
                 source, owner = document.source_id, f"extract:{document.source_id}"
@@ -322,7 +398,7 @@ class _Trial:
                             dependencies=(_dependency(evidence[f"raw:{source}"]),),
                             source=source,
                             provenance_group=document.origin,
-                            resources=Resources(actions=1, verifications=0, tokens=RESERVATION),
+                            resources=self.reservation("read"),
                         )
                     )
                 if extracted_id in evidence:
@@ -366,7 +442,7 @@ class _Trial:
                         handler_id=f"reviewer:{self.digest}",
                         produces_evidence_id=f"review:{round_number}",
                         dependencies=(_dependency(current), *deps),
-                        resources=Resources(actions=1, verifications=0, tokens=RESERVATION),
+                        resources=self.reservation("review"),
                     )
                 )
             output.append(
@@ -423,11 +499,24 @@ class _Trial:
                         handler_id=f"integrator:{self.digest}",
                         produces_evidence_id=f"answer:{new_round}",
                         dependencies=deps,
-                        resources=Resources(actions=1, verifications=0, tokens=RESERVATION),
+                        resources=self.reservation("integrate"),
                     )
                 )
         self.pool = tuple(action for action in output if action.id not in issued)
         return self.pool
+
+    def reservation(self, stage: str) -> Resources:
+        tokens = (
+            RESERVATION
+            if self.settings is None
+            else (
+                self.settings.context
+                + self.settings.cap(stage)
+                + self.settings.context
+                + self.settings.repair_cap
+            )
+        )
+        return Resources(actions=1, verifications=0, tokens=tokens)
 
     def material_dependencies(
         self,
@@ -460,7 +549,7 @@ class _Trial:
         return docs
 
     def from_call(self, view: CallbackView, record: dict[str, Any]) -> Result:
-        tokens = record.get("usage", {}).get("total_tokens")
+        tokens = record.get("callback_total_tokens", record.get("usage", {}).get("total_tokens"))
         if record.get("unknown_consumption") or record.get("pending") or tokens is None:
             self.fault = "unknown_consumption"
             return view.result(
@@ -487,7 +576,7 @@ class _Trial:
         model_type: type[Output] = (
             Extraction
             if action.id.startswith("read:")
-            else (Review if action.id.startswith("review:") else Answer)
+            else (self.review_type if action.id.startswith("review:") else Answer)
         )
         parsed = record.get("parsed")
         if not isinstance(parsed, dict):
@@ -499,7 +588,7 @@ class _Trial:
             )
         try:
             validated = validate_output(parsed, model_type)
-            if isinstance(validated, Review) and any(
+            if isinstance(validated, (Review, CompactReview)) and any(
                 source not in {d.source_id for d in self.task.documents}
                 for source in validated.requested_sources
             ):
@@ -518,7 +607,7 @@ class _Trial:
             "related_inputs": [item.id for item in view.inputs],
             "retrieved_sources": [d.source_id for d in self.documents(view)],
         }
-        if isinstance(validated, Review):
+        if isinstance(validated, (Review, CompactReview)):
             payload["reviewed_answer_id"] = next(
                 e.id for e in view.inputs if e.obligation_id == "answer"
             )
@@ -558,7 +647,7 @@ class _Trial:
             self.state,
             view.action,
             view.attempt_id,
-            TRIAL_BUDGET,
+            self.budget,
             self.policy,
             candidates=self.pool,
         )
@@ -571,9 +660,15 @@ class _Trial:
             model_type: type[Output] = Extraction
             messages = extraction_messages(self.task, docs[0])
         elif view.action.id.startswith("review:"):
-            model_type = Review
+            model_type = self.review_type
             answer = next(e for e in view.inputs if e.obligation_id == "answer")
-            messages = review_messages(self.task, docs, _data(answer)["output"], extracted)
+            messages = review_messages(
+                self.task,
+                docs,
+                _data(answer)["output"],
+                extracted,
+                compact=self.settings is not None,
+            )
         else:
             model_type = Answer
             previous = next((e for e in view.inputs if e.obligation_id == "answer"), None)
@@ -602,6 +697,11 @@ class _Trial:
                     "input_ids": [e.id for e in view.inputs],
                 },
                 validator=lambda parsed: validate_output(parsed, model_type),
+                **(
+                    {"num_predict": self.settings.cap(view.action.id.split(":")[0])}
+                    if self.settings
+                    else {}
+                ),
             )
         except Exception as error:
             self.fault = "callback_exception"
@@ -623,6 +723,56 @@ class _Trial:
         # Save the completed record before observing it, so a crash can settle
         # this exact result without another model invocation.
         self.save()
+        repairable = {"length", "empty_final", "final_json_error", "schema_error"}
+        repairs = sum(call.get("stage") == "repair" for call in self.calls)
+        if (
+            self.settings
+            and record.get("status") in repairable
+            and record.get("unknown_consumption") is False
+            and not record.get("pending")
+            and repairs < self.settings.format_repairs
+            and len(self.calls) < self.maximum_calls
+            and not self.client.summary().get("blocked")
+        ):
+            # One repair per stage invocation, at most two across the trial.
+            # Original failure and its paid usage remain in calls and the ledger.
+            first_tokens = record["usage"]["total_tokens"]
+            repaired = self.client.chat(
+                model=self.model,
+                trial_id=self.trial_id,
+                request_id=request_id + ":format-repair-1",
+                messages=[
+                    *messages,
+                    {"role": "assistant", "content": (record.get("content") or "")[:8000]},
+                    {
+                        "role": "user",
+                        "content": (
+                            "出力形式を修正し、短い完全な指定JSONだけを返す。新しい事実を作らない。"
+                        ),
+                    },
+                ],
+                schema=model_type.model_json_schema(),
+                seed=self.seed,
+                metadata={
+                    "task_id": self.task.task_id,
+                    "arm": self.arm,
+                    "stage": "repair",
+                    "attempt_id": view.attempt_id,
+                    "repair_of": request_id,
+                },
+                validator=lambda parsed: validate_output(parsed, model_type),
+                num_predict=self.settings.repair_cap,
+            )
+            repaired = {**repaired, "stage": "repair", "stage_provenance": "host_format_repair"}
+            self.calls.append(repaired)
+            self.save()
+            last_tokens = repaired.get("usage", {}).get("total_tokens")
+            record = {
+                **repaired,
+                "callback_total_tokens": first_tokens + last_tokens
+                if last_tokens is not None
+                else None,
+            }
         receipt = self.from_call(view, record)
         self.state = observe(self.state, receipt, self.policy)
         self.save()
@@ -648,8 +798,8 @@ class _Trial:
         answer = next(e for e in view.inputs if e.id == view.action.target_evidence_id)
         review = next(e for e in view.inputs if e.obligation_id == "review")
         output = validate_output(_data(answer)["output"], Answer)
-        feedback = validate_output(_data(review)["output"], Review)
-        assert isinstance(output, Answer) and isinstance(feedback, Review)
+        feedback = validate_output(_data(review)["output"], self.review_type)
+        assert isinstance(output, Answer) and isinstance(feedback, (Review, CompactReview))
         docs = {d.source_id: d for d in self.documents(view)}
         valid = _data(review)["reviewed_answer_id"] == answer.id and all(
             c.source_id in docs
@@ -698,7 +848,7 @@ class _Trial:
         pending = any(
             a.id not in {r.attempt_id for r in self.state.results} for a in self.state.attempts
         )
-        decision = plan(self.state, (), TRIAL_BUDGET, self.policy)
+        decision = plan(self.state, (), self.budget, self.policy)
         return {
             "task_id": self.task.task_id,
             "family": self.task.family,
@@ -707,6 +857,7 @@ class _Trial:
             "model_digest": self.digest,
             "seed": self.seed,
             "trial_id": self.trial_id,
+            "trial_settings": asdict(self.settings) if self.settings else None,
             "calls": self.calls,
             "answer": answer,
             "answer_evidence_id": latest,
@@ -746,6 +897,7 @@ def run_trial(
     checkpoint: Path | None = None,
     resume: bool = False,
     secondary_steps: int = 0,
+    settings: TrialSettings | None = None,
 ) -> dict[str, Any]:
     """One finite trial, optionally resume exact known records; never redispatch pending.
 
@@ -757,7 +909,7 @@ def run_trial(
         raise ValueError("invalid arm or secondary continuation bound")
     if len(model_digest) != 64 or any(c not in "0123456789abcdef" for c in model_digest):
         raise ValueError("exact model digest is required")
-    trial = _Trial(task, arm, model, model_digest, seed, client, checkpoint)
+    trial = _Trial(task, arm, model, model_digest, seed, client, checkpoint, settings)
     if resume:
         trial.load()
     if trial.fault in ("pending_or_unknown_dispatch", "unknown_consumption", "callback_exception"):
@@ -777,11 +929,11 @@ def run_trial(
     auxiliary_only = resume and secondary_steps > 0
     if arm == "C" and not auxiliary_only:
         # A fixed central workflow; catalogue material is never routed away from C.
-        for _ in range(16 - len(trial.state.results)):
+        for _ in range(trial.maximum_actions - len(trial.state.results)):
             report = step(
                 trial.state,
                 trial.candidates,
-                TRIAL_BUDGET,
+                trial.budget,
                 trial.policy,
                 trial.handlers(),
                 selector=lambda _state, _pool, eligible: min(eligible, key=lambda a: a.id),
@@ -802,10 +954,10 @@ def run_trial(
         running = run(
             trial.state,
             trial.candidates,
-            TRIAL_BUDGET,
+            trial.budget,
             trial.policy,
             trial.handlers(),
-            max_steps=max(1, 16 - len(trial.state.results)),
+            max_steps=max(1, trial.maximum_actions - len(trial.state.results)),
             selector=selector,
         )
         trial.state, trial.runner_stop = running.state, running.stop_reason
@@ -814,7 +966,13 @@ def run_trial(
         trial.save()
     if (
         secondary_steps
-        and not trial.fault
+        and (
+            not trial.fault
+            or (
+                trial.settings
+                and trial.fault in ("length", "empty_final", "final_json_error", "schema_error")
+            )
+        )
         and (trial.runner_stop == "no_progress" or trial.secondary_origin_results is not None)
     ):
         if trial.secondary_origin_results is None:
@@ -829,7 +987,7 @@ def run_trial(
             if trial.result()["pending"] or trial.client.summary().get("blocked"):
                 break
             pool = trial.candidates(trial.state)
-            eligible = feasible_actions(trial.state, pool, TRIAL_BUDGET, trial.policy)
+            eligible = feasible_actions(trial.state, pool, trial.budget, trial.policy)
             issued = {a.action.id for a in trial.state.attempts}
             unused = tuple(a for a in eligible if a.id not in issued)
             if not unused:
@@ -845,7 +1003,7 @@ def run_trial(
             continued = step(
                 trial.state,
                 pool,
-                TRIAL_BUDGET,
+                trial.budget,
                 trial.policy,
                 trial.handlers(),
                 selector=continuation_selector,

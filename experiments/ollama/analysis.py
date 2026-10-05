@@ -88,8 +88,10 @@ def analyze(
     directory: Path, output: Path, protocol: dict[str, Any], *, frozen: dict[str, Any] | None = None
 ) -> dict[str, Any]:
     """Score every recorded terminal key; unstarted/fault/pending are separate outcomes."""
+    edition = "024" if protocol["package_version"] == "0.2.4" else "023"
     tasks = {
-        task.task_id: (task, gold) for task, gold in (*development_tasks(), *confirmation_tasks())
+        task.task_id: (task, gold)
+        for task, gold in (*development_tasks(edition), *confirmation_tasks(edition))
     }
     rows: list[dict[str, Any]] = []
     failures = []
@@ -113,6 +115,10 @@ def analyze(
         for item in planned
         if item["key"] in auxiliary_sources
     )
+    all_planned.extend(
+        ({k: v for k, v in item.items() if k != "phase"}, item["phase"])
+        for item in ([] if frozen is None else frozen.get("planned_sensitivity_keys", []))
+    )
     for item, phase in all_planned:
         saved = records.get(item["key"])
         if saved is not None and (
@@ -135,6 +141,8 @@ def analyze(
             else {
                 "oracle_assessed": False,
                 "answer_correct": False,
+                "answer_grounded_correct": None,
+                "verified_supported_completion": None,
                 "evidence_supported_completion": False,
                 "grounded_abstention": False,
                 "errors": [record["execution"]],
@@ -161,6 +169,36 @@ def analyze(
             "system_claimed_complete": bool(result.get("system_claimed_complete")),
             **scored,
         }
+        calls = result.get("calls", [])
+        row.update(
+            answer_grounded_correct=scored.get(
+                "answer_grounded_correct", scored["evidence_supported_completion"]
+            ),
+            verified_supported_completion=scored.get(
+                "verified_supported_completion", scored["evidence_supported_completion"]
+            ),
+            executed=bool(calls),
+            unexecuted=record["execution"] != "completed",
+            transport_completed=bool(calls) and all(c.get("done") is True for c in calls),
+            known_usage=bool(calls) and all(c.get("unknown_consumption") is False for c in calls),
+            request_pending=any(c.get("pending") for c in calls),
+            output_schema_valid=bool(calls)
+            and all(isinstance(c.get("parsed"), dict) for c in calls),
+            length_or_format_fault=any(
+                c.get("status") in ("length", "final_json_error", "schema_error", "empty_final")
+                for c in calls
+            ),
+            reviewer_status=(result.get("reviews") or [{}])[-1].get("status"),
+            router_satisfied=result.get("router_satisfied"),
+        )
+        row["reviewer_false_pass"] = (
+            row["reviewer_status"] == "PASS" and row["answer_grounded_correct"] is False
+        )
+        row["erroneous_stop"] = (
+            row["oracle_assessed"]
+            and not row["verified_supported_completion"]
+            and row["gold_decision"] != "unknown"
+        )
         row["known_attempt_termination"] = (
             row["execution"] == "completed"
             and not row["pending"]
@@ -250,6 +288,7 @@ def analyze(
             and arms["B"]["oracle_assessed"]
             and arms["A"]["known_attempt_termination"]
             and arms["B"]["known_attempt_termination"]
+            and (edition != "024" or arms["A"]["gold_decision"] != "unknown")
         ]
         differences = [
             int(pair["A"]["evidence_supported_completion"])
@@ -283,7 +322,7 @@ def analyze(
                 "parents": len(both),
                 "parents_with_cost_records": sum(v is not None for v in selected),
             }
-            if any(v is None for v in selected):
+            if not selected or any(v is None for v in selected):
                 for name in (
                     "generated_tokens",
                     "total_tokens",
@@ -305,6 +344,26 @@ def analyze(
             "success_subset_selection_bias": True,
             "C_interpretation": "pooled-information reference; different information arrival",
         }
+        answerable = [
+            arms
+            for arms in by_parent.values()
+            if "A" in arms and "B" in arms and arms["A"]["gold_decision"] != "unknown"
+        ]
+        bounds = []
+        for arms in answerable:
+            values = {}
+            for arm in ("A", "B"):
+                row = arms[arm]
+                values[arm] = (
+                    [int(bool(row["verified_supported_completion"]))] * 2
+                    if (row["oracle_assessed"] and row["known_attempt_termination"])
+                    else [0, 1]
+                )
+            bounds.append((values["A"][0] - values["B"][1], values["A"][1] - values["B"][0]))
+        comparisons[model]["all_planned_answerable_parents"] = len(answerable)
+        comparisons[model]["unresolved_A_minus_B_bounds"] = (
+            [sum(b[i] for b in bounds) / len(bounds) for i in (0, 1)] if bounds else None
+        )
         outcomes[model] = {}
         for arm in ("A", "B", "C"):
             arm_rows = [row for row in model_rows if row["arm"] == arm]
@@ -320,6 +379,12 @@ def analyze(
                         "false_acceptance",
                         "pending",
                         "known_attempt_termination",
+                        "answer_grounded_correct",
+                        "verified_supported_completion",
+                        "executed",
+                        "unexecuted",
+                        "known_usage",
+                        "reviewer_false_pass",
                     )
                 },
                 "known_insufficient_parents": sum(
@@ -336,6 +401,14 @@ def analyze(
         "all_attempt_costs": {key: _finish_cost(value) for key, value in costs.items()},
         "planned_confirmation_keys": len(planned),
         "planned_auxiliary_keys": len(auxiliary_sources),
+        "planned_sensitivity_keys": 0
+        if frozen is None
+        else len(frozen.get("planned_sensitivity_keys", [])),
+        "legacy_metric_mapping": (
+            "evidence_supported_completion equals verified_supported_completion; "
+            "answer_grounded_correct excludes model-review acceptance"
+        ),
+        "termination_markers": [r for r in ledger if r.get("event") == "terminated_unmetered"],
         "missing_terminal_keys": sum(
             row["execution"] == "unexecuted_no_terminal_record" for row in rows
         ),

@@ -92,6 +92,8 @@ def evaluate(task: PublicTask, gold: GoldTask, trial: dict[str, Any]) -> dict[st
         return {
             "oracle_assessed": True,
             "answer_correct": False,
+            "answer_grounded_correct": False,
+            "verified_supported_completion": False,
             "evidence_supported_completion": False,
             "grounded_abstention": False,
             "errors": ["no_structured_answer"],
@@ -364,10 +366,19 @@ def evaluate(task: PublicTask, gold: GoldTask, trial: dict[str, Any]) -> dict[st
     ):
         errors.append("uncertain_execution")
     supported = not errors
+    review_errors = {
+        "no_grounded_semantic_review_receipt",
+        "current_negative_check",
+        "unresolved_contradiction",
+        "uncertain_execution",
+    }
+    grounded = not any(error not in review_errors for error in errors)
     return {
         "oracle_assessed": True,
         "answer_correct": correct,
+        "answer_grounded_correct": grounded,
+        "verified_supported_completion": supported,
         "evidence_supported_completion": supported,
-        "grounded_abstention": supported and gold.decision == "unknown",
+        "grounded_abstention": grounded and gold.decision == "unknown",
         "errors": sorted(set(errors)),
     }

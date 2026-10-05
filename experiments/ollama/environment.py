@@ -380,9 +380,17 @@ def collect_resources(server_pid: int | None = None) -> dict[str, Any]:
     }
 
 
-def resource_gate(output_dir: str | Path, server_pid: int | None = None) -> dict[str, Any]:
+def resource_gate(
+    output_dir: str | Path,
+    server_pid: int | None = None,
+    *,
+    raw_limit_bytes: int | None = None,
+    minimum_disk_free: int = 0,
+) -> dict[str, Any]:
     """Check the next-request RAM/disk preconditions; this function never dispatches."""
     resources = collect_resources(server_pid)
+    if raw_limit_bytes is None:
+        raw_limit_bytes = MAX_RAW_BYTES
     directory = Path(output_dir)
     ancestor = directory.resolve()
     while not ancestor.exists():
@@ -407,14 +415,14 @@ def resource_gate(output_dir: str | Path, server_pid: int | None = None) -> dict
         reasons.append("owned_server_liveness_unconfirmed")
     if used is None or free is None:
         reasons.append("disk_observation_unknown")
-    elif used >= MAX_RAW_BYTES:
+    elif used >= raw_limit_bytes:
         reasons.append("raw_disk_envelope_exhausted")
-    elif free < MAX_RAW_BYTES - used:
+    elif free < max(minimum_disk_free, raw_limit_bytes - used):
         reasons.append("insufficient_disk_for_remaining_raw_envelope")
     return {
         "resources": resources,
         "raw_bytes": used,
-        "raw_limit_bytes": MAX_RAW_BYTES,
+        "raw_limit_bytes": raw_limit_bytes,
         "disk_free_bytes": free,
         "disk_observation_error": error,
         "safe_for_new_request": not reasons,

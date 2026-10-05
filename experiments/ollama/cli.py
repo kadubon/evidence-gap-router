@@ -12,7 +12,7 @@ import subprocess
 import sys
 import time
 import zipfile
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any, TypeGuard
 
@@ -34,11 +34,42 @@ from experiments.ollama.environment import (  # noqa: E402
     resource_gate,
     verify_inventory,
 )
-from experiments.ollama.harness import run_trial  # noqa: E402
+from experiments.ollama.harness import TrialSettings, run_trial  # noqa: E402
+from experiments.ollama.prompts import (
+    Answer,
+    CompactReview,
+    Extraction,
+    Review,
+    extraction_messages,  # noqa: E402
+    integration_messages,
+    review_messages,
+    validate_output,
+)
 from experiments.ollama.tasks import confirmation_tasks, development_tasks  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent
 PROTOCOL = json.loads((ROOT / "protocol.json").read_text(encoding="utf-8"))
+PROTOCOL_PATH = ROOT / "protocol.json"
+
+
+def edition() -> str:
+    return "024" if PROTOCOL["package_version"] == "0.2.4" else "023"
+
+
+def protocol_path() -> Path:
+    return PROTOCOL_PATH if edition() == "024" else ROOT / "protocol.json"
+
+
+def task_pairs(phase: str) -> Any:
+    return development_tasks(edition()) if phase == "pilot" else confirmation_tasks(edition())
+
+
+def trial_settings(directory: Path) -> TrialSettings | None:
+    if edition() != "024":
+        return None
+    path = directory / "selected-settings.json"
+    value = json.loads(path.read_text("utf-8")) if path.exists() else PROTOCOL["stage_limits"]
+    return TrialSettings(**value)
 
 
 def sha(path: Path) -> str:
@@ -75,6 +106,16 @@ def client_for(args: argparse.Namespace) -> OllamaClient:
         raise ValueError("this protocol requires the inspected Ollama 0.35.0 server")
     if manifest["ready_for_backend_smoke"] is not True:
         raise ValueError("actual server locality/resource preflight is incomplete")
+    modern = edition() == "024"
+    request = PROTOCOL["request"]
+    if modern and any(
+        not model["advertised_context_lengths"]
+        or any(
+            length < request["num_ctx"] for length in model["advertised_context_lengths"].values()
+        )
+        for model in manifest["models"]
+    ):
+        raise ValueError("new context length exceeds or lacks advertised model support")
     profiles = {
         model["tag"]: ModelProfile(
             tag=model["tag"],
@@ -82,23 +123,69 @@ def client_for(args: argparse.Namespace) -> OllamaClient:
             think=False,
             thinking_values=tuple(model["supported_thinking_values_advertised"]),
             local_verified=True,
+            **(
+                {
+                    "num_ctx": request["num_ctx"],
+                    "num_predict": request["num_predict"],
+                    "keep_alive": request["keep_alive"],
+                    "request_wall_seconds": request[
+                        "qwen_wall_seconds"
+                        if model["tag"].startswith("qwen")
+                        else "gemma_wall_seconds"
+                    ],
+                    "trial_wall_seconds": PROTOCOL["trial_limits"][
+                        "qwen_wall_seconds"
+                        if model["tag"].startswith("qwen")
+                        else "gemma_wall_seconds"
+                    ],
+                }
+                if modern
+                else {}
+            ),
         )
         for model in manifest["models"]
     }
-    if list(profiles) != PROTOCOL["models"]:
+    if set(profiles) != set(PROTOCOL["models"]):
         raise ValueError("preflight model selection differs from the protocol")
+    profiles = {name: profiles[name] for name in PROTOCOL["models"]}
+    owner = (
+        json.loads((args.directory / "private/current-owner.json").read_text("utf-8"))
+        if modern
+        else None
+    )
+    limits = (
+        Limits(
+            global_wall_seconds=PROTOCOL["global_limits"]["wall_seconds"],
+            socket_timeout_seconds=180,
+            max_response_bytes=65536,
+        )
+        if not modern
+        else Limits(
+            global_wall_seconds=172800,
+            global_calls=4000,
+            global_generated_tokens=4000000,
+            global_total_tokens=40000000,
+            trial_wall_seconds=7200,
+            trial_calls=10,
+            trial_total_tokens=122880,
+            request_wall_seconds=1800,
+            maximum_request_wall_seconds=3600,
+            socket_timeout_seconds=3600,
+            connect_timeout_seconds=30,
+            read_until_deadline=True,
+            max_response_bytes=65536,
+            max_disk_bytes=4294967296,
+        )
+    )
     return OllamaClient(
         args.url,
         args.directory / "calls.jsonl",
         run_id=PROTOCOL["protocol_id"],
-        freeze_id=sha(ROOT / "protocol.json"),
+        freeze_id=sha(protocol_path()),
         profiles=profiles,
-        limits=Limits(
-            global_wall_seconds=PROTOCOL["global_limits"]["wall_seconds"],
-            socket_timeout_seconds=180,
-            max_response_bytes=65536,
-        ),
+        limits=limits,
         disk_root=args.directory,
+        **({"server_epoch": owner["server_epoch"], "termination_policy": True} if owner else {}),
     )
 
 
@@ -148,7 +235,22 @@ def amend_wall(args: argparse.Namespace) -> dict[str, Any]:
 def guard(args: argparse.Namespace) -> dict[str, Any]:
     if (args.directory / "identity-violations.jsonl").exists():
         raise ClientBlocked("pinned_model_identity_violation: stop new calls")
-    observation = resource_gate(args.directory, server_pid=args.server_pid)
+    if edition() == "024":
+        from experiments.ollama.ownership import verify_owned_alive
+
+        owner = json.loads((args.directory / "private/current-owner.json").read_text("utf-8"))
+        if args.server_pid != owner["root"]["pid"]:
+            raise ClientBlocked("supplied server PID differs from the owned startup record")
+        verify_owned_alive(owner)
+    observation = resource_gate(
+        args.directory,
+        server_pid=args.server_pid,
+        **(
+            {"raw_limit_bytes": 4294967296, "minimum_disk_free": 5368709120}
+            if edition() == "024"
+            else {}
+        ),
+    )
     resources = observation["resources"]
     if args.server_pid is None or resources.get("server_alive") is not True:
         raise ClientBlocked("owned_server_liveness_unconfirmed: stop new calls")
@@ -229,7 +331,16 @@ class BoundClient:
         return {**record, "ledger_request_id": record["request_id"], "request_id": original}
 
     def lookup(self, request_id: str) -> dict[str, Any] | None:
-        record = self.client.record(self.trial_key + "/" + request_id)
+        identity = self.trial_key + "/" + request_id
+        record = self.client.record(identity)
+        if record is None and identity in self.client.summary()["pending"]:
+            record = {
+                "request_id": identity,
+                "status": "pending_without_receipt",
+                "pending": True,
+                "unknown_consumption": True,
+                "usage": {"total_tokens": None},
+            }
         return (
             None
             if record is None
@@ -263,7 +374,7 @@ def execute(
         ):
             raise ValueError("saved trial identity or freeze differs; no replay")
         return saved
-    tasks = development_tasks() if phase == "pilot" else confirmation_tasks()
+    tasks = task_pairs(phase)
     task = next(task for task, _gold in tasks if task.task_id == item["task_id"])
     checkpoint = args.directory / "checkpoints" / (trial_key + ".json")
     resumed = checkpoint.exists()
@@ -278,6 +389,8 @@ def execute(
         client=adapter,
         checkpoint=checkpoint,
         resume=resumed,
+        secondary_steps=2 if phase == "sensitivity-bounded" else 0,
+        **({"settings": trial_settings(args.directory)} if edition() == "024" else {}),
     )
     record = {
         **item,
@@ -482,7 +595,7 @@ def selected_parent_ids(count: int) -> list[str]:
     mapping = PROTOCOL["profile_parent_numbers"][str(count)]
     return [
         task.task_id
-        for task, _gold in confirmation_tasks()
+        for task, _gold in confirmation_tasks(edition())
         if int(task.task_id.rsplit("-", 1)[1]) in mapping[task.family]
     ]
 
@@ -572,36 +685,69 @@ def freeze(args: argparse.Namespace) -> dict[str, Any]:
         if resource_path.exists()
         else []
     )
-    forecast = speed_forecast(ledger, resources, PROTOCOL["models"])
+    modern = edition() == "024"
+    eligible_ledger = [
+        r
+        for r in ledger
+        if not modern
+        or r.get("event") != "response"
+        or r["record"]["request_id"].startswith(("warmup", "pilot"))
+    ]
+    forecast = speed_forecast(eligible_ledger, resources, PROTOCOL["models"])
     forecast_known = all(value["per_request_seconds"] is not None for value in forecast.values())
     remaining_calls = PROTOCOL["global_limits"]["calls"] - summary["calls"]
     remaining_generated = (
-        PROTOCOL["global_limits"]["generated_tokens"] - summary["generated_tokens"]
+        PROTOCOL["global_limits"]["generated_tokens"] - summary["charged_generated_tokens"]
     )
-    remaining_tokens = PROTOCOL["global_limits"]["total_tokens"] - summary["total_tokens"]
+    remaining_tokens = PROTOCOL["global_limits"]["total_tokens"] - summary["charged_total_tokens"]
+    calls_per_trial = PROTOCOL["trial_limits"]["calls"]
+    cap = (
+        max(
+            asdict(trial_settings(args.directory)).get(name, 0)
+            for name in ("reader_cap", "integrator_cap", "reviewer_cap", "repair_cap")
+        )
+        if modern
+        else 512
+    )
+    ctx = PROTOCOL["request"]["num_ctx"]
+    sensitivity_calls_per_model = 8 * 2 * 2 * calls_per_trial if modern else 0
     selected = next(
         (
             n
-            for n in (24, 16, 8)
+            for n in PROTOCOL["confirmation_profiles"]
             if forecast_known
-            and n * 3 * 6 * sum(value["per_request_seconds"] for value in forecast.values())
+            and (n * 3 * calls_per_trial + sensitivity_calls_per_model)
+            * sum(value["per_request_seconds"] for value in forecast.values())
             + sum(
                 value["once_per_model_load_seconds"]
                 for value in forecast.values()
                 if value["once_per_model_load_seconds"] is not None
             )
             < 0.9 * remaining
-            and n * 3 * 6 * len(PROTOCOL["models"]) <= remaining_calls
-            and n * 3 * 6 * len(PROTOCOL["models"]) * 512 <= remaining_generated
-            and n * 3 * 6 * len(PROTOCOL["models"]) * 4608 <= remaining_tokens
+            and (n * 3 * calls_per_trial + sensitivity_calls_per_model) * len(PROTOCOL["models"])
+            <= remaining_calls
+            and (n * 3 * calls_per_trial + sensitivity_calls_per_model)
+            * len(PROTOCOL["models"])
+            * cap
+            <= remaining_generated
+            and (n * 3 * calls_per_trial + sensitivity_calls_per_model)
+            * len(PROTOCOL["models"])
+            * (ctx + cap)
+            <= remaining_tokens
         ),
         0,
     )
     selected_tasks = selected_parent_ids(selected)
     public = [
-        asdict(task) for task, _gold in confirmation_tasks() if task.task_id in selected_tasks
+        asdict(task)
+        for task, _gold in confirmation_tasks(edition())
+        if task.task_id in selected_tasks
     ]
-    gold = [asdict(score) for task, score in confirmation_tasks() if task.task_id in selected_tasks]
+    gold = [
+        asdict(score)
+        for task, score in confirmation_tasks(edition())
+        if task.task_id in selected_tasks
+    ]
     write_json(args.directory / "frozen-public-tasks.json", public)
     write_json(args.directory / "evaluation-only-gold.json", gold)
     code = {p.name: sha(p) for p in sorted(ROOT.glob("*.py"))}
@@ -616,7 +762,11 @@ def freeze(args: argparse.Namespace) -> dict[str, Any]:
         tracked = subprocess.check_output(
             ["git", "show", f"{commit}:experiments/ollama/{path.name}"], cwd=ROOT
         )
-        if tracked.replace(b"\r\n", b"\n") != path.read_bytes().replace(b"\r\n", b"\n"):
+        if (
+            tracked != path.read_bytes()
+            if modern
+            else tracked.replace(b"\r\n", b"\n") != path.read_bytes().replace(b"\r\n", b"\n")
+        ):
             raise ValueError("freeze requires committed exact harness bytes")
     result = {
         "protocol_id": PROTOCOL["protocol_id"],
@@ -624,7 +774,8 @@ def freeze(args: argparse.Namespace) -> dict[str, Any]:
         "candidate_wheel_sha256": sha(wheel),
         "candidate_package_sha256": package_fingerprint(wheel),
         "installed_runtime": installed,
-        "manifest_sha256": sha(ROOT / "protocol.json"),
+        "manifest_sha256": sha(protocol_path()),
+        "protocol_file": protocol_path().name,
         "harness_sha256": harness.hexdigest(),
         "harness_files": code,
         "preflight_sha256": sha(args.directory / "preflight/manifest.json"),
@@ -633,7 +784,7 @@ def freeze(args: argparse.Namespace) -> dict[str, Any]:
         "selected_parent_count": selected,
         "excluded_parent_ids": [
             task.task_id
-            for task, _gold in confirmation_tasks()
+            for task, _gold in confirmation_tasks(edition())
             if task.task_id not in selected_tasks
         ],
         "exclusion_reason": "Predeclared balanced profile chosen from speed/resource budgets",
@@ -645,7 +796,9 @@ def freeze(args: argparse.Namespace) -> dict[str, Any]:
         "remaining_total_tokens_at_freeze": remaining_tokens,
         "speed_only_profile_forecast_request_seconds": forecast,
         "planned_trial_keys": schedule(selected_tasks, "confirmation"),
-        "planned_auxiliary_source_keys": [
+        "planned_auxiliary_source_keys": []
+        if modern
+        else [
             item["key"]
             for item in schedule(selected_tasks, "confirmation")
             if item["arm"] in ("A", "B")
@@ -657,6 +810,19 @@ def freeze(args: argparse.Namespace) -> dict[str, Any]:
         "input_provenance": "new artificial parents, distinct from the older model-free regression",
         "no_result_based_profile_choice": True,
     }
+    if modern:
+        sensitivity_tasks = [
+            task_id for task_id in selected_tasks if int(task_id.rsplit("-", 1)[1]) in (1, 6)
+        ]
+        result["planned_sensitivity_keys"] = [
+            {**item, "phase": phase}
+            for phase in ("sensitivity-strict", "sensitivity-bounded")
+            for item in schedule(sensitivity_tasks, phase)
+            if item["arm"] in ("A", "B")
+        ]
+        result["selected_settings"] = asdict(trial_settings(args.directory))
+        result["selected_settings_sha256"] = sha(args.directory / "selected-settings.json")
+        result["trial_budget"] = trial_settings(args.directory).budget.model_dump(mode="json")
     write_json(args.freeze, result)
     return result
 
@@ -669,7 +835,11 @@ def live(args: argparse.Namespace, client: OllamaClient) -> None:
         current.update(path.read_bytes())
     if (
         current.hexdigest() != frozen["harness_sha256"]
-        or sha(ROOT / "protocol.json") != frozen["manifest_sha256"]
+        or sha(protocol_path()) != frozen["manifest_sha256"]
+        or (
+            edition() == "024"
+            and sha(args.directory / "selected-settings.json") != frozen["selected_settings_sha256"]
+        )
     ):
         raise ValueError("frozen implementation or protocol changed; retain records and stop")
     halted = None
@@ -678,7 +848,9 @@ def live(args: argparse.Namespace, client: OllamaClient) -> None:
         if index % 3 == 0 and halted is None:
             summary = client.summary()
             # Auxiliary callbacks consume unused calls inside the original six-call trials.
-            maximum_calls = 18
+            maximum_calls = 3 * PROTOCOL["trial_limits"]["calls"]
+            output_cap = PROTOCOL["request"]["num_predict"]
+            total_cap = PROTOCOL["request"]["num_ctx"] + output_cap
             try:
                 guard(args)
                 if (
@@ -686,9 +858,13 @@ def live(args: argparse.Namespace, client: OllamaClient) -> None:
                     or summary["started_epoch"] is None
                     or time.time() - summary["started_epoch"]
                     >= PROTOCOL["global_limits"]["wall_seconds"]
-                    or summary["calls"] + maximum_calls > 1200
-                    or summary["generated_tokens"] + maximum_calls * 512 > 600000
-                    or summary["total_tokens"] + maximum_calls * 4608 > 5000000
+                    or summary["calls"] + maximum_calls > PROTOCOL["global_limits"]["calls"]
+                    or summary.get("charged_generated_tokens", summary.get("generated_tokens"))
+                    + maximum_calls * output_cap
+                    > PROTOCOL["global_limits"]["generated_tokens"]
+                    or summary.get("charged_total_tokens", summary.get("total_tokens"))
+                    + maximum_calls * total_cap
+                    > PROTOCOL["global_limits"]["total_tokens"]
                 ):
                     raise ClientBlocked("whole parent block cannot fit remaining envelope")
                 append(
@@ -697,7 +873,7 @@ def live(args: argparse.Namespace, client: OllamaClient) -> None:
                         "event": "reserve_parent_block",
                         "keys": [x["key"] for x in frozen["planned_trial_keys"][index : index + 3]],
                         "maximum_calls": maximum_calls,
-                        "maximum_total_tokens": maximum_calls * 4608,
+                        "maximum_total_tokens": maximum_calls * total_cap,
                     },
                 )
             except ClientBlocked as error:
@@ -709,6 +885,11 @@ def live(args: argparse.Namespace, client: OllamaClient) -> None:
             if client.summary()["blocked"]:
                 halted = "pending_or_unknown_consumption"
         else:
+            if edition() == "024" and halted == "pending_or_unknown_consumption":
+                # Frozen planned-but-unstarted keys remain reconstructible by
+                # analyze. Do not seal them as terminal failures: after verified
+                # termination a new epoch may execute those unstarted keys.
+                break
             final = args.directory / "trials/confirmation" / (item["key"] + ".json")
             if not final.exists():
                 write_json(
@@ -724,9 +905,266 @@ def live(args: argparse.Namespace, client: OllamaClient) -> None:
                 )
             if item["key"] in auxiliary_sources:
                 auxiliary(args, client, json.loads(final.read_text("utf-8")), sha(args.freeze))
+    if edition() == "024":
+        for item in frozen["planned_sensitivity_keys"]:
+            if client.summary()["blocked"]:
+                break
+            execute(
+                args,
+                client,
+                item["phase"],
+                {k: v for k, v in item.items() if k != "phase"},
+                sha(args.freeze),
+            )
+
+
+def warmup(args: argparse.Namespace, client: OllamaClient) -> None:
+    """Cold preload followed by two real reader/integrator/reviewer rounds."""
+    from experiments.ollama.tasks import Document
+
+    settings = trial_settings(args.directory)
+    task, _ = development_tasks("024")[0]
+    for model in PROTOCOL["models"]:
+        preload_id = "warmup/" + model + "/preload"
+        if client.record(preload_id) is None:
+            record = BoundClient(client, args, "preload", "warmup/" + model).chat(
+                model=model,
+                trial_id="unused",
+                request_id="preload",
+                messages=[],
+                schema={"type": "object"},
+                seed=PROTOCOL["development_seed"],
+                preload=True,
+                wall_seconds=PROTOCOL["request"]["preload_wall_seconds"],
+                num_predict=1,
+            )
+            if record["status"] != "loaded":
+                raise ClientBlocked("preload did not produce a known final load receipt")
+        for repetition in range(2):
+            chosen = task
+            if repetition == 1:
+                first = task.documents[0]
+                long = Document(
+                    first.source_id,
+                    first.owner,
+                    first.topic,
+                    first.version,
+                    first.origin,
+                    first.text + ("参考メモ: 備品の色は判定条件に含まれない。\n" * 100),
+                )
+                second = task.documents[1]
+                changed = replace(second, text=second.text.replace("条件Qは真", "条件Qは偽"))
+                chosen = replace(task, documents=(long, changed, *task.documents[2:]))
+            extraction = answer = None
+            for stage, model_type in (
+                ("read", Extraction),
+                ("integrate", Answer),
+                ("review", CompactReview),
+            ):
+                identity = f"warmup/{model}/round-{repetition}/{stage}"
+                existing = client.record(identity + "/call")
+                messages = (
+                    extraction_messages(chosen, chosen.documents[0])
+                    if stage == "read"
+                    else integration_messages(
+                        chosen, chosen.documents, (extraction,) if extraction else ()
+                    )
+                    if stage == "integrate"
+                    else review_messages(chosen, chosen.documents, answer or {}, compact=True)
+                )
+                record = existing or BoundClient(client, args, "warmup", identity).chat(
+                    model=model,
+                    trial_id=identity,
+                    request_id="call",
+                    messages=messages,
+                    schema=model_type.model_json_schema(),
+                    seed=PROTOCOL["development_seed"],
+                    num_predict=settings.cap(stage),
+                    metadata={"stage": stage, "warm_round": repetition},
+                    validator=lambda p, typ=model_type: validate_output(p, typ),
+                )
+                if stage == "read":
+                    extraction = record.get("parsed")
+                elif stage == "integrate":
+                    answer = record.get("parsed")
+                print(
+                    json.dumps(
+                        {
+                            "phase": "warmup",
+                            "model": model,
+                            "stage": stage,
+                            "status": record["status"],
+                            "wall": record["client_wall_seconds"],
+                        }
+                    ),
+                    flush=True,
+                )
+                if record["unknown_consumption"]:
+                    raise ClientBlocked("warm request has unknown consumption")
+
+
+def calibrate(args: argparse.Namespace, client: OllamaClient) -> dict[str, Any]:
+    from experiments.ollama.tasks import calibration_tasks
+
+    bank = []
+    tasks = calibration_tasks()
+    kinds = (
+        "correct_yes",
+        "correct_no",
+        "grounded_unknown",
+        "wrong_answer",
+        "fake_quote",
+        "stale_version",
+        "false_complete_insufficient",
+        "irrelevant_quote",
+    )
+    for index in range(24):
+        family = ("L1", "L2", "L3", "L4")[index // 6]
+        kind = kinds[index % len(kinds)]
+        number = (
+            6
+            if kind in ("grounded_unknown", "false_complete_insufficient")
+            else 2
+            if kind in ("correct_no", "stale_version")
+            else 1
+        )
+        task, gold = next(
+            (t, g) for t, g in tasks if t.family == family and t.task_id.endswith("-" + str(number))
+        )
+        answer = {
+            "decision": gold.decision,
+            "answer": "公開規則に基づく結論。",
+            "reasoning": "現行規則と関連記録を用いた。",
+            "citations": [
+                {
+                    "source_id": w.source_id,
+                    "version": task.document(w.source_id).version,
+                    "quote": w.quote,
+                }
+                for w in gold.witnesses
+            ],
+        }
+        valid = kind.startswith("correct") or kind == "grounded_unknown"
+        if kind in ("wrong_answer", "false_complete_insufficient"):
+            answer["decision"] = "yes" if gold.decision != "yes" else "no"
+        elif kind == "fake_quote":
+            answer["citations"][0]["quote"] = "存在しない架空の引用。"
+        elif kind == "stale_version":
+            answer["citations"][0]["version"] = "0"
+        elif kind == "irrelevant_quote":
+            answer["citations"] = [
+                {
+                    "source_id": task.documents[-1].source_id,
+                    "version": task.documents[-1].version,
+                    "quote": task.documents[-1].text[-1:],
+                }
+            ]
+        bank.append(
+            {
+                "case_id": index,
+                "kind": kind,
+                "public_task": asdict(task),
+                "answer": answer,
+                "evaluation_only_expected_accept": valid,
+            }
+        )
+    write_json(args.directory / "calibration-answer-bank.json", bank)
+    results = []
+    for model in PROTOCOL["models"]:
+        for schema_name, typ in (("old", Review), ("compact", CompactReview)):
+            for cap in (512, 2048):
+                for case in bank:
+                    task = next(t for t, g in tasks if t.task_id == case["public_task"]["task_id"])
+                    identity = f"calibration/{model}/{schema_name}/{cap}/{case['case_id']}"
+                    record = client.record(identity + "/call")
+                    if record is None:
+                        record = BoundClient(client, args, "calibration", identity).chat(
+                            model=model,
+                            trial_id=identity,
+                            request_id="call",
+                            messages=review_messages(
+                                task,
+                                task.documents,
+                                case["answer"],
+                                compact=schema_name == "compact",
+                            ),
+                            schema=typ.model_json_schema(),
+                            seed=PROTOCOL["development_seed"],
+                            num_predict=cap,
+                            metadata={
+                                "stage": "review",
+                                "case_id": case["case_id"],
+                                "schema": schema_name,
+                                "cap": cap,
+                            },
+                            validator=lambda p, typ=typ: validate_output(p, typ),
+                        )
+                    result = {
+                        "model": model,
+                        "schema": schema_name,
+                        "cap": cap,
+                        "case_id": case["case_id"],
+                        "kind": case["kind"],
+                        "status": record["status"],
+                        "syntax_valid": record["status"] == "ok",
+                        "reviewer_status": (record.get("parsed") or {}).get("status"),
+                        "expected_accept": case["evaluation_only_expected_accept"],
+                        "request_id": identity + "/call",
+                    }
+                    result["false_pass"] = (
+                        result["reviewer_status"] == "PASS" and not result["expected_accept"]
+                    )
+                    results.append(result)
+                    write_json(args.directory / "calibration-results.json", results)
+                    print(json.dumps(result), flush=True)
+                    if record["unknown_consumption"]:
+                        raise ClientBlocked("calibration request has unknown consumption")
+    aggregates = []
+    for model in PROTOCOL["models"]:
+        for schema_name in ("old", "compact"):
+            for cap in (512, 2048):
+                subset = [
+                    r
+                    for r in results
+                    if (r["model"], r["schema"], r["cap"]) == (model, schema_name, cap)
+                ]
+                aggregates.append(
+                    {
+                        "model": model,
+                        "schema": schema_name,
+                        "cap": cap,
+                        "N": len(subset),
+                        "syntax_valid": sum(r["syntax_valid"] for r in subset),
+                        "last20_valid": sum(r["syntax_valid"] for r in subset[-20:]),
+                        "false_pass": sum(r["false_pass"] for r in subset),
+                    }
+                )
+    # Same compact schema/cap in every arm/model. Outcome comparisons never
+    # enter this development-only syntax, false-PASS and resource choice.
+    choices = [
+        (cap, [r for r in aggregates if r["schema"] == "compact" and r["cap"] == cap])
+        for cap in (512, 2048)
+    ]
+    qualified = [(cap, rows) for cap, rows in choices if all(r["last20_valid"] >= 19 for r in rows)]
+    selected = (
+        min(qualified, key=lambda x: (sum(r["false_pass"] for r in x[1]), x[0]))[0]
+        if qualified
+        else 2048
+    )
+    settings = {**PROTOCOL["stage_limits"], "reviewer_cap": selected}
+    write_json(args.directory / "selected-settings.json", settings)
+    summary = {
+        "aggregates": aggregates,
+        "selected_settings": settings,
+        "syntax_floor_met": bool(qualified),
+        "choice_used_A_minus_B": False,
+    }
+    write_json(args.directory / "calibration-summary.json", summary)
+    return summary
 
 
 def main(argv: list[str] | None = None) -> int:
+    global PROTOCOL, PROTOCOL_PATH
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "command",
@@ -739,6 +1177,11 @@ def main(argv: list[str] | None = None) -> int:
             "live",
             "resume",
             "analyze",
+            "warmup",
+            "calibrate",
+            "status",
+            "recover-receipt",
+            "recover-server",
         ),
     )
     parser.add_argument("--directory", type=Path, required=True)
@@ -748,9 +1191,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--authorization")
     parser.add_argument("--amendment-id")
     parser.add_argument("--wheel", type=Path)
-    parser.add_argument("--freeze", type=Path, default=ROOT / "results/freeze-v0.2.3.json")
-    parser.add_argument("--output", type=Path, default=ROOT / "results/v0.2.3")
+    parser.add_argument("--protocol", type=Path, default=ROOT / "protocol-v0.2.4.json")
+    parser.add_argument("--request-id")
+    parser.add_argument("--freeze", type=Path, default=ROOT / "results/freeze-v0.2.4.json")
+    parser.add_argument("--output", type=Path, default=ROOT / "results/v0.2.4")
     args = parser.parse_args(argv)
+    PROTOCOL_PATH = args.protocol.resolve(strict=True)
+    PROTOCOL = json.loads(PROTOCOL_PATH.read_text("utf-8"))
+    if edition() == "024" and (args.directory / "private/current-owner.json").exists():
+        owner = json.loads((args.directory / "private/current-owner.json").read_text("utf-8"))
+        if args.server_pid is None:
+            args.server_pid = owner["root"]["pid"]
+        if args.server_log is None:
+            args.server_log = Path(owner["server_log"])
     if args.command == "amend-wall":
         if not args.authorization or not args.amendment_id:
             parser.error("amend-wall requires --authorization and --amendment-id")
@@ -791,8 +1244,84 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("freeze requires --wheel with the actually installed candidate")
         print(json.dumps(freeze(args), ensure_ascii=False))
         return 0
-    client = client_for(args)
-    if args.command == "backend-smoke":
+    try:
+        client = client_for(args)
+    except ClientBlocked as error:
+        if args.command != "status" or "ledger lock" not in str(error):
+            raise
+        # Observation never interrupts the owner or takes a dispatch lock. A
+        # bounded tail describes the last durable event; it is not a complete
+        # budget audit and cannot authorize any request.
+        path = args.directory / "calls.jsonl"
+        with path.open("rb") as handle:
+            size = handle.seek(0, os.SEEK_END)
+            handle.seek(max(0, size - 1048576))
+            tail = handle.read(1048576)
+        lines = tail.splitlines()
+        if not tail.endswith(b"\n"):
+            lines = lines[:-1]
+        last = strict_json(lines[-1].decode("utf-8")) if lines else {}
+        print(
+            json.dumps(
+                {
+                    "controller_busy": True,
+                    "observation_only": True,
+                    "last_complete_event": last.get("event"),
+                    "request_id": last.get("request_id"),
+                    "ledger_bytes": size,
+                    "budget_audited": False,
+                }
+            )
+        )
+        return 0
+    if args.command == "status":
+        print(json.dumps({k: v for k, v in client.summary().items() if k != "responses"}))
+        return 0
+    if args.command == "recover-receipt":
+        if not args.request_id:
+            parser.error("recover-receipt requires --request-id")
+        reserve = next(
+            r
+            for r in client._rows()
+            if r.get("event") == "reserve" and r["request_id"] == args.request_id
+        )
+        title = reserve["request"]["format"].get("title")
+        typ = {t.__name__: t for t in (Extraction, Answer, Review, CompactReview)}.get(title)
+        print(
+            json.dumps(
+                client.recover_receipt(
+                    args.request_id, validator=(lambda p: validate_output(p, typ)) if typ else None
+                )
+            )
+        )
+        return 0
+    if args.command == "recover-server":
+        from experiments.ollama.ownership import start_owned, verify_and_stop_owned
+
+        pending = client.summary()["pending"]
+        if len(pending) != 1:
+            raise ClientBlocked("server recovery requires exactly one frozen uncertain request")
+        owner = json.loads((args.directory / "private/current-owner.json").read_text("utf-8"))
+        proof = verify_and_stop_owned(owner)
+        write_json(args.directory / ("termination-" + owner["server_epoch"] + ".json"), proof)
+        client.terminate_unmetered(pending[0], proof)
+        new_owner = start_owned(args.directory, Path(owner["root"]["executable"]))
+        client.advance_server_epoch(new_owner["server_epoch"])
+        print(
+            json.dumps(
+                {
+                    "terminated_unmetered": pending,
+                    "new_server_pid": new_owner["root"]["pid"],
+                    "actual_usage": None,
+                }
+            )
+        )
+        return 0
+    if args.command == "warmup":
+        warmup(args, client)
+    elif args.command == "calibrate":
+        print(json.dumps(calibrate(args, client)))
+    elif args.command == "backend-smoke":
         for model in PROTOCOL["models"]:
             identity = "backend-smoke/" + model
             if client.record(identity + "/call-1") is not None:
@@ -829,7 +1358,9 @@ def main(argv: list[str] | None = None) -> int:
             if record["status"] != "ok":
                 raise ClientBlocked("backend smoke failed; preserve response and stop")
     elif args.command == "pilot":
-        for item in schedule([task.task_id for task, _gold in development_tasks()], "pilot"):
+        for item in schedule(
+            [task.task_id for task, _gold in development_tasks(edition())], "pilot"
+        ):
             execute(args, client, "pilot", item)
             if client.summary()["blocked"]:
                 break
