@@ -161,7 +161,7 @@ def main() -> None:
             Path("experiments/ollama/results/v0.2.4/summary.json").read_text("utf-8")
         )
         frozen = json.loads(
-            Path("experiments/ollama/results/freeze-v0.2.4.json").read_text("utf-8")
+            Path("experiments/ollama/results/freeze-v0.2.4-r2.json").read_text("utf-8")
         )
         results = []
         for model in summary["outcomes"]:

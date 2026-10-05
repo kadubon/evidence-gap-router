@@ -142,9 +142,9 @@ an ordinary installed SDK and explicit local inference. Ollama is not required
 by core imports or the offline CLI. Model weights and user credentials are absent
 from the package; normal tests and release CI do not run model inference.
 
-The v0.2.4 campaign is in development calibration. Both existing local models
-completed six warm reader/integrator/reviewer requests. Primary A/B/C parent
-measurements have not started; those warm receipts are not routing performance.
+The initial v0.2.4 confirmation exposed an optional-field receipt defect. Its
+results and costs are retained; a corrective protocol uses unused public
+instances and the original cumulative limits. Semantic criteria are unchanged.
 See the [current technical report](docs/ollama-experiment-v0.2.4.md),
 [Japanese summary](docs/ollama-experiment-v0.2.4.ja.md) and
 [archived v0.2.3 report](docs/ollama-experiment.md).

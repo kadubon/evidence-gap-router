@@ -1,5 +1,19 @@
 # v0.2.4 audit
 
+Post-freeze tracing found a mechanical experiment defect: Pydantic added optional
+`feedback`/`unit` defaults to saved evidence, so actual model JSON and issued
+evidence disagreed. The correction preserves original parsed JSON after strict
+validation; the independent oracle and SDK acceptance criteria are unchanged.
+The initial worker/server stopped with held native handles, zero pending/unknown
+responses, and 957 paid/empty-load reservations (133,726 generated / 742,263 total
+tokens). Protocol v2 retains that exact ledger prefix and durable clock, all limits,
+and a new owned epoch. Fresh instances change targets, authorities, symbols,
+versions and deadlines while retaining the authored rule families.
+
+The corrective source passed 695 tests in 26.92 s, lint and mypy. A further
+historical-license export regression and all 50 portable v0.2.4 contracts passed
+together (56 tests); the final full suite and native gates remain separate.
+
 The audit found experiment transport and output-contract limitations. It did
 not establish a new defect in the SDK's acceptance, permission or helper rules.
 Those rules continue to use schema 2 and the public `plan/start/observe/step/run`

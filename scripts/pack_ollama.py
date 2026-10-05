@@ -230,7 +230,14 @@ def pack(
             or (modern and path.suffix == ".py" and path.is_relative_to(historical))
             or (
                 path.suffix == ".txt"
-                and path.parent == raw / "preflight"
+                and (
+                    path.parent == raw / "preflight"
+                    or (
+                        modern
+                        and path.is_relative_to(historical)
+                        and path.parent.name == "preflight"
+                    )
+                )
                 and re.fullmatch(r"license-[0-9a-f]{16}\.txt", path.name)
             )
         )

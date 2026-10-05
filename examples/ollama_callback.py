@@ -30,7 +30,7 @@ def main() -> None:
     args = parser.parse_args()
     if not re.fullmatch(r"[A-Za-z0-9_.-]{1,100}", args.key):
         parser.error("key must be a bounded filename-safe new trial identity")
-    cli.PROTOCOL_PATH = cli.ROOT / "protocol-v0.2.4.json"
+    cli.PROTOCOL_PATH = cli.ROOT / "protocol-v0.2.4-r2.json"
     cli.PROTOCOL = json.loads(cli.PROTOCOL_PATH.read_text("utf-8"))
     owner = json.loads((args.directory / "private/current-owner.json").read_text("utf-8"))
     args.server_pid = owner["root"]["pid"]

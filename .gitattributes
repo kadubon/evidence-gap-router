@@ -8,6 +8,7 @@ benchmarks/results/v0.2.1-erratum/*.json -text
 experiments/ollama/*.py text eol=lf
 experiments/ollama/protocol.json text eol=lf
 experiments/ollama/protocol-v0.2.4.json text eol=lf
+experiments/ollama/protocol-v0.2.4-r2.json text eol=lf
 experiments/ollama/results/**/*.json -text
 experiments/ollama/results/freeze-v0.2.3.json -text
 experiments/ollama/results/freeze-v0.2.4.json -text

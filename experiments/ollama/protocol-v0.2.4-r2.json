@@ -1,0 +1,217 @@
+{
+  "arms": [
+    "A",
+    "B",
+    "C"
+  ],
+  "auxiliary": {
+    "fresh_trials": 64,
+    "maximum_extra_callbacks_per_trial": 2,
+    "maximum_generation_calls": 640,
+    "policy": "Fresh eight-parent A/B both-model strict and bounded continuation pairs, same base budgets; at most two additional unused public step callbacks after known no_progress or format fault. Preserve primary state/history/costs. No unknown retry.",
+    "selected_families": [
+      "L1",
+      "L2",
+      "L3",
+      "L4"
+    ],
+    "selected_parent_numbers": [
+      1,
+      6
+    ]
+  },
+  "bootstrap_replicates": 2000,
+  "bootstrap_seed": 24042041,
+  "budget_allocation": {
+    "development_maximum_fraction": 0.25,
+    "main_minimum_fraction": 0.6,
+    "sensitivity_fraction": 0.15
+  },
+  "calibration": {
+    "caps": [
+      512,
+      2048
+    ],
+    "choice_basis": [
+      "syntax stability",
+      "false PASS",
+      "speed",
+      "resources"
+    ],
+    "maximum_cycles": 3,
+    "minimum_final_review_syntax_valid": "19/20",
+    "minimum_warm_final_receipts": 6,
+    "parents": 24,
+    "primary_outcomes_used": false,
+    "schemas": [
+      "old",
+      "compact"
+    ]
+  },
+  "confirmation_profiles": [
+    24,
+    16
+  ],
+  "corrective_revision": {
+    "additional_end_to_end_verification_pilot_trials": 24,
+    "additional_prompt_tuning": false,
+    "cause": "Validated optional defaults were incorrectly inserted into evidence output, so omitted feedback failed the unchanged exact live-receipt identity check. Preserve original JSON after validation. No oracle, semantic threshold, decoder, schema or cap change.",
+    "clock_anchor_and_ledger_prefix_preserved": true,
+    "fresh_instances": "New entities, authorities, symbols, versions, deadlines and temperature thresholds. Same authored reasoning families and structural cases; not held-out families. Primary outcomes do not select profile size, schema or caps.",
+    "initial_calls": 957,
+    "initial_freeze_file": "freeze-v0.2.4.json",
+    "initial_freeze_sha256": "f4268bcd25bac6d1d152e2d59e6f06bce61f967be1373cad9d553623297d4061",
+    "initial_generated_tokens": 133726,
+    "initial_ledger_sha256": "e93d990797b2068a4e5991f0b89d8d6f5b1e4e05cb27247773cf0b64d3019e77",
+    "initial_protocol_file": "protocol-v0.2.4.json",
+    "initial_protocol_sha256": "0a9ee79369effcfd635fa3632927e30a62fe45b0af360896ebe81a41154e3e35",
+    "initial_total_tokens": 742263,
+    "original_first_reservation_epoch": 1791212209.9767654,
+    "original_limits_not_increased": true,
+    "prompt_tuning_cycles_completed": 3
+  },
+  "development_parents": 4,
+  "development_seed": 24042003,
+  "global_limits": {
+    "calls": 4000,
+    "disk_bytes": 4294967296,
+    "generated_tokens": 4000000,
+    "total_tokens": 40000000,
+    "wall_seconds": 172800
+  },
+  "models": [
+    "qwen3.6:35b-a3b",
+    "gemma4:e4b"
+  ],
+  "package_version": "0.2.4",
+  "pilot": {
+    "maximum_common_prompt_adjustment_cycles": 3,
+    "maximum_trials": 24
+  },
+  "post_confirmation_changes": "Measured bytes are immutable. Any change needs an explicit new protocol, unused confirmatory parents and retained cumulative campaign costs.",
+  "primary": "Within model, answerable parent paired verified_supported_completion A minus B. Grounded world-unknown abstention and reviewer-unknown are distinct. Small N is descriptive.",
+  "profile_parent_numbers": {
+    "16": {
+      "L1": [
+        1,
+        2,
+        3,
+        6
+      ],
+      "L2": [
+        1,
+        2,
+        3,
+        6
+      ],
+      "L3": [
+        1,
+        2,
+        3,
+        6
+      ],
+      "L4": [
+        1,
+        2,
+        3,
+        6
+      ]
+    },
+    "24": {
+      "L1": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "L2": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "L3": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "L4": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    }
+  },
+  "profile_selection": "Largest 24/16 balanced new profile fitting a speed/resource-only forecast, including separate sensitivity and margin. Never select by A minus B.",
+  "protocol_id": "egr-024-local-ollama-v2",
+  "public_gold_separation": "Only new PublicTask reaches prompts, factories and selectors. Minimal exact GoldTask witnesses are evaluation-only. Same review and repair rules across A/B/C.",
+  "recovery": {
+    "actual_unknown_usage": null,
+    "bound": "ollama-0.35.0-no-shift-explicit-ctx-predict",
+    "maximum_automatic_recoveries": 2,
+    "maximum_separate_diagnostics_per_failed_trial": 1,
+    "proof": "held-native-process-handles",
+    "retain_full_original_reservation": true,
+    "retry_primary": false
+  },
+  "release_authorization": "The user authorizes 0.2.4 publication; old tags and public assets stay immutable.",
+  "request": {
+    "connect_timeout_seconds": 30,
+    "gemma_wall_seconds": 900,
+    "keep_alive": "60m",
+    "maximum_request_wall_seconds": 3600,
+    "num_ctx": 8192,
+    "num_predict": 4096,
+    "preload_wall_seconds": 1800,
+    "qwen_wall_seconds": 1800,
+    "read_until_deadline": true,
+    "shift": false,
+    "stream": false,
+    "temperature": 0.0,
+    "think": false,
+    "truncate": false
+  },
+  "request_key_prefix": "r2-",
+  "schedule_seed": 24042029,
+  "seed": 24042017,
+  "server": {
+    "automatic_model_downloads": false,
+    "cloud_disabled": true,
+    "keep_alive": "60m",
+    "load_timeout": "30m",
+    "maximum_loaded_models": 1,
+    "maximum_queue": 1,
+    "parallel": 1,
+    "version": "0.35.0"
+  },
+  "stage_limits": {
+    "actions": 32,
+    "calls": 10,
+    "context": 8192,
+    "format_repairs": 2,
+    "integrator_cap": 1536,
+    "reader_cap": 1024,
+    "repair_cap": 1024,
+    "reviewer_cap": 2048,
+    "verifications": 16
+  },
+  "task_edition": "024r2",
+  "trial_limits": {
+    "actions": 32,
+    "calls": 10,
+    "gemma_wall_seconds": 3600,
+    "qwen_wall_seconds": 7200,
+    "tokens": 97280,
+    "verifications": 16
+  }
+}

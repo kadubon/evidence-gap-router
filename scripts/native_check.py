@@ -174,6 +174,10 @@ def main() -> None:
                     root / "experiments/ollama/protocol-v0.2.4.json",
                     experiment / "protocol-v0.2.4.json",
                 )
+                shutil.copyfile(
+                    root / "experiments/ollama/protocol-v0.2.4-r2.json",
+                    experiment / "protocol-v0.2.4-r2.json",
+                )
             contract_tests = clean / "contract-tests"
             contract_tests.mkdir()
             contract_names = (

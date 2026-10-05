@@ -160,9 +160,10 @@ def analyze(
 ) -> dict[str, Any]:
     """Score every recorded terminal key; unstarted/fault/pending are separate outcomes."""
     edition = "024" if protocol["package_version"] == "0.2.4" else "023"
+    task_edition = protocol.get("task_edition", edition)
     tasks = {
         task.task_id: (task, gold)
-        for task, gold in (*development_tasks(edition), *confirmation_tasks(edition))
+        for task, gold in (*development_tasks(task_edition), *confirmation_tasks(task_edition))
     }
     ledger_path = directory / "calls.jsonl"
     ledger_bytes = ledger_path.read_bytes() if ledger_path.exists() else b""
@@ -319,7 +320,12 @@ def analyze(
     for request_id, issued in reservations.items():
         model = issued["request"]["model"]
         phase = issued.get("metadata", {}).get("phase", "unknown")
-        cost = costs.setdefault(model + "/" + phase, _new_cost())
+        historical = (
+            task_edition == "024r2"
+            and issued.get("metadata", {}).get("execution_protocol_id") != protocol["protocol_id"]
+        )
+        cost_label = model + ("/initial-protocol-v1/" if historical else "/") + phase
+        cost = costs.setdefault(cost_label, _new_cost())
         tc = trial_costs.setdefault((phase, issued["trial_id"]), _new_cost())
         response = receipts.get(request_id, {})
         usage = response.get("usage") or {}
@@ -636,7 +642,7 @@ def analyze(
                 if isinstance(row.get(name), dict)
             }
             for row in ledger
-            if row.get("event") in ("config", "wall_budget_amendment")
+            if row.get("event") in ("config", "wall_budget_amendment", "protocol_revision")
         ],
         "original_first_reservation_epoch": next(
             (row.get("started_epoch") for row in ledger if row.get("event") == "reserve"), None

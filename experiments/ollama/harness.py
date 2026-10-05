@@ -656,7 +656,9 @@ class _Trial:
                 reason=self.fault,
             )
         payload: dict[str, Any] = {
-            "output": validated.model_dump(mode="json"),
+            # Validation may fill optional defaults (feedback/unit). The receipt
+            # binds the actual model JSON, not those host-generated defaults.
+            "output": parsed,
             "request_id": record["request_id"],
             "model_digest": self.digest,
             "related_inputs": [item.id for item in view.inputs],

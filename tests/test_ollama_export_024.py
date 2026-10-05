@@ -84,6 +84,20 @@ def test_export_keeps_original_events_and_development_source_and_excludes_privat
         pack_ollama.pack(raw, output, frozen, summary, repository=repository)
 
 
+def test_export_keeps_exact_historical_model_license_bytes(tmp_path):
+    repository, raw, frozen, summary = inputs(tmp_path)
+    license_path = (
+        raw / "development-history/initial-protocol-v1/preflight/license-0123456789abcdef.txt"
+    )
+    license_path.parent.mkdir(parents=True)
+    content = b"Retained artificial model license fixture\n"
+    license_path.write_bytes(content)
+    output = tmp_path / "public.zip"
+    pack_ollama.pack(raw, output, frozen, summary, repository=repository)
+    with zipfile.ZipFile(output) as archive:
+        assert archive.read("raw/" + license_path.relative_to(raw).as_posix()) == content
+
+
 @pytest.mark.parametrize("changed", ["candidate", "public-task", "protocol"])
 def test_export_rejects_candidate_or_frozen_source_mismatch(tmp_path, changed):
     repository, raw, frozen, summary = inputs(tmp_path)

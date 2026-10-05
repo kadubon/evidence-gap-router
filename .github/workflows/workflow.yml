@@ -49,7 +49,7 @@ jobs:
           uv build --no-sources
           uv run --locked python -c 'from pathlib import Path; Path("dist/.gitignore").unlink(missing_ok=True)'
           uv run --locked twine check dist/*
-          uv run --locked python scripts/package_audit.py dist --benchmark-freeze experiments/ollama/results/freeze-v0.2.4.json
+          uv run --locked python scripts/package_audit.py dist --benchmark-freeze experiments/ollama/results/freeze-v0.2.4-r2.json
       - name: Check tag admission and prior manual validation
         id: guard
         env:

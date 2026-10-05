@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, replace
 
 
 @dataclass(frozen=True)
@@ -81,6 +82,8 @@ def _task(
 
 def confirmation_tasks(edition: str = "023") -> tuple[tuple[PublicTask, GoldTask], ...]:
     """24 separately worded parents; exactly six have no determined yes/no answer."""
+    if edition == "024r2":
+        return _corrective_tasks(development=False)
     if edition == "024":
         return _new_tasks(development=False)
     if edition != "023":
@@ -475,6 +478,8 @@ def confirmation_tasks(edition: str = "023") -> tuple[tuple[PublicTask, GoldTask
 
 def development_tasks(edition: str = "023") -> tuple[tuple[PublicTask, GoldTask], ...]:
     """Four pilot-only parents; no document text is reused in confirmation."""
+    if edition == "024r2":
+        return _corrective_tasks(development=True)
     if edition == "024":
         return _new_tasks(development=True)
     if edition != "023":
@@ -540,6 +545,73 @@ def development_tasks(edition: str = "023") -> tuple[tuple[PublicTask, GoldTask]
 
 def calibration_tasks() -> tuple[tuple[PublicTask, GoldTask], ...]:
     return _new_tasks(development=False, calibration=True)
+
+
+def _corrective_tasks(*, development: bool) -> tuple[tuple[PublicTask, GoldTask], ...]:
+    """Unused public instances after the mechanical receipt defect.
+
+    The authored rule families remain shared. Entities, authority names, factual
+    symbols, current/stale versions, deadlines and temperature limits are new;
+    these are structurally isomorphic instances, not held-out reasoning families.
+    No transformation depends on measured A/B outcomes.
+    """
+    substitutions = {
+        "新規": "再確認024r2",
+        "予備": "再予備024r2",
+        "条件P": "要件M",
+        "条件Q": "要件N",
+        "条件R": "要件S",
+        "禁止例外Q": "禁止例外N",
+        "規則当局": "規則委員会",
+        "観測当局": "観測局",
+        "記録当局": "記録局",
+        "検査甲": "調査東",
+        "検査乙": "調査西",
+        "検査丙": "調査南",
+        "17時00分": "14時30分",
+        "16時40分": "14時05分",
+        "15時10分": "12時50分",
+        "10℃": "12℃",
+        "備品の色は白": "備品の色は青",
+        "棚番号は七": "棚番号は十二",
+    }
+
+    def text(value: str) -> str:
+        for before, after in substitutions.items():
+            value = value.replace(before, after)
+        return re.sub(r"版([1-4])", lambda match: "版" + str(int(match[1]) + 6), value)
+
+    result = []
+    for task, gold in _new_tasks(development=development):
+        identity = task.task_id.replace("024-", "024r2-")
+        docs = tuple(
+            replace(
+                document,
+                text=(
+                    f"対象{identity}に適用する規則。" if document.source_id == "document-1" else ""
+                )
+                + text(document.text),
+                owner=text(document.owner),
+                origin=text(document.origin),
+                version=str(int(document.version) + 6),
+            )
+            for document in task.documents
+        )
+        witnesses = tuple(
+            replace(
+                witness,
+                quote=text(witness.quote),
+                alternative_quotes=tuple(text(q) for q in witness.alternative_quotes),
+            )
+            for witness in gold.witnesses
+        )
+        result.append(
+            (
+                replace(task, task_id=identity, question=text(task.question), documents=docs),
+                replace(gold, task_id=identity, witnesses=witnesses),
+            )
+        )
+    return tuple(result)
 
 
 def _new_tasks(

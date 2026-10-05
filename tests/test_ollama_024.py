@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import copy
 import json
+import time
 from dataclasses import replace
+from datetime import UTC, datetime
 
 import pytest
 from test_ollama_client import PROFILE, SCHEMA, TAG, chat, client, fake_http, successful
@@ -317,10 +319,11 @@ def test_new_confirmation_profiles_never_shrink_to_eight(monkeypatch):
 
 
 class _CompactFake:
-    def __init__(self, *, review="PASS", first_format_fault=False):
+    def __init__(self, *, review="PASS", first_format_fault=False, omit_optional=False):
         from test_ollama_experiment import FakeClient
 
         self.fake = FakeClient(review=review, fault="length" if first_format_fault else None)
+        self.omit_optional = omit_optional
 
     def summary(self):
         return self.fake.summary()
@@ -336,6 +339,11 @@ class _CompactFake:
                 output["reason_code"] = (
                     "supported" if output["status"] == "PASS" else "wrong_decision"
                 )
+                if self.omit_optional:
+                    output.pop("feedback", None)
+            if self.omit_optional and kwargs["schema"]["title"] == "Extraction":
+                for claim in output["claims"]:
+                    claim.pop("unit", None)
             return original(output)
 
         kwargs["validator"] = validate
@@ -349,6 +357,136 @@ class _CompactFake:
         record = self.fake.chat(**kwargs)
         self.fake.fault = None
         return record
+
+
+@pytest.mark.parametrize("arm", ["B", "C"])
+def test_omitted_optional_model_fields_preserve_exact_receipt_identity(arm):
+    from experiments.ollama.harness import run_trial
+    from experiments.ollama.oracle import evaluate
+
+    task, gold = development_tasks("024")[0]
+    result = run_trial(
+        task,
+        arm=arm,
+        model="fake",
+        model_digest="a" * 64,
+        seed=17,
+        client=_CompactFake(omit_optional=True),
+        settings=TrialSettings(),
+    )
+    review = result["reviews"][-1]
+    original = result["calls"][-1]["parsed"]
+    assert "feedback" not in original
+    assert review == original
+    scored = evaluate(task, gold, result)
+    assert scored["answer_grounded_correct"] and scored["verified_supported_completion"]
+
+
+def _revise_known(connection):
+    stopped = {**proof(), "verified_exit_epoch": datetime.now(UTC).timestamp()}
+    return connection.revise_protocol(
+        run_id="egr-024-contract-revision",
+        freeze_id="d" * 64,
+        server_epoch="c" * 64,
+        previous_owned_exit_proof=stopped,
+        authorization="The user requires a new protocol after a mechanical post-freeze defect",
+    )
+
+
+def test_protocol_revision_preserves_exact_prefix_expenses_and_durable_clock(tmp_path):
+    with fake_http(successful()) as (url, received):
+        connection = modern(url, tmp_path, global_wall_seconds=172800)
+        chat(connection)
+        before = connection.summary()
+        prefix = connection.path.read_bytes()
+        anchor = connection.path.with_suffix(".clock.json").read_bytes()
+        event = _revise_known(connection)
+        after = connection.summary()
+        assert connection.path.read_bytes().startswith(prefix)
+        assert connection.path.with_suffix(".clock.json").read_bytes() == anchor
+        assert event["retained_budget_state"]["started_epoch"] == before["started_epoch"]
+        for field in ("calls", "started_epoch", "generated_tokens", "total_tokens"):
+            assert before[field] == after[field]
+        reopened = OllamaClient(
+            url,
+            connection.path,
+            run_id="egr-024-contract-revision",
+            freeze_id="d" * 64,
+            profiles={TAG: PROFILE},
+            limits=Limits(global_wall_seconds=172800),
+            server_epoch="c" * 64,
+            termination_policy=True,
+        )
+        assert reopened.summary()["calls"] == 1
+        chat(reopened, request_id="fresh-request", trial_id="fresh-task")
+        assert reopened.summary()["calls"] == 2 and len(received) == 2
+        with pytest.raises(ClientBlocked):
+            reopened.revise_protocol(
+                run_id="third",
+                freeze_id="e" * 64,
+                server_epoch="f" * 64,
+                previous_owned_exit_proof={**proof("c" * 64), "verified_exit_epoch": time.time()},
+                authorization="Do not reset a second time",
+            )
+
+
+@pytest.mark.parametrize(
+    "field", ["limits", "profiles", "prefix", "budget", "exit", "proof", "authorization"]
+)
+def test_protocol_revision_rejects_budget_identity_and_exit_tampering(tmp_path, field):
+    with fake_http(successful()) as (url, _):
+        connection = modern(url, tmp_path, global_wall_seconds=172800)
+        chat(connection)
+        event = _revise_known(connection)
+        broken = copy.deepcopy(event)
+        if field == "limits":
+            broken["config"]["limits"]["global_calls"] += 1
+        elif field == "profiles":
+            broken["config"]["profiles"][TAG]["num_predict"] += 1
+        elif field == "prefix":
+            broken["prior_events_canonical_sha256"] = "0" * 64
+        elif field == "budget":
+            broken["retained_budget_state"]["calls"] = 0
+        elif field == "exit":
+            broken["previous_owned_exit_proof"]["verified_exit_epoch"] = 0
+        elif field == "proof":
+            broken["previous_owned_exit_proof"]["tree_stopped"] = False
+        else:
+            broken["authorization"] = ""
+        rows = connection._rows()
+        with pytest.raises(ClientBlocked):
+            connection._effective_config([*rows[:-1], broken])
+
+
+def test_protocol_revision_cannot_clear_unknown_consumption(tmp_path):
+    with fake_http(successful(), delay=0.1) as (url, _):
+        connection = modern(url, tmp_path, global_wall_seconds=172800, request_wall_seconds=0.02)
+        assert chat(connection)["unknown_consumption"]
+        before = connection.path.read_bytes()
+        with pytest.raises(ClientBlocked):
+            _revise_known(connection)
+        assert connection.path.read_bytes() == before
+
+
+def test_corrective_tasks_have_unused_material_and_exact_public_witnesses():
+    old = {task.task_id for task, _ in confirmation_tasks("024")}
+    new = confirmation_tasks("024r2")
+    assert len(new) == 24 and not old.intersection(task.task_id for task, _ in new)
+    assert sum(gold.decision == "unknown" for _, gold in new) == 6
+    old_documents = {
+        document.text for task, _ in confirmation_tasks("024") for document in task.documents
+    }
+    for task, gold in new:
+        assert all(document.text not in old_documents for document in task.documents)
+        assert all(int(document.version) >= 7 for document in task.documents)
+        for witness in gold.witnesses:
+            assert witness.quote in task.document(witness.source_id).text
+            assert all(
+                quote in task.document(witness.source_id).text
+                for quote in witness.alternative_quotes
+            )
+    assert any("14時30分" in d.text for task, _ in new for d in task.documents)
+    assert any("12℃" in d.text for task, _ in new for d in task.documents)
 
 
 def test_grounded_correct_answer_survives_reviewer_failure_and_is_not_verified_complete():

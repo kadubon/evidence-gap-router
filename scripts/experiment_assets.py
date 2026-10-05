@@ -26,8 +26,8 @@ def main() -> None:
     }
     if args.version == "0.2.4":
         paths = {
-            "ollama-protocol-v0.2.4.json": Path("experiments/ollama/protocol-v0.2.4.json"),
-            "ollama-freeze-v0.2.4.json": Path("experiments/ollama/results/freeze-v0.2.4.json"),
+            "ollama-protocol-v0.2.4.json": Path("experiments/ollama/protocol-v0.2.4-r2.json"),
+            "ollama-freeze-v0.2.4.json": Path("experiments/ollama/results/freeze-v0.2.4-r2.json"),
             "ollama-summary-v0.2.4.json": Path("experiments/ollama/results/v0.2.4/summary.json"),
             "ollama-provenance-v0.2.4.json": Path(
                 "experiments/ollama/results/v0.2.4/artifact-provenance.json"

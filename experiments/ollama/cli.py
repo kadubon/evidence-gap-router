@@ -61,8 +61,16 @@ def protocol_path() -> Path:
     return PROTOCOL_PATH if edition() == "024" else ROOT / "protocol.json"
 
 
+def task_edition() -> str:
+    return PROTOCOL.get("task_edition", edition())
+
+
 def task_pairs(phase: str) -> Any:
-    return development_tasks(edition()) if phase == "pilot" else confirmation_tasks(edition())
+    return (
+        development_tasks(task_edition())
+        if phase == "pilot"
+        else confirmation_tasks(task_edition())
+    )
 
 
 def trial_settings(directory: Path) -> TrialSettings | None:
@@ -295,6 +303,7 @@ class BoundClient:
         kwargs["metadata"] = {
             **kwargs.get("metadata", {}),
             "phase": self.phase,
+            "execution_protocol_id": PROTOCOL["protocol_id"],
             "formal_freeze_sha256": self.freeze_sha,
             "resources_before": before,
             "inventory_before": inventory,
@@ -657,7 +666,7 @@ def selected_parent_ids(count: int) -> list[str]:
     mapping = PROTOCOL["profile_parent_numbers"][str(count)]
     return [
         task.task_id
-        for task, _gold in confirmation_tasks(edition())
+        for task, _gold in confirmation_tasks(task_edition())
         if int(task.task_id.rsplit("-", 1)[1]) in mapping[task.family]
     ]
 
@@ -812,12 +821,12 @@ def freeze(args: argparse.Namespace) -> dict[str, Any]:
     selected_tasks = selected_parent_ids(selected)
     public = [
         asdict(task)
-        for task, _gold in confirmation_tasks(edition())
+        for task, _gold in confirmation_tasks(task_edition())
         if task.task_id in selected_tasks
     ]
     gold = [
         asdict(score)
-        for task, score in confirmation_tasks(edition())
+        for task, score in confirmation_tasks(task_edition())
         if task.task_id in selected_tasks
     ]
     write_json(args.directory / "frozen-public-tasks.json", public)
@@ -856,7 +865,7 @@ def freeze(args: argparse.Namespace) -> dict[str, Any]:
         "selected_parent_count": selected,
         "excluded_parent_ids": [
             task.task_id
-            for task, _gold in confirmation_tasks(edition())
+            for task, _gold in confirmation_tasks(task_edition())
             if task.task_id not in selected_tasks
         ],
         "exclusion_reason": "Predeclared balanced profile chosen from speed/resource budgets",
@@ -997,8 +1006,9 @@ def warmup(args: argparse.Namespace, client: OllamaClient) -> None:
     from experiments.ollama.tasks import Document
 
     settings = trial_settings(args.directory)
-    task, _ = development_tasks("024")[0]
+    task, _ = development_tasks(task_edition())[0]
     prefix = "warmup" if args.development_cycle == 1 else f"warmup-cycle-{args.development_cycle}"
+    prefix = PROTOCOL.get("request_key_prefix", "") + prefix
     for model in PROTOCOL["models"]:
         preload_id = prefix + "/" + model + "/preload"
         if client.record(preload_id) is None:
@@ -1028,7 +1038,10 @@ def warmup(args: argparse.Namespace, client: OllamaClient) -> None:
                     first.text + ("参考メモ: 備品の色は判定条件に含まれない。\n" * 100),
                 )
                 second = task.documents[1]
-                changed = replace(second, text=second.text.replace("条件Qは真", "条件Qは偽"))
+                condition = "要件N" if task_edition() == "024r2" else "条件Q"
+                changed = replace(
+                    second, text=second.text.replace(condition + "は真", condition + "は偽")
+                )
                 chosen = replace(task, documents=(long, changed, *task.documents[2:]))
             extraction = answer = None
             for stage, model_type in (
@@ -1286,10 +1299,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--authorization")
     parser.add_argument("--amendment-id")
     parser.add_argument("--wheel", type=Path)
-    parser.add_argument("--protocol", type=Path, default=ROOT / "protocol-v0.2.4.json")
+    parser.add_argument("--protocol", type=Path, default=ROOT / "protocol-v0.2.4-r2.json")
     parser.add_argument("--request-id")
     parser.add_argument("--development-cycle", type=int, choices=(1, 2, 3), default=1)
-    parser.add_argument("--freeze", type=Path, default=ROOT / "results/freeze-v0.2.4.json")
+    parser.add_argument("--freeze", type=Path, default=ROOT / "results/freeze-v0.2.4-r2.json")
     parser.add_argument("--output", type=Path, default=ROOT / "results/v0.2.4")
     args = parser.parse_args(argv)
     PROTOCOL_PATH = args.protocol.resolve(strict=True)
@@ -1455,7 +1468,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ClientBlocked("backend smoke failed; preserve response and stop")
     elif args.command == "pilot":
         for item in schedule(
-            [task.task_id for task, _gold in development_tasks(edition())], "pilot"
+            [task.task_id for task, _gold in development_tasks(task_edition())], "pilot"
         ):
             execute(args, client, "pilot", item)
             if client.summary()["blocked"]:

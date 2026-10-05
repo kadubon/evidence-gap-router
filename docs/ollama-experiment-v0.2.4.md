@@ -1,8 +1,17 @@
 # Local Ollama experiment — v0.2.4
 
-Calibration and the separate 24-trial pilot have completed. The frozen 16-parent
-confirmation is running, followed by 64 fresh stop-policy trials. Qwen completes
-the current CPU measurement path. That is not a routing advantage.
+The initial frozen confirmation completed, but its verified-completion results
+were invalidated by a mechanical receipt defect: the host inserted optional
+empty `feedback` defaults into model evidence, while the unchanged oracle
+required exact actual-response identity. This particularly affected Gemma's
+omitted field. The initial worker and owned server were stopped with no pending
+or unknown usage. All 957 calls and their costs remain retained.
+
+Corrective protocol `egr-024-local-ollama-v2` preserves the actual parsed JSON,
+unchanged review/oracle criteria and cumulative campaign limits. Fresh public
+instances and a new confirmation freeze are required; initial results are not
+pooled with the corrective confirmation. The initial development observations
+below remain historical, rather than corrected or replaced model outputs.
 
 Both current local models completed two reader/integrator/reviewer rounds,
 including a longer input and a changed Q fact. Every operation has a known

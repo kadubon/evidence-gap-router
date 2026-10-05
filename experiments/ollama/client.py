@@ -133,6 +133,28 @@ def _retained_budget_state(summary: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _protocol_revised_config(
+    config: dict[str, Any], run_id: str, freeze_id: str, server_epoch: str
+) -> dict[str, Any]:
+    """Change identities only; every cumulative limit and model profile stays fixed."""
+    if (
+        config.get("termination_policy") != "retain-full-reservation-max-two-v1"
+        or config["limits"]["global_wall_seconds"] != 172800
+        or not isinstance(run_id, str)
+        or not 1 <= len(run_id) <= 256
+        or run_id == config["run_id"]
+        or not isinstance(freeze_id, str)
+        or re.fullmatch(r"[0-9a-f]{64}", freeze_id) is None
+        or freeze_id == config["freeze_id"]
+        or not isinstance(server_epoch, str)
+        or re.fullmatch(r"[0-9a-f]{64}", server_epoch) is None
+        or server_epoch == config.get("server_epoch")
+    ):
+        raise ValueError("a new finite protocol and owned epoch require unchanged campaign limits")
+    canonical = strict_json(_bytes(config).decode())
+    return {**canonical, "run_id": run_id, "freeze_id": freeze_id, "server_epoch": server_epoch}
+
+
 def _stamp() -> str:
     return datetime.now(UTC).isoformat()
 
@@ -519,6 +541,79 @@ class OllamaClient:
             "retained_budget_state",
         }
         for index, row in enumerate(rows[1:], start=1):
+            if row.get("event") == "protocol_revision":
+                try:
+                    new_config = row["config"]
+                    expected = _protocol_revised_config(
+                        effective,
+                        new_config["run_id"],
+                        new_config["freeze_id"],
+                        new_config["server_epoch"],
+                    )
+                    prior = self._summary(rows[:index])
+                    proof = row["previous_owned_exit_proof"]
+                    exit_epoch = proof["verified_exit_epoch"]
+                    last_receipt = max(
+                        datetime.fromisoformat(r["record"]["ended_at"]).timestamp()
+                        for r in rows[:index]
+                        if r.get("event") == "response"
+                    )
+                    identities = proof["identities"]
+                    if (
+                        set(row)
+                        != {
+                            "event",
+                            "created_at",
+                            "authorization",
+                            "config",
+                            "from_config_sha256",
+                            "to_config_sha256",
+                            "prior_events_canonical_sha256",
+                            "prior_event_count",
+                            "retained_budget_state",
+                            "previous_owned_exit_proof",
+                        }
+                        or any(r.get("event") == "protocol_revision" for r in rows[:index])
+                        or not isinstance(row["authorization"], str)
+                        or not 1 <= len(row["authorization"]) <= 1024
+                        or prior["pending"]
+                        or prior["unknown_consumption"]
+                        or prior["halted"]
+                        or new_config != expected
+                        or row["from_config_sha256"] != _canonical_sha256(effective)
+                        or row["to_config_sha256"] != _canonical_sha256(expected)
+                        or row["prior_events_canonical_sha256"] != _canonical_sha256(rows[:index])
+                        or type(row["prior_event_count"]) is not int
+                        or row["prior_event_count"] != index
+                        or row["retained_budget_state"] != _retained_budget_state(prior)
+                        or proof["tree_stopped"] is not True
+                        or proof["proof_method"] != "held-native-process-handles"
+                        or proof["server_epoch"] != effective["server_epoch"]
+                        or type(exit_epoch) not in (int, float)
+                        or not math.isfinite(exit_epoch)
+                        or not last_receipt
+                        <= exit_epoch
+                        <= datetime.fromisoformat(row["created_at"]).timestamp()
+                        or not isinstance(identities, list)
+                        or not identities
+                        or len({i["pid"] for i in identities}) != len(identities)
+                        or not any(i["executable_name"].lower() == "ollama.exe" for i in identities)
+                        or any(
+                            type(i["pid"]) is not int
+                            or i["pid"] < 1
+                            or type(i["creation_filetime"]) is not int
+                            or i["creation_filetime"] < 1
+                            or re.fullmatch(r"[0-9a-f]{64}", i["executable_sha256"]) is None
+                            or i["executable_name"].lower()
+                            not in {"ollama.exe", "llama-server.exe", "conhost.exe"}
+                            for i in identities
+                        )
+                    ):
+                        raise ValueError("invalid retained protocol transition")
+                except (KeyError, TypeError, ValueError) as error:
+                    raise ClientBlocked("invalid cumulative protocol revision") from error
+                effective = expected
+                continue
             if row.get("event") == "server_epoch":
                 new_config = {**effective, "server_epoch": row.get("server_epoch")}
                 prior = self._summary(rows[:index])
@@ -629,7 +724,7 @@ class OllamaClient:
         responses: dict[str, dict[str, Any]] = {}
         terminated: dict[str, dict[str, Any]] = {}
         for row in rows[1:]:
-            if row.get("event") in ("wall_budget_amendment", "server_epoch"):
+            if row.get("event") in ("wall_budget_amendment", "server_epoch", "protocol_revision"):
                 continue
             key = row.get("request_id")
             if not isinstance(key, str) or not key:
@@ -1197,6 +1292,43 @@ class OllamaClient:
             self._summary([*rows, marker])
             self._append(marker)
             return marker
+
+    def revise_protocol(
+        self,
+        *,
+        run_id: str,
+        freeze_id: str,
+        server_epoch: str,
+        previous_owned_exit_proof: dict[str, Any],
+        authorization: str,
+    ) -> dict[str, Any]:
+        """Append one authorized corrective identity transition without a budget reset.
+
+        The host must obtain real held-handle exit evidence. This journal validates
+        its consistency and retains all old reservations, receipts and clock bytes;
+        it does not authenticate a supplied proof or a human authorization string.
+        """
+        with self._locked():
+            rows = self._rows()
+            self._assert_identity(rows)
+            prior = self._summary(rows)
+            config = _protocol_revised_config(self.config, run_id, freeze_id, server_epoch)
+            event = {
+                "event": "protocol_revision",
+                "created_at": _stamp(),
+                "authorization": authorization,
+                "config": config,
+                "from_config_sha256": _canonical_sha256(self.config),
+                "to_config_sha256": _canonical_sha256(config),
+                "prior_events_canonical_sha256": _canonical_sha256(rows),
+                "prior_event_count": len(rows),
+                "retained_budget_state": _retained_budget_state(prior),
+                "previous_owned_exit_proof": previous_owned_exit_proof,
+            }
+            self._effective_config([*rows, event])
+            self._append(event)
+            self.config = config
+            return event
 
     def advance_server_epoch(self, server_epoch: str) -> None:
         with self._locked():

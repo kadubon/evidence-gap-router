@@ -138,9 +138,9 @@ print([r.code for r in report.decision.residuals if r.blocking])  # []
 組み合わせ、明示的にローカル推論を行います。coreのimportやoffline CLIにOllamaは
 不要です。モデル重みと認証情報は同梱せず、通常のtestsと公開CIで推論しません。
 
-v0.2.4の実験は開発較正中です。現行の両モデルでreader・integrator・reviewerの
-暖機6回が完了しました。主確認のA/B/C親課題測定は未着手であり、暖機応答を
-routingの性能値とはしません。[現在の技術報告](docs/ollama-experiment-v0.2.4.md)、
+初回v0.2.4確認で省略可能な項目の証拠保存に不整合が見つかりました。
+原結果と費用を残し、新protocol・未使用資料・元の累積上限で再確認します。
+意味的な受入基準は変えていません。[現在の技術報告](docs/ollama-experiment-v0.2.4.md)、
 [日本語要約](docs/ollama-experiment-v0.2.4.ja.md)、
 [v0.2.3の保存済み報告](docs/ollama-experiment.md)を分けて参照できます。
 
