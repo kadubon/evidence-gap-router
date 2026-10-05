@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import deque
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import Literal
 
@@ -30,7 +30,9 @@ from .models import (
     State,
     Supersession,
     VerificationBasis,
+    _contradiction_inputs_match,
     _fingerprint,
+    _resolution_basis_subject_error,
 )
 
 DIMENSIONS = ("actions", "verifications", "tokens")
@@ -148,26 +150,7 @@ def make_basis(state: State, action: ActionCandidate) -> VerificationBasis:
             "check" if action.purpose == "check_resolution" else "contradiction"
         )
         fingerprint = resolution_fingerprint(state, kind, action.resolution_target_id or "")
-        if kind == "check":
-            old = next(c for c in state.checks if c.id == action.resolution_target_id)
-            if (old.obligation_id, old.scope, old.target_digest) != (
-                action.obligation_id,
-                action.scope,
-                target.digest,
-            ):
-                raise ValueError("resolution_target_mismatch")
-            if old.basis is None or old.basis.target.evidence_id != target.evidence_id:
-                raise ValueError("resolution_subject_id_mismatch_or_unassessed")
-        else:
-            conflict = next(c for c in state.contradictions if c.id == action.resolution_target_id)
-            if (conflict.obligation_id, conflict.scope) != (action.obligation_id, action.scope):
-                raise ValueError("resolution_target_mismatch")
-            inputs = {target.evidence_id, *(d.evidence_id for d in dependencies)}
-            if target.evidence_id not in conflict.evidence_ids or not set(
-                conflict.evidence_ids
-            ).issubset(inputs):
-                raise ValueError("resolution_related_evidence_missing")
-    return VerificationBasis(
+    basis = VerificationBasis(
         obligation_id=action.obligation_id,
         scope=action.scope,
         contract_fingerprint=target.contract_fingerprint,
@@ -179,6 +162,13 @@ def make_basis(state: State, action: ActionCandidate) -> VerificationBasis:
         resolution_target_id=action.resolution_target_id,
         resolution_fingerprint=fingerprint,
     )
+    if action.purpose != "content":
+        subjects = state.checks if action.purpose == "check_resolution" else state.contradictions
+        subject = next((r for r in subjects if r.id == action.resolution_target_id), None)
+        error = _resolution_basis_subject_error(basis, subject)
+        if error is not None:
+            raise ValueError(error)
+    return basis
 
 
 def _binding_active(state: State, binding: EvidenceBinding) -> bool:
@@ -207,6 +197,7 @@ class _Evaluation:
         self.evidence = {e.id: e for e in state.evidence}
         self.obligations = {o.id: o for o in state.obligations}
         self.checks = {c.id: c for c in state.checks}
+        self.contradictions = {c.id: c for c in state.contradictions}
         self.active = {e.id for o in state.obligations for e in _active_evidence(state, o)}
         self.invalid_checks = {i.target_id for i in state.invalidations if i.kind == "check"}
         self.by_target: dict[str, list[CheckResult]] = {}
@@ -308,14 +299,14 @@ class _Evaluation:
             kind: Literal["check", "contradiction"] = (
                 "check" if basis.purpose == "check_resolution" else "contradiction"
             )
-            if kind == "check":
-                old = self.checks.get(basis.resolution_target_id or "")
-                if (
-                    old is None
-                    or old.basis is None
-                    or (old.basis.target.evidence_id != basis.target.evidence_id)
-                ):
-                    return False
+            subjects = self.checks if kind == "check" else self.contradictions
+            if (
+                _resolution_basis_subject_error(
+                    basis, subjects.get(basis.resolution_target_id or "")
+                )
+                is not None
+            ):
+                return False
             key = (kind, basis.resolution_target_id or "")
             if key not in self._fingerprints:
                 try:
@@ -943,6 +934,73 @@ def _gap_for_action(action: ActionCandidate, gaps: tuple[Gap, ...]) -> Gap | Non
     return None
 
 
+class _HelperGraph:
+    """Evaluation-local monotone AND/OR rules; each activated node emits once."""
+
+    def __init__(self) -> None:
+        self.rules: list[tuple[int, tuple[int, ...]]] = []
+        self.by_head: list[list[int]] = []
+        self.listeners: list[list[int]] = []
+
+    def node(self) -> int:
+        identifier = len(self.by_head)
+        self.by_head.append([])
+        self.listeners.append([])
+        return identifier
+
+    def rule(self, head: int, children: Iterable[int]) -> None:
+        inputs = tuple(dict.fromkeys(children))
+        index = len(self.rules)
+        self.rules.append((head, inputs))
+        self.by_head[head].append(index)
+        for child in inputs:
+            self.listeners[child].append(index)
+
+    def choice(self, alternatives: Iterable[int], *, seed: bool = False) -> int:
+        node = self.node()
+        if seed:
+            self.rule(node, ())
+        for alternative in alternatives:
+            self.rule(node, (alternative,))
+        return node
+
+    def _consume_edge(self, rule: int, pending: list[int]) -> int | None:
+        pending[rule] -= 1
+        return self.rules[rule][0] if pending[rule] == 0 else None
+
+    def solve(self, blocked: int) -> list[bool]:
+        """Least grounded closure excluding the consuming root's own future result."""
+        truth = [False] * len(self.by_head)
+        pending = [len(children) for _, children in self.rules]
+        queue: deque[int] = deque()
+        for head, children in self.rules:
+            if not children and head != blocked and not truth[head]:
+                truth[head] = True
+                queue.append(head)
+        while queue:
+            for rule in self.listeners[queue.popleft()]:
+                activated = self._consume_edge(rule, pending)
+                if activated is not None and activated != blocked and not truth[activated]:
+                    truth[activated] = True
+                    queue.append(activated)
+        return truth
+
+    def needed(self, inputs: tuple[int, ...], truth: list[bool]) -> set[int]:
+        """Retain every grounded alternative without enumerating proof paths."""
+        seen: set[int] = set()
+        queue = deque(inputs)
+        while queue:
+            node = queue.popleft()
+            if node in seen or not truth[node]:
+                continue
+            seen.add(node)
+            for index in self.by_head[node]:
+                children = self.rules[index][1]
+                if all(truth[child] for child in children):
+                    queue.extend(children)
+        return seen
+
+
 def _helper_actions(
     state: State,
     candidates: tuple[ActionCandidate, ...],
@@ -952,9 +1010,28 @@ def _helper_actions(
     remaining: Resources,
     evaluation: _Evaluation,
 ) -> frozenset[str]:
-    """Finite backwards feasibility paths to a current required verification gap."""
+    """Grounded finite helper closure, shared rules and linear work per consuming root."""
+    roots = tuple(
+        action
+        for action in candidates
+        if action.kind == "verify"
+        and (action.dependencies or action.requires_evidence_ids)
+        and (gap := _gap_for_action(action, assessment.gaps)) is not None
+        and (obligation := evaluation.obligations.get(action.obligation_id)) is not None
+        and (obligation.required or gap.kind == "contradiction")
+    )
+    if not roots:
+        return frozenset()
     by_produced: dict[str, list[ActionCandidate]] = {}
     by_target: dict[str, list[ActionCandidate]] = {}
+    attempted = {attempt.action.id for attempt in state.attempts}
+    registrations = {
+        handler.handler_id: handler
+        for handler in policy.handlers
+        if (policy.available_handlers is None or handler.handler_id in policy.available_handlers)
+        and (not policy.executable_handlers or handler.handler_id in policy.executable_handlers)
+    }
+    conflicts = {conflict.id: conflict for conflict in state.contradictions}
     for action in candidates:
         if action.kind == "verify" and action.target_evidence_id is not None:
             by_target.setdefault(action.target_evidence_id, []).append(action)
@@ -963,13 +1040,13 @@ def _helper_actions(
 
     def authorized(action: ActionCandidate) -> bool:
         obligation = evaluation.obligations.get(action.obligation_id)
-        registration = _registration(policy, action)
+        registration = registrations.get(action.handler_id)
         if (
             obligation is None
             or obligation.scope != action.scope
             or registration is None
             or action.kind not in registration.roles
-            or any(a.action.id == action.id for a in state.attempts)
+            or action.id in attempted
         ):
             return False
         for name in DIMENSIONS:
@@ -977,6 +1054,11 @@ def _helper_actions(
             if getattr(budget.limits, name) is not None and (upper is None or upper > (left or 0)):
                 return False
         if action.kind == "verify":
+            if any(
+                d.evidence_id == action.target_evidence_id and d.requirement == "verified"
+                for d in action.dependencies
+            ):
+                return False
             if action.checker_id not in policy.trusted_verifiers or not any(
                 p.checker_id == action.checker_id
                 and p.revision == action.checker_revision
@@ -1002,43 +1084,62 @@ def _helper_actions(
                 ):
                     return False
             elif action.purpose == "contradiction_resolution":
-                conflict = next(
-                    (c for c in state.contradictions if c.id == action.resolution_target_id), None
-                )
-                if conflict is None or action.target_evidence_id not in conflict.evidence_ids:
+                conflict = conflicts.get(action.resolution_target_id or "")
+                if conflict is None or not _contradiction_inputs_match(
+                    conflict,
+                    action.target_evidence_id or "",
+                    (
+                        action.target_evidence_id or "",
+                        *(d.evidence_id for d in action.dependencies),
+                        *action.requires_evidence_ids,
+                    ),
+                ):
                     return False
         return True
 
-    def action_path(action: ActionCandidate, visiting: frozenset[str]) -> set[str] | None:
-        if action.id in visiting or not authorized(action):
-            return None
-        path = visiting | {action.id}
-        needed = {action.id}
-        declared = {d.evidence_id for d in action.dependencies}
-        requirements = [*action.dependencies]
-        for identifier in action.requires_evidence_ids:
-            if identifier not in declared:
-                evidence = evaluation.evidence.get(identifier)
-                if evidence is None:
-                    # Scope is not declared for a missing legacy prerequisite.
-                    return None
-                requirements.append(
-                    DependencyRequirement(
-                        evidence_id=identifier,
-                        obligation_id=evidence.obligation_id,
-                        scope=evidence.scope,
-                    )
-                )
-        for requirement in requirements:
-            material = material_path(requirement, path)
-            if material is None:
-                return None
-            needed |= material
-        return needed
+    graph = _HelperGraph()
+    action_nodes = {action.id: graph.node() for action in candidates}
+    authorized_ids = {action.id for action in candidates if authorized(action)}
+    requirements: dict[DependencyRequirement, int] = {}
+    pending_requirements: deque[DependencyRequirement] = deque()
 
-    def material_path(
-        requirement: DependencyRequirement, visiting: frozenset[str]
-    ) -> set[str] | None:
+    def material_node(requirement: DependencyRequirement) -> int:
+        if requirement not in requirements:
+            requirements[requirement] = graph.node()
+            pending_requirements.append(requirement)
+        return requirements[requirement]
+
+    def expand_action(action: ActionCandidate) -> None:
+        if action.id not in authorized_ids:
+            return
+        declared = {d.evidence_id for d in action.dependencies}
+        inputs = list(action.dependencies)
+        for identifier in action.requires_evidence_ids:
+            if identifier in declared:
+                continue
+            evidence = evaluation.evidence.get(identifier)
+            if evidence is None:
+                # Missing legacy prerequisites declare no owner/scope.
+                return
+            inputs.append(
+                DependencyRequirement(
+                    evidence_id=identifier,
+                    obligation_id=evidence.obligation_id,
+                    scope=evidence.scope,
+                )
+            )
+        graph.rule(action_nodes[action.id], (material_node(d) for d in inputs))
+
+    future_checkers = {
+        permission.checker_id
+        for handler in registrations.values()
+        if "verify" in handler.roles
+        for permission in handler.checkers
+        if "content" in permission.purposes and permission.checker_id in policy.trusted_verifiers
+    }
+
+    def expand_material(requirement: DependencyRequirement) -> None:
+        node = requirements[requirement]
         obligation = evaluation.obligations.get(requirement.obligation_id)
         if (
             obligation is None
@@ -1048,23 +1149,20 @@ def _helper_actions(
                 and requirement.contract_fingerprint != obligation.contract_fingerprint
             )
         ):
-            return None
+            return
         evidence = evaluation.evidence.get(requirement.evidence_id)
-        needed: set[str] = set()
+        inputs: list[int] = []
         if evidence is None:
-            alternatives: list[set[str]] = []
-            for producer in by_produced.get(requirement.evidence_id, ()):
-                if (producer.obligation_id, producer.scope) != (
-                    requirement.obligation_id,
-                    requirement.scope,
-                ):
-                    continue
-                path = action_path(producer, visiting)
-                if path is not None:
-                    alternatives.append(path)
+            alternatives = [
+                action_nodes[producer.id]
+                for producer in by_produced.get(requirement.evidence_id, ())
+                if producer.id in authorized_ids
+                and (producer.obligation_id, producer.scope)
+                == (requirement.obligation_id, requirement.scope)
+            ]
             if not alternatives:
-                return None
-            needed.update(*alternatives)
+                return
+            inputs.append(graph.choice(alternatives))
         elif (
             (evidence.obligation_id, evidence.scope)
             != (requirement.obligation_id, requirement.scope)
@@ -1073,11 +1171,12 @@ def _helper_actions(
             or requirement.requirement != "exists"
             and evidence.id not in evaluation.active
         ):
-            return None
+            return
         if requirement.requirement != "verified" or (
             evidence is not None and evaluation.target_verified(evidence.id)
         ):
-            return needed
+            graph.rule(node, inputs)
+            return
         current = () if evidence is None else evaluation.target_checks(evidence)
 
         def compatible(candidate: ActionCandidate) -> bool:
@@ -1088,75 +1187,54 @@ def _helper_actions(
                 and (evidence is None or candidate.target_digest == evidence.digest)
             )
 
-        negatives = [c for c in current if c.status in ("FAIL", "UNKNOWN")]
-        for negative in negatives:
-            paths = [
-                path
+        for negative in (c for c in current if c.status in ("FAIL", "UNKNOWN")):
+            alternatives = [
+                action_nodes[candidate.id]
                 for candidate in by_target.get(requirement.evidence_id, ())
-                if candidate.purpose == "check_resolution"
+                if candidate.id in authorized_ids
+                and candidate.purpose == "check_resolution"
                 and compatible(candidate)
                 and candidate.resolution_target_id == negative.id
-                and (path := action_path(candidate, visiting)) is not None
             ]
-            if not paths:
-                return None
-            needed.update(*paths)
+            inputs.append(graph.choice(alternatives))
         passes = {c.verifier_id for c in current if c.status == "PASS"}
         checkers: tuple[str | None, ...] = (
-            tuple(set(obligation.required_verifiers) - passes)
+            tuple(checker for checker in obligation.required_verifiers if checker not in passes)
             if obligation.required_verifiers
             else (() if passes else (None,))
         )
         for checker in checkers:
-            paths = [
-                path
+            alternatives = [
+                action_nodes[candidate.id]
                 for candidate in by_target.get(requirement.evidence_id, ())
-                if candidate.purpose in ("content", "check_resolution")
+                if candidate.id in authorized_ids
+                and candidate.purpose in ("content", "check_resolution")
                 and compatible(candidate)
                 and (checker is None or candidate.checker_id == checker)
-                and (path := action_path(candidate, visiting)) is not None
             ]
-            if not paths:
-                # An unknown digest cannot have a concrete verification action
-                # yet. Exact acquisition may bootstrap the host's next finite
-                # factory result when the required checker is already authorized.
-                future_checkers = {
-                    permission.checker_id
-                    for handler in policy.handlers
-                    if "verify" in handler.roles
-                    and (
-                        policy.available_handlers is None
-                        or handler.handler_id in policy.available_handlers
-                    )
-                    and (
-                        not policy.executable_handlers
-                        or handler.handler_id in policy.executable_handlers
-                    )
-                    for permission in handler.checkers
-                    if "content" in permission.purposes
-                    and permission.checker_id in policy.trusted_verifiers
-                }
-                if evidence is not None or (
-                    checker not in future_checkers if checker is not None else not future_checkers
-                ):
-                    return None
-            needed.update(*paths)
-        return needed
+            # Unknown-digest acquisition may bootstrap the next concrete factory
+            # only with currently available registered content-check authority.
+            dynamic = evidence is None and (
+                checker in future_checkers if checker is not None else bool(future_checkers)
+            )
+            inputs.append(graph.choice(alternatives, seed=dynamic))
+        graph.rule(node, inputs)
 
-    helpers: set[str] = set()
     for action in candidates:
-        gap = _gap_for_action(action, assessment.gaps)
-        obligation = evaluation.obligations.get(action.obligation_id)
-        if (
-            action.kind != "verify"
-            or gap is None
-            or obligation is None
-            or (not obligation.required and gap.kind != "contradiction")
-        ):
+        expand_action(action)
+    while pending_requirements:
+        expand_material(pending_requirements.popleft())
+    helpers: set[str] = set()
+    by_node = {node: identifier for identifier, node in action_nodes.items()}
+    for action in roots:
+        root = action_nodes[action.id]
+        rules = graph.by_head[root]
+        if not rules:
             continue
-        path = action_path(action, frozenset())
-        if path is not None:
-            helpers.update(path - {action.id})
+        inputs = graph.rules[rules[0]][1]
+        truth = graph.solve(root)
+        if all(truth[node] for node in inputs):
+            helpers.update(by_node[node] for node in graph.needed(inputs, truth) if node in by_node)
     return frozenset(helpers)
 
 
@@ -1197,10 +1275,18 @@ def _needed_helper_actions(
     return _helper_actions(state, candidates, budget, policy, assessment, remaining, evaluation)
 
 
-def plan(
-    state: State, candidates: tuple[ActionCandidate, ...], budget: Budget, policy: Policy
+def _plan(
+    state: State,
+    candidates: tuple[ActionCandidate, ...],
+    budget: Budget,
+    policy: Policy,
+    *,
+    selector: Callable[
+        [State, tuple[ActionCandidate, ...], tuple[ActionCandidate, ...]], ActionCandidate
+    ]
+    | None = None,
 ) -> Decision:
-    """Recommend at most one declared action without mutating state or consuming budget."""
+    """Prepare one current evaluation; optionally replace only eligible-action ranking."""
     if len({a.id for a in candidates}) != len(candidates):
         raise ValueError("candidate IDs must be unique")
     evaluation = _Evaluation(state, policy)
@@ -1238,7 +1324,11 @@ def plan(
         r.code == "contradiction" and r.blocking for r in residuals
     ):
         global_reason, stop = "required_obligations_satisfied", "satisfied"
-    helpers = _helper_actions(state, candidates, budget, policy, assessment, remaining, evaluation)
+    helpers = (
+        frozenset()
+        if global_reason
+        else _helper_actions(state, candidates, budget, policy, assessment, remaining, evaluation)
+    )
     exclusions: list[Exclusion] = []
     eligible: list[ActionCandidate] = []
     for action in sorted(candidates, key=lambda a: a.id):
@@ -1306,10 +1396,16 @@ def plan(
                 relevance = 6
             return not o.required, -o.priority, relevance, action.id
 
-        selected = min(eligible, key=rank)
-        reason = (
-            f"Selected {selected.id} by required status, priority, evidence gap, and stable ID."
-        )
+        if selector is None:
+            selected = min(eligible, key=rank)
+            reason = (
+                f"Selected {selected.id} by required status, priority, evidence gap, and stable ID."
+            )
+        else:
+            selected = selector(state, candidates, tuple(eligible))
+            if not isinstance(selected, ActionCandidate) or selected not in eligible:
+                raise ValueError("selector must return an unchanged currently eligible action")
+            reason = f"Host selector ranked eligible action {selected.id}; current gates retained."
     elif stop:
         reason = global_reason or stop
     else:
@@ -1350,6 +1446,13 @@ def plan(
         selected_gap=None if selected is None else _gap_for_action(selected, tuple(gaps)),
         pending_verifications=assessment.pending,
     )
+
+
+def plan(
+    state: State, candidates: tuple[ActionCandidate, ...], budget: Budget, policy: Policy
+) -> Decision:
+    """Recommend at most one declared action without mutating state or consuming budget."""
+    return _plan(state, candidates, budget, policy)
 
 
 def start(
@@ -1441,12 +1544,16 @@ def observe(state: State, result: Result, policy: Policy | None = None) -> State
     issued = next(a for a in state.attempts if a.id == result.attempt_id)
     if (
         issued.basis is not None
-        and issued.basis.purpose == "check_resolution"
+        and issued.basis.purpose != "content"
         and (result.checks or result.supersessions)
     ):
-        old = next(c for c in state.checks if c.id == issued.basis.resolution_target_id)
-        if old.basis is None or old.basis.target.evidence_id != issued.basis.target.evidence_id:
-            raise ValueError("resolution_subject_id_mismatch_or_unassessed")
+        subjects = (
+            state.checks if issued.basis.purpose == "check_resolution" else state.contradictions
+        )
+        subject = next((r for r in subjects if r.id == issued.basis.resolution_target_id), None)
+        error = _resolution_basis_subject_error(issued.basis, subject)
+        if error is not None:
+            raise ValueError(error)
     if policy is not None:
         registration = _registration(policy, issued.action)
         if registration is None or issued.action.kind not in registration.roles:

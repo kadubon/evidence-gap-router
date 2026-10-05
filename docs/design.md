@@ -16,6 +16,15 @@ resolution grounds. Neither operation rewrites a callback's original receipt.
 changing that separation. Factory and callback failures preserve the latest state.
 Snapshot continuation is explicit, with no crash-safe exactly-once claim.
 
+An optional pure `selector(state, full_pool, eligible)` on `step`/`run` changes
+only which unchanged eligible candidate is selected. Default calls retain EGR
+ordering. All selections use the same callback input, issuance, receipt/error,
+progress, replanning and finite-limit path. The complete current pool remains
+available to helper evaluation and `start`; selection does not reduce it to one
+candidate. Selector exceptions or invalid returns are planning failures before
+callback invocation. The host supplies purity and external process timeouts;
+neither is enforced by frozen Python records.
+
 ## Mechanical acceptance and actual used material
 
 An obligation's fingerprint includes ID, scope, contract revision, acceptance,
@@ -94,6 +103,16 @@ substitute for that subject. Old inappropriate alias-resolution records remain
 readable history but are excluded from current acceptance. A basis-less legacy
 negative needs explicit host assessment rather than an inferred subject ID.
 
+Contradiction resolution must target an exact ID listed by the conflict and bind
+all of its related IDs in target/dependencies. This subject predicate is common
+to issuance and current assessment of imported, resolved or reloaded checks.
+Other bindings still require matching owner/scope/digest/current contract and
+the declared applicability condition, checker revision and purpose. A current
+fingerprint cannot substitute for an omitted input, nor can a same-digest alias.
+Structurally readable old checks and events lacking related inputs remain in
+history but do not establish current resolution. No missing material, invocation
+or cost is inferred. Fully bound authorized imported records remain supported.
+
 Matching authorized resolution evidence may be reused. If earlier grounds become
 inapplicable because of a changed contract or used material/check invalidation,
 new dedicated current checks can support another append-only resolution event
@@ -117,11 +136,15 @@ previous attempt IDs and resource bounds before ranking. Required status and
 priority lead, followed by the specific missing target/checker/purpose or an
 explicit material prerequisite; stable IDs resolve otherwise comparable ties.
 Current satisfied content targets are excluded from redundant rechecks by default.
-`feasible_actions(state, candidates, budget, policy)` exposes the same safety
-gates in the original finite pool order. It adds no EGR ranking, provenance
+`feasible_actions(state, candidates, budget, policy)` exposes eligibility,
+including unmet-gap/necessity and exact helper evaluation, in the original finite
+pool order. It is more than a safety filter. It adds no EGR ranking, provenance
 preference or randomized choice. A host may select any returned action and use
 `start(..., candidates=original_pool)`; start checks the same helper context,
 pending execution, resource bounds and required-satisfaction boundary.
+Fixed, verify-first and random choices over this common output measure the
+additional ordering value conditional on the same mechanism. They do not form
+independent full-stack schedulers.
 Provenance fit separates known repetition, unknown origin and declared new
 source/group material. Same-source/group bridges collapse transitively; source
 names and groups do not prove statistical independence.
@@ -140,6 +163,20 @@ handlers/checkers, and fit resource bounds. An unrelated acquisition, a wrong-sc
 future verifier, an impossible prerequisite or a dependency cycle gets no such
 exception. Multi-stage acquisition and verification use the same rules.
 
+The candidate helper graph is distinct from the graph of recorded checks.
+Its indexed finite worklist expresses AND prerequisites, OR alternative actions
+and required checker sets while retaining exact material/contract bindings.
+Subproblems are shared within the current assessment instead of enumerating every
+alternative path. Grounded exits can establish a cyclic route; an ungrounded
+cycle cannot. Compatible alternatives remain eligible without opening unrelated
+acquisition. Pending execution or unknown constrained resources short-circuit
+helper expansion once automatic work is already blocked. Reuse is local to the
+current state, policy, pool and bounds; no cached eligibility survives a changed
+contract, invalidation, candidate, handler/checker revision or availability.
+Structural visits, independent small-reference agreement, normal timing and
+separate memory measurements assess different properties. They do not turn a
+finite input contract into a general performance or security proof.
+
 An unknown digest may prevent the host from declaring a concrete verifier action
 before acquisition. Exact missing verified-dependency acquisition can bootstrap
 the next factory result if the contract-required checker is already authorized
@@ -155,6 +192,14 @@ Action, verification and optional token counts remain separate nonnegative
 integers. Bounds/estimates are distinct from actual observations. Unknown demand
 in a constrained dimension is not zero. Unknown budgeted/bounded actual use,
 overrun or uncertain side effects prevents safe automatic continuation.
+
+Worker status, runner stop, domain stop and independent oracle completion have
+separate meanings. Known correct abstention requires a defined unsolvable task,
+an assessed incomplete outcome and a meaningful domain halt with known bounded
+use/effects and no pending invocation. Uncertain incomplete stops, execution
+faults and erroneous stops on solvable work remain separate. The
+[v0.2.1 erratum](benchmark-v0.2.1-erratum.md) reconstructs old raw counts and
+identifies an old runner-label artifact; it does not retime those unequal paths.
 
 ## Bounded JSON and local numerical input
 

@@ -48,7 +48,7 @@ jobs:
           uv build --no-sources
           uv run --locked python -c 'from pathlib import Path; Path("dist/.gitignore").unlink(missing_ok=True)'
           uv run --locked twine check dist/*
-          uv run --locked python scripts/package_audit.py dist --benchmark-freeze benchmarks/results/freeze.json
+          uv run --locked python scripts/package_audit.py dist --benchmark-freeze benchmarks/results/freeze-v0.2.2.json
       - name: Check tag admission and prior manual validation
         id: guard
         env:
@@ -282,9 +282,14 @@ jobs:
         run: |
           uv run --no-project --python 3.12 python scripts/release_notes.py --version "$VERSION" --commit "$COMMIT" --manual-run "$MANUAL_RUN" --release-run "$GITHUB_RUN_ID" --profiles release/native --dist dist --output release/notes.md
           mkdir release/benchmark
-          cp benchmarks/protocol.json release/benchmark/protocol.json
-          cp benchmarks/results/freeze.json release/benchmark/freeze.json
-          cp benchmarks/results/summary.json release/benchmark/benchmark-summary.json
-          cp docs/benchmark.md release/benchmark/benchmark-report.md
-          cp docs/benchmark.ja.md release/benchmark/benchmark-report.ja.md
+          cp benchmarks/protocol.json release/benchmark/protocol-v0.2.2.json
+          cp benchmarks/results/freeze-v0.2.2.json release/benchmark/freeze-v0.2.2.json
+          cp benchmarks/results/v0.2.2/summary.json release/benchmark/benchmark-summary-v0.2.2.json
+          cp benchmarks/results/v0.2.2/controller-summary.json release/benchmark/controller-summary-v0.2.2.json
+          cp benchmarks/results/v0.2.2/artifact-provenance.json release/benchmark/artifact-provenance-v0.2.2.json
+          cp docs/benchmark.md release/benchmark/benchmark-report-v0.2.2.md
+          cp docs/benchmark.ja.md release/benchmark/benchmark-report-v0.2.2.ja.md
+          cp benchmarks/results/v0.2.1-erratum/summary.json release/benchmark/erratum-v0.2.1.json
+          cp docs/benchmark-v0.2.1-erratum.md release/benchmark/erratum-v0.2.1.md
+          cp docs/benchmark-v0.2.1-erratum.ja.md release/benchmark/erratum-v0.2.1.ja.md
           gh release create "v$VERSION" dist/*.whl dist/*.tar.gz release/SHA256SUMS release/native/*.json release/benchmark/* --repo kadubon/evidence-gap-router --verify-tag --title "v$VERSION" --notes-file release/notes.md

@@ -31,6 +31,14 @@
   run has a finite step limit; factory/receipt/callback errors retain state and
   invocation costs. Preserve strict schema-2 IO and explicit schema-1 migration:
   old PASS without a basis is unassessed, never retroactively authenticated.
+- Helper candidate reachability and existing proof evaluation are separate
+  graphs. Reuse subproblems only within the current evaluation; preserve AND
+  prerequisites, OR alternatives, exact IDs/authority and grounded cycle exits.
+  Resolution issuance/import/reuse must require the same current related inputs.
+- Method experiments share the finite public runner and complete candidate pool;
+  only selection differs. Worker failure, runner stop, domain stop and independent
+  oracle outcome are separate. Unknown use/effects/pending are not known safe
+  abstention. Preserve original v0.2.1 data and publish its erratum separately.
 - Reject duplicate CSV headers and JSON keys on the actual local-file path.
   Digest complete original bytes; reject over-limit input rather than accepting
   a prefix. File paths are data, never shell-command fragments.
@@ -41,6 +49,10 @@
   cannot be missing or skipped. Match tag/version/main history, confirm the existing
   PyPI publisher and environment `pypi`, and use OIDC only. The publish job runs
   no checkout, build, test or project script. Build the release distributions once.
+- The v0.2.2 measured-package gate uses
+  `benchmarks/results/freeze-v0.2.2.json`; the prior `freeze.json` stays unchanged.
+  Compare all six exact-commit manual native reports before tagging; matching
+  configured runners or overall workflow success alone is insufficient evidence.
 - Preserve existing data, tags, protection rules and public files; no force push,
   tag movement or `skip-existing` success masking. Record source/Release/PyPI/public
   verification separately. No unexecuted test or publication is reported as passed.

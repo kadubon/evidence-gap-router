@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.2.2
+
+- Candidate-helper reachability reuses current evaluation subproblems while
+  preserving exact prerequisites, checker authority, AND dependencies,
+  OR alternatives and grounded cycle exits. Existing proof evaluation is a
+  separate path; neither result cache is carried into a changed snapshot.
+- Contradiction-resolution issuance and reuse require the same complete related
+  evidence bindings. Incomplete imported grounds remain in history without
+  granting current acceptance or inventing missing checker inputs.
+- Method selectors share the finite public runner, complete candidate pool,
+  issuance, callback/receipt handling, progress checks and failure accounting.
+- A separate v0.2.1 raw-data erratum reproduces the published primary tables and
+  removes the ten-parent F7 stop-label artifact. Known incomplete stops,
+  uncertain use/effects, execution faults and erroneous stops are distinct.
+  Original results, costs, protocol and freeze remain available unchanged.
+- Fixed regression tasks, new confirmation cases, proof graphs and candidate
+  helper graphs have separate measurement contracts and recorded limits.
+  Release admission uses the new measured v0.2.2 package freeze and retains
+  all six native same-wheel gates and the exact-commit manual requirement.
+
 ## 0.2.1
 
 - Append-only host invalidation preserves issued receipts and costs while making

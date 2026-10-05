@@ -1,5 +1,70 @@
 # Validation evidence and native profiles
 
+## v0.2.2 audit and current validation evidence
+
+Before edits, the unchanged `3e6a547dd38af9668115aaad9d9d30129c018c1b`
+source passed its original **260 tests**, without skips, in 5.72 seconds on this
+Windows development host. This is a source baseline, not a new native release run.
+
+The official [v0.2.1 Release](https://github.com/kadubon/evidence-gap-router/releases/tag/v0.2.1)
+raw ZIP was downloaded again into a new dedicated external directory. Its actual
+SHA256 is `9212ee2499df0b16b47b23ac3150f71b83b1db69abc85a7123a02044f4fa69a0`.
+The original ZIP is retained read-only; safe extraction rejects escaped paths,
+duplicate entries and symlinks. All 29 manifest source assets verified.
+
+The standalone `benchmarks/erratum_021.py` reaggregates all **5,400 recorded rows**
+without running either SDK or the old aggregate. Every published primary
+overall/family/budget numerator and denominator was reproduced. Ten F7 parent
+tasks across all four primary methods have identical State/action/receipt/decision,
+oracle and cost semantics after normalizing only invocation/receipt identifiers.
+Their old runner labels differed. Each new-version main method has **75/95 known
+incomplete domain stops, 5/95 uncertain incomplete stops and 15/95 execution
+faults**. The old 80/95 versus 70/95 label metric is not a routing safety benefit.
+Unknown verification use/effects stay unknown. The matched completion result
+99/132 to 132/132 and false satisfaction 9/220 to 0/220 remain unchanged.
+The **19 new erratum regressions** passed; affected files passed Ruff lint and
+formatting. This corrects recorded classifications, not old execution timing.
+
+A separate pre-freeze diagnostic reran the ten previously observed F7 mode-4/5
+parents through the exact archived LF v0.2.1 harness, four old methods, original
+order and seed 17: **40 completed trials**. The ordinary official 0.2.1 wheel,
+29 wheel RECORD hashes, installed package bytes, old harness/protocol and matched
+Python 3.12.14/runtime dependencies verified. All ten parent signatures agreed
+across methods; old label counts were 10 versus 0, but each method had five known
+and five uncertain incomplete stops. This is a diagnostic replay, not a new
+holdout or performance measurement; its raw SHA256 is
+`3d13813e997d95b556001692bb2dc9b6d98b52fbf1c4c06e62973b0c37fdb9bd`.
+
+v0.2.2 runtime/runner regressions, fixed-set reruns and new confirmation/controller
+measurements are recorded separately after execution. The current release gate
+requires `benchmarks/results/freeze-v0.2.2.json`; it cannot reuse the v0.2.1
+candidate fingerprint. Method rows separate worker status, runner stop, domain
+stop and oracle outcome. Only actual unreceipted issued attempts indicate pending
+invocations; the count of unperformed required checks does not prove unknown
+execution. Proof evaluation and candidate-helper exploration are separate graphs.
+
+The source-only files `test_release_guard.py`, `test_package_audit.py`,
+`test_publication_verification.py`, `test_benchmarks.py`, `test_benchmark_erratum.py`,
+`test_benchmark_loop_022.py`, `test_audit_022.py`, `test_controller_022.py`,
+`test_helper_scaling_022.py`, `test_worker_limits.py` and `test_summarize_022.py`
+inspect release/experiment
+orchestration and run in the full source suite. Native reports list source-only
+files actually present; they are not silently skipped tests. The new runtime
+`test_v022_helpers.py`, `test_v022_resolution.py` and `test_v022_selector.py`
+must be copied and executed against the installed wheel, along with all other
+portable runtime regressions. Portable benchmark smoke also checks the important
+shared-loop and helper cases; full timed experiments remain on one explicit host.
+
+The formal protocol distinguishes Windows Job peak aggregate private committed
+bytes (256 MiB per worker, including venv descendants) from parent peak working
+set (512 MiB), and from separately traced Python allocations. Wall/CPU limits
+are enforced by the owned worker controller with possible sampling overshoot.
+These metrics must not be relabeled as one interchangeable resident-memory bound.
+
+No new v0.2.2 manual/native/publication result is asserted here before execution.
+The six required profiles below apply to v0.2.2. Prior macOS observations are
+published native records, not newly executed macOS checks by this local audit.
+
 ## v0.2.1 facts available before publication
 
 The official v0.2.0 wheel (SHA256
@@ -20,8 +85,8 @@ and archive guards also check index visibility, RECORD bytes and measured-packag
 equality. Final commands/counts and the measured protocol/environment are recorded
 below after execution; a development check is not a native release result.
 
-The v0.2.1 release still requires all six same-wheel native profiles in the table
-below. Each also runs the same portable benchmark smoke, whose canonical outcome
+At that source snapshot, v0.2.1 required all six same-wheel native profiles.
+Each ran the same portable benchmark smoke, whose canonical outcome
 hash must agree. Full statistical measurements run in one explicit environment;
 the native smoke is not a replacement for that experiment.
 

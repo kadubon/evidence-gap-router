@@ -13,7 +13,6 @@ import subprocess
 import sys
 import tempfile
 import time
-import tracemalloc
 import zipfile
 from decimal import Decimal
 from importlib import metadata
@@ -82,15 +81,20 @@ def verify_installed_bytes(wheel: Path) -> str:
     return package_fingerprint(wheel)
 
 
-def freeze(path: Path, commit: str, wheel: Path, old_wheel: Path) -> None:
+def freeze(
+    path: Path, commit: str, wheel: Path, old_wheel: Path, host_record: Path | None = None
+) -> None:
     if path.exists():
         raise ValueError("Freeze record already exists; do not replace preregistration")
     if digest(old_wheel.read_bytes()) != manifest()["baseline_wheel_sha256"]:
-        raise ValueError("Wrong published v0.2.0 baseline bytes")
+        raise ValueError("Wrong published baseline wheel bytes")
     if re.fullmatch(r"[0-9a-f]{40}", commit) is None:
         raise ValueError("Implementation commit must be a full lowercase Git SHA")
     measured = environment()
-    if measured["package"] != "0.2.1" or "site-packages" not in measured["package_import"]:
+    if (
+        measured["package"] != manifest()["candidate_version"]
+        or "site-packages" not in measured["package_import"]
+    ):
         raise ValueError("Freeze must use an ordinary installed candidate wheel")
     installed_fingerprint = verify_installed_bytes(wheel)
     record = {
@@ -102,6 +106,7 @@ def freeze(path: Path, commit: str, wheel: Path, old_wheel: Path) -> None:
         "wheel_sha256": digest(wheel.read_bytes()),
         "baseline_wheel": str(old_wheel.resolve()),
         "baseline_wheel_sha256": digest(old_wheel.read_bytes()),
+        "baseline_runtime_commit": manifest()["baseline_runtime_commit"],
         "candidate_package_sha256": installed_fingerprint,
         "baseline_package_sha256": package_fingerprint(old_wheel),
         "package_fingerprint_definition": (
@@ -109,6 +114,12 @@ def freeze(path: Path, commit: str, wheel: Path, old_wheel: Path) -> None:
             "UTF-8, separators=(',',':'), excludes generated __pycache__."
         ),
         "environment": measured,
+        "measurement_host": json.loads(host_record.read_text(encoding="utf-8-sig"))
+        if host_record
+        else {
+            "processor": platform.processor(),
+            "scope": "Hardware/power/load details unavailable",
+        },
         "frozen_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -126,12 +137,12 @@ def validate_freeze(path: Path, *, phase: str) -> dict:
         raise ValueError("Candidate wheel changed")
     if digest(Path(record["baseline_wheel"]).read_bytes()) != record["baseline_wheel_sha256"]:
         raise ValueError("Baseline wheel changed")
-    if phase == "holdout":
+    if phase in {"holdout", "regression", "confirmation"}:
         import evidence_gap_router as sdk
 
         if Path(sdk.__file__).resolve().is_relative_to(Path(__file__).resolve().parents[1] / "src"):
             raise ValueError("Holdout must use an ordinary installed wheel outside source")
-        if sdk.__version__ not in {"0.2.0", "0.2.1"}:
+        if sdk.__version__ not in {manifest()["baseline_version"], manifest()["candidate_version"]}:
             raise ValueError("Unexpected measured version")
         current = environment()
         if "site-packages" not in current["package_import"]:
@@ -139,7 +150,7 @@ def validate_freeze(path: Path, *, phase: str) -> dict:
         for key in ("python", "os", "machine", "pydantic", "pydantic_core", "runtime_dependencies"):
             if current[key] != record["environment"][key]:
                 raise ValueError(f"Unmatched measured environment: {key}")
-        baseline = current["package"] == "0.2.0"
+        baseline = current["package"] == manifest()["baseline_version"]
         wheel = Path(record["baseline_wheel" if baseline else "candidate_wheel"])
         fingerprint = verify_installed_bytes(wheel)
         key = "baseline_package_sha256" if baseline else "candidate_package_sha256"
@@ -540,45 +551,19 @@ class World:
         ), f"computed raw value {raw['value']} >= declared/bound minimum {minimum}"
 
     def issue(self, state, action, budget, pool, prefix="bench"):
-        s = self.s
-        issued = s.start(
+        """Initialize through the same public issued/receipt/error path as continuation."""
+        report = self.s.step(
             state,
-            action,
-            f"{prefix}-{len(state.attempts) + 1}",
+            pool,
             budget,
             self.policy,
-            candidates=pool,
+            {"read": self.recorded_callback, "check": self.recorded_callback},
+            selector=lambda current, full, eligible: action,
         )
-        attempt = issued.attempts[-1]
-        bound = {e.id: e for e in issued.evidence}
-        view = s.CallbackView(
-            action=attempt.action,
-            attempt_id=attempt.id,
-            obligation=next(o for o in issued.obligations if o.id == action.obligation_id),
-            basis=attempt.basis,
-            inputs=tuple(bound[b.evidence_id] for b in attempt.inputs),
-        )
-        try:
-            receipt = self.recorded_callback(view)
-            if not isinstance(receipt, s.Result):
-                raise ValueError("invalid callback receipt")
-            if (
-                receipt.attempt_id != attempt.id
-                or receipt.action_id != action.id
-                or receipt.obligation_id != action.obligation_id
-                or receipt.scope != action.scope
-                or receipt.target_digest != action.target_digest
-            ):
-                raise ValueError("callback receipt does not match the issued attempt")
-            return s.observe(issued, receipt, self.policy), None
-        except Exception as error:
-            receipt = view.result(
-                actual_resources=s.Resources(actions=1, verifications=None),
-                status="unknown",
-                side_effects="unknown",
-                reason=f"{type(error).__name__}: {error}",
-            )
-            return s.observe(issued, receipt, self.policy), f"{type(error).__name__}: {error}"
+        error = report.error
+        if report.receipt is None and error is None:
+            error = "Explicit initialization action not executable: " + report.decision.reason
+        return report.state, error
 
     def recorded_callback(self, view):
         before = len(self.trace)
@@ -888,6 +873,8 @@ def oracle(world: World, state) -> dict:
             or basis.contract_fingerprint != contract(owner)
             or basis.checker_id != check.verifier_id
             or basis.target.digest != check.target_digest
+            or (basis.target.obligation_id, basis.target.scope)
+            != (basis.obligation_id, basis.scope)
         ):
             return False
         if check.verifier_id not in world.policy.trusted_verifiers:
@@ -930,6 +917,8 @@ def oracle(world: World, state) -> dict:
             subject = next((r for r in records if r.id == basis.resolution_target_id), None)
             if subject is None:
                 return False
+            if (subject.obligation_id, subject.scope) != (basis.obligation_id, basis.scope):
+                return False
             if kind == "check" and (
                 subject.basis is None
                 or subject.basis.target.evidence_id != basis.target.evidence_id
@@ -939,6 +928,11 @@ def oracle(world: World, state) -> dict:
                 return False
             related = []
             if kind == "contradiction":
+                bound_ids = {b.evidence_id for b in (basis.target, *basis.dependencies)}
+                if basis.target.evidence_id not in subject.evidence_ids or not set(
+                    subject.evidence_ids
+                ).issubset(bound_ids):
+                    return False
                 for identifier in subject.evidence_ids:
                     item = evidence.get(identifier)
                     if item is None:
@@ -1176,15 +1170,12 @@ def oracle(world: World, state) -> dict:
     }
 
 
-def select(world: World, state, pool: tuple, method: str, rng: random.Random):
-    s = world.s
-    if method == "egr":
-        return s.plan(state, pool, world.budget, world.policy).action
-    if not hasattr(s, "feasible_actions"):
-        raise NotImplementedError("public shared feasibility API unavailable in this version")
-    feasible = s.feasible_actions(state, pool, world.budget, world.policy)
+def select(world: World, state, pool: tuple, eligible: tuple, method: str, rng: random.Random):
+    # Common planning already evaluated every safety/necessity gate once.
+    # Preserve declaration order without a second factory call or graph evaluation.
+    feasible = tuple(a for a in pool if a in eligible)
     if not feasible:
-        return None
+        raise ValueError("selector is called only with nonempty eligible actions")
     if method == "fixed-feasible":
         return feasible[0]
     if method in {"without-gap-rank", "without-provenance-rank"}:
@@ -1210,9 +1201,9 @@ def select(world: World, state, pool: tuple, method: str, rng: random.Random):
 def trial(task: Task, variant: str, method: str, random_seed: int, frozen: dict) -> dict:
     started = time.perf_counter()
     cpu_start = time.process_time()
-    tracemalloc.start()
     row = {
         "question": "Q1/Q2",
+        "schema_version": "egr-experiment-022-1",
         "task": task.document(),
         "task_id": task.id,
         "variant": variant,
@@ -1220,12 +1211,20 @@ def trial(task: Task, variant: str, method: str, random_seed: int, frozen: dict)
         "method": method,
         "manifest_sha256": digest(PROTOCOL.read_bytes()),
         "implementation_commit": frozen.get("implementation_commit"),
+        "harness_commit": frozen.get("implementation_commit"),
+        "runtime_commit": frozen.get(
+            "baseline_runtime_commit"
+            if environment()["package"] == manifest()["baseline_version"]
+            else "implementation_commit"
+        ),
         "wheel_sha256": frozen.get(
-            "baseline_wheel_sha256" if environment()["package"] == "0.2.0" else "wheel_sha256"
+            "baseline_wheel_sha256"
+            if environment()["package"] == manifest()["baseline_version"]
+            else "wheel_sha256"
         ),
         "package_sha256": frozen.get(
             "baseline_package_sha256"
-            if environment()["package"] == "0.2.0"
+            if environment()["package"] == manifest()["baseline_version"]
             else "candidate_package_sha256"
         ),
         "environment": environment(),
@@ -1235,11 +1234,12 @@ def trial(task: Task, variant: str, method: str, random_seed: int, frozen: dict)
         "tokens": None,
         "money": None,
         "measurement_observer": (
-            "Q1/Q2 timing includes tracemalloc overhead; Q3 timing is separate/uninstrumented."
+            "Common public loop; normal timing without profile/tracemalloc. "
+            "Memory is a separate replay."
         ),
     }
     world = World(task, variant)
-    planning_cpu, execution_seconds, serialization_seconds = 0.0, 0.0, 0.0
+    planning_cpu, execution_seconds, serialization_seconds, execution_cpu = 0.0, 0.0, 0.0, 0.0
     try:
         if method != "direct-pipeline":
             world.initialize()
@@ -1300,69 +1300,48 @@ def trial(task: Task, variant: str, method: str, random_seed: int, frozen: dict)
             return row
         rng = random.Random(random_seed)
         stop, error = "max_steps_reached", None
-        if method == "egr":
-            import evidence_gap_router.runner as runner
+        import evidence_gap_router.runner as runner
 
-            original_plan = runner.plan
+        original_recommend = runner._recommend
 
-            def timed_plan(*args, **kwargs):
-                nonlocal planning_cpu
-                begin = time.process_time()
-                try:
-                    return original_plan(*args, **kwargs)
-                finally:
-                    planning_cpu += time.process_time() - begin
-
-            runner.plan = timed_plan
-            begin = time.perf_counter()
+        def timed_recommend(*args, **kwargs):
+            nonlocal planning_cpu
+            begin = time.process_time()
             try:
-                report = world.s.run(
-                    state,
-                    world.pool,
-                    world.budget,
-                    world.policy,
-                    {"read": world.recorded_callback, "check": world.recorded_callback},
-                    max_steps=manifest()["max_steps"],
-                )
-                state, stop, error = report.state, report.stop_reason, report.error
-                row["runner_decision"] = report.decision.model_dump(mode="json")
-                world.state = state
+                return original_recommend(*args, **kwargs)
             finally:
-                runner.plan = original_plan
-                execution_seconds = time.perf_counter() - begin
-        for _ in range(0 if method == "egr" else manifest()["max_steps"]):
-            if time.perf_counter() - started > manifest()["task_timeout_seconds"]:
-                row["timeout"] = True
-                stop = "task_timeout"
-                break
-            before = time.process_time()
-            try:
-                pool = world.pool(state)
-                action = select(world, state, pool, method, rng)
-            except NotImplementedError:
-                raise
-            except Exception as exc:
-                stop, error = "factory_error", f"{type(exc).__name__}: {exc}"
-                break
-            planning_cpu += time.process_time() - before
-            if action is None:
-                stop = "router_stopped"
-                break
-            before = time.perf_counter()
-            state, error = world.issue(state, action, world.budget, pool)
+                planning_cpu += time.process_time() - begin
+
+        # All methods use public run; only current eligible-action ranking changes.
+        # This phase includes the identical factory/gates and method ranking, not
+        # pure ranking cost. Normal timing never uses profile or tracemalloc.
+        runner._recommend = timed_recommend
+        begin = time.perf_counter()
+        execution_cpu_start = time.process_time()
+        try:
+            selector = (
+                None
+                if method == "egr"
+                else lambda current, full, eligible: select(
+                    world, current, full, eligible, method, rng
+                )
+            )
+            report = world.s.run(
+                state,
+                world.pool,
+                world.budget,
+                world.policy,
+                {"read": world.recorded_callback, "check": world.recorded_callback},
+                max_steps=manifest()["max_steps"],
+                selector=selector,
+            )
+            state, stop, error = report.state, report.stop_reason, report.error
+            row["runner_decision"] = report.decision.model_dump(mode="json")
             world.state = state
-            execution_seconds += time.perf_counter() - before
-            if error:
-                stop = "callback_error"
-                break
-            receipt_value = world.trace[-1]["receipt"] if world.trace else None
-            if not receipt_value or not (
-                receipt_value["evidence"]
-                or receipt_value["checks"]
-                or receipt_value["supersessions"]
-            ):
-                stop = "no_progress"
-                break
+        finally:
+            runner._recommend = original_recommend
+            execution_seconds = time.perf_counter() - begin
+            execution_cpu = time.process_time() - execution_cpu_start
         before = time.process_time()
         decision = world.s.plan(state, (), world.budget, world.policy)
         planning_cpu += time.process_time() - before
@@ -1432,6 +1411,8 @@ def trial(task: Task, variant: str, method: str, random_seed: int, frozen: dict)
                     "Repeated bytes or basis are observed counts, not assumed unnecessary work."
                 ),
                 "stop_reason": stop,
+                "runner_stop": stop,
+                "worker_status": "completed",
                 "domain_stop": decision.stop_reason,
                 "exception": error,
                 "snapshot_resume": snapshot_resume,
@@ -1470,12 +1451,13 @@ def trial(task: Task, variant: str, method: str, random_seed: int, frozen: dict)
             }
         )
     finally:
-        _, peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop()
         row.update(
             {
                 "planning_cpu_seconds": planning_cpu,
                 "execution_and_transitions_seconds": execution_seconds,
+                "execution_and_transitions_cpu_seconds": execution_cpu,
+                "controller_wall_seconds": max(0.0, execution_seconds - world.callback_wall),
+                "controller_cpu_seconds": max(0.0, execution_cpu - world.callback_cpu),
                 "callback_wall_seconds": world.callback_wall,
                 "callback_cpu_seconds": world.callback_cpu,
                 "initial_callback_wall_seconds": world.initial_callback_wall,
@@ -1483,7 +1465,7 @@ def trial(task: Task, variant: str, method: str, random_seed: int, frozen: dict)
                 "serialization_seconds": serialization_seconds,
                 "cpu_seconds": time.process_time() - cpu_start,
                 "end_to_end_seconds": time.perf_counter() - started,
-                "peak_traced_python_allocation_bytes": peak,
+                "peak_traced_python_allocation_bytes": None,
             }
         )
         world.directory.cleanup()
@@ -1539,7 +1521,7 @@ def run_trials(
                             "implementation_commit": frozen.get("implementation_commit"),
                             "wheel_sha256": frozen.get(
                                 "baseline_wheel_sha256"
-                                if environment()["package"] == "0.2.0"
+                                if environment()["package"] == manifest()["baseline_version"]
                                 else "wheel_sha256"
                             ),
                             "environment": environment(),
@@ -1607,8 +1589,11 @@ def main() -> None:
     lock.add_argument("--implementation-commit", required=True)
     lock.add_argument("--wheel", type=Path, required=True)
     lock.add_argument("--baseline-wheel", type=Path, required=True)
+    lock.add_argument("--host-record", type=Path)
     run_parser = commands.add_parser("run")
-    run_parser.add_argument("--phase", choices=("development", "holdout"), default="development")
+    run_parser.add_argument(
+        "--phase", choices=("development", "holdout", "regression"), default="development"
+    )
     run_parser.add_argument("--output", type=Path, required=True)
     run_parser.add_argument("--freeze", type=Path)
     run_parser.add_argument("--limit", type=int)
@@ -1626,7 +1611,13 @@ def main() -> None:
         )
         print(json.dumps(result, ensure_ascii=True))
     elif args.command == "freeze":
-        freeze(args.output, args.implementation_commit, args.wheel, args.baseline_wheel)
+        freeze(
+            args.output,
+            args.implementation_commit,
+            args.wheel,
+            args.baseline_wheel,
+            args.host_record,
+        )
     else:
         if args.phase == "holdout" and (args.freeze is None or args.limit is not None):
             parser.error("Holdout requires freeze record and complete frozen task count")

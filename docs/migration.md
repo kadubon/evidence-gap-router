@@ -1,5 +1,42 @@
 # Migrating from 0.1 to 0.2
 
+## 0.2.1 to 0.2.2
+
+Schema remains **2** and existing calls remain available. `step` and `run` add an
+optional keyword-only `selector(state, full_pool, eligible) -> ActionCandidate`.
+Omitting it preserves default routing. A custom selector returns an unchanged
+eligible candidate; all execution, receipt, progress, replanning and stop rules
+remain those of the public runner. Replace hand-written method loops with this
+selection point when comparing ordering. Keep the complete candidate pool, even
+when only one action is selected. See [the exact contract](api.md).
+
+`feasible_actions` includes unmet-gap/necessity and helper eligibility, as well as
+safety/permission/resource checks. Its output order is unchanged declaration
+order, not EGR ranking. Interpret comparisons built on it as additional selection
+value conditional on the common mechanism.
+
+A contradiction-resolution PASS must bind every exact related evidence ID in
+its target/dependencies, and its target must be one of those IDs. Issued, imported,
+reused and reloaded records now undergo the same subject condition. A digest
+alias or resolution fingerprint cannot substitute for omitted input disclosure.
+Structurally valid old snapshots retain inappropriate checks, supersessions,
+FAIL/UNKNOWN, receipts and costs, but those old grounds are inapplicable. A task
+previously reported satisfied from such grounds may reopen. Declare the missing
+inputs and perform an authorized new check/resolution; do not edit the old basis
+or infer that material was checked. Valid full-input imported bases remain usable,
+and unrelated additions need not invalidate them.
+
+The indexed finite helper worklist replaces repeated candidate-path enumeration;
+its cache is confined to a current evaluation. This changes neither permissions
+nor the obligation to record actual callback work. The candidate helper graph is
+separate from the checked-proof graph optimized in 0.2.1.
+
+The [v0.2.1 erratum](benchmark-v0.2.1-erratum.md) preserves original raw files and
+corrects a stop-label artifact without retiming old trials. Worker faults, runner
+stops, domain stops, oracle completion and unknown use/effects are separate fields.
+Do not migrate the old `correct_abstention` flag into a claim of known safe
+abstention. New common-loop measurements are a separate experiment.
+
 ## 0.2.0 to 0.2.1
 
 The SDK/CLI entry points and schema **2** remain. A legitimate old schema-2

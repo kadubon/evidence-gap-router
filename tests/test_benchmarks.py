@@ -223,14 +223,14 @@ def test_common_whole_worker_deadline_retains_unknown_outcomes_for_all_arms(tmp_
     assert all(r["status"] == "timeout" and r["right_censored"] for r in rows)
     assert all(r["oracle"] is None and r["false_satisfied"] is None for r in rows)
     assert all(r["callbacks"] is None and r["implementation_commit"] == "a" * 40 for r in rows)
-    assert not any(p["correct_abstention"] for p in summarize(rows)["parents"])
+    assert not any(p["known_correct_abstention"] for p in summarize(rows)["parents"])
 
 
 def test_version_pairs_keep_compatible_failed_arm_and_separate_unknown_false_satisfied():
     task = next(t for t in generate("development") if t.family == "F6" and t.index == 1)
     new = trial(task, "original", "egr", 0, {})
     old = json.loads(json.dumps(new))
-    old["environment"]["package"] = "0.2.0"
+    old["environment"]["package"] = "0.2.1"
     old.update(status="timeout", timeout=True, oracle=None, false_satisfied=None, callbacks=None)
     summary = summarize([new, old])
     pair = next(p for p in summary["version_comparisons"] if p["family"] == "all")

@@ -12,7 +12,7 @@ Python **3.12 以上** · Apache-2.0 · [English](README.md)
 ## インストールと手元のファイル
 
 ```sh
-python -m pip install evidence-gap-router==0.2.1
+python -m pip install evidence-gap-router==0.2.2
 egr --version
 egr check-data --data ./orders.csv --dictionary ./rules.json --json
 egr demo --json
@@ -92,6 +92,12 @@ factory/callback の例外、不正 receipt、無進捗、上限到達でも状�
 runner の `max_steps_reached` 等と業務上の `satisfied` を混同しません。
 実行した失敗は呼出回数・不明な費用・副作用を保持し、自動 retry しません。
 
+両方に純粋な `selector(state, full_pool, eligible)` を任意指定できます。
+現在適格な候補を変更せず返し、順位選択だけを変えます。完全な有限候補 pool、
+発行、権限/予算、receipt 受付、進捗、停止は共通です。selector の例外や不正な返値は
+呼出前の planning error です。省略時は既定 routing を使います。
+[正確な契約と短い例](docs/api.md)を参照してください。
+
 取得 view には明示した依存資料だけを開示します。同梱例の独立した初回取得は
 依存を宣言しません。検証 view には対象と明示依存資料だけを開示します。
 これはアプリの情報露出規則であり、同一プロセス内の sandbox、
@@ -132,11 +138,18 @@ ID/revision、purpose に結び付きます。契約には ID/scope/revision/acc
 根拠・purpose とホスト許可が必要です。原記録は保持し、同一 receipt の再入力は冪等、
 ID 衝突はエラーにします。
 
+矛盾解消では、関連する正確な evidence ID の一つを対象にし、すべての関連 ID を
+target/dependencies に含めます。発行・取込み・再利用・再読込みで同じ条件を適用し、
+同じ digest の別 ID や一致した fingerprint で欠けた入力を代用しません。
+読込み可能な不適合旧根拠は履歴に残しますが解消には使わず、必要な資料で新しく検証します。
+
 業務上の停止は `satisfied`、`budget_exhausted`、`blocked`、`escalation_required`。
 満足は宣言済み条件と現在 policy に相対的で、業務成功・一般的真理の認定ではありません。
 coverage は分子/分母・scope・policy を示し、正答確率や知能スコアではありません。
 必須要求ゼロは拒否。action・検証・token は別の整数次元で、制約/申告上限のある
 実績不明や外部効果不明は自動継続を止めます。
+実行障害、runner の停止、不確実な未完了停止を、既知の安全な停止として数えません。
+worker 状態・runner 停止・domain 停止・独立 oracle の結果を分けて扱います。
 
 `--json` は機械可読結果を stdout に出します。不正な plan 入力は stdout を出さず
 stderr へエラーを出します。ファイル入力/callback 失敗は状態・費用を含む JSON を
@@ -171,7 +184,7 @@ v0.1 の A01〜A12 を再現し、[監査対応表](docs/audit.md)へ修正・�
 固定順と gap routing を比較し、同等だったケースも残します。
 一般的な AI 改善、コスト削減、知能成長、集合知効果の実証ではありません。
 
-[固定した v0.2.1 benchmark](docs/benchmark.ja.md)は240親課題、強いfeasible baseline、
+[保存した v0.2.1 benchmark](docs/benchmark-v0.2.1.ja.md)は240親課題、強いfeasible baseline、
 独立oracle、生結果を追加します。元の候補順（random は seed 17）の主条件で、
 解決可能145課題の完了は EGR 145、固定順142、verify-first 143、random 145でした。
 全宣言順序・seed を親課題内で平均した完了差の95%区間はいずれも0を含みます。
@@ -179,6 +192,20 @@ v0.1 の A01〜A12 を再現し、[監査対応表](docs/audit.md)へ修正・�
 両者が全反復で成功した選択subsetではcallback数が減る一方、allocation tracing・
 初回import・desktop負荷を含むtrial CPUは増えました。全課題での費用削減推定ではありません。
 固定手順が明らかな仕事には固定pipelineが適し、同等・追加費用・旧版の打切りも残します。
+
+[v0.2.1 訂正](docs/benchmark-v0.2.1-erratum.ja.md)は元 raw の分子分母を再構成しました。
+旧80/95対70/95の停止差は、実行の意味が同じ10件の F7 課題で runner label が違った
+ことによります。修正した定義では各方式とも既知の適切な停止75/95、不確実な未完了5/95、
+実行障害15/95です。不明な検証消費は不明のままです。完了・誤完了の観測は保持し、
+旧来の異なる loop の CPU 値を純粋な順位付け費用として再利用しません。
+
+[現在の実験記録](docs/benchmark.ja.md)は観測済み240課題の回帰セットと、新しく固定する
+確認セットを分けます。方式比較では同じ公開有限 runner を使い、選択だけを変えます。
+共通 `feasible_actions` は権限・上限だけでなく未充足 gap/必要性と helper 適格性も含みます。
+この共通機構を条件とした順位の追加価値を測り、独立 scheduler に対する全体優位を示しません。
+候補 helper の有限 index/worklist と既存の検証済み proof graph は別です。
+手順が確定した仕事には固定 pipeline が適し、対象・前提・再開した check によって
+次の許可された手順が変わる仕事には routing が候補になります。
 
 [実行済みと未確認を分けた検証記録](docs/validation.md)を参照してください。
 CI は Linux/Python 3.12 で 1 回だけ build し、同じ wheel を Windows x64、

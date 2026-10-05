@@ -22,7 +22,7 @@ from .models import (
     Supersession,
     VerificationBasis,
 )
-from .router import _needed_helper_actions, feasible_actions, observe, plan, start
+from .router import _needed_helper_actions, _plan, feasible_actions, observe, plan, start
 
 
 class CallbackView(Record):
@@ -83,6 +83,9 @@ class CallbackView(Record):
 Handler = Callable[[CallbackView], Result]
 CandidateFactory = Callable[[State], tuple[ActionCandidate, ...]]
 Candidates = tuple[ActionCandidate, ...] | CandidateFactory
+ActionSelector = Callable[
+    [State, tuple[ActionCandidate, ...], tuple[ActionCandidate, ...]], ActionCandidate
+]
 RunnerStop = Literal[
     "router_stopped",
     "step_completed",
@@ -123,7 +126,11 @@ def _policy(policy: Policy, handlers: Mapping[str, Handler]) -> Policy:
 
 
 def _recommend(
-    state: State, candidates: Candidates, budget: Budget, policy: Policy
+    state: State,
+    candidates: Candidates,
+    budget: Budget,
+    policy: Policy,
+    selector: ActionSelector | None = None,
 ) -> tuple[Decision, RunnerStop | None, str | None, tuple[ActionCandidate, ...]]:
     try:
         current = candidates(state) if callable(candidates) else candidates
@@ -134,7 +141,12 @@ def _recommend(
             not isinstance(item, ActionCandidate) for item in current
         ):
             raise TypeError("candidates must be a finite tuple of ActionCandidate records")
-        return plan(state, current, budget, policy), None, None, current
+        decision = (
+            plan(state, current, budget, policy)
+            if selector is None
+            else _plan(state, current, budget, policy, selector=selector)
+        )
+        return decision, None, None, current
     except Exception as exc:
         return plan(state, (), budget, policy), "planning_error", f"{type(exc).__name__}: {exc}", ()
 
@@ -235,6 +247,8 @@ def step(
     budget: Budget,
     policy: Policy,
     handlers: Mapping[str, Handler],
+    *,
+    selector: ActionSelector | None = None,
 ) -> StepReport:
     """Recommend and execute at most one registered callback, retaining all state.
 
@@ -242,9 +256,14 @@ def step(
     with the returned state to obtain the next recommendation. A pending attempt
     is never reissued. Factory/start failures happen before invocation and are
     not charged as callback executions; callback uncertainty is recorded.
+    A host ``selector(state, full_pool, eligible)`` may replace ranking only;
+    it must return an unchanged eligible action. All current gates and the full
+    dependency pool remain in force. Selector exceptions are planning failures.
     """
     effective = _policy(policy, handlers)
-    decision, error_stop, error, current = _recommend(state, candidates, budget, effective)
+    decision, error_stop, error, current = _recommend(
+        state, candidates, budget, effective, selector
+    )
     if error_stop is not None:
         return StepReport(state=state, decision=decision, stop_reason=error_stop, error=error)
     return _execute(state, decision, current, budget, effective, handlers)
@@ -325,12 +344,15 @@ def run(
     handlers: Mapping[str, Handler],
     *,
     max_steps: int = 32,
+    selector: ActionSelector | None = None,
 ) -> RunReport:
     """Run at most ``max_steps`` callbacks; return current state on every stop.
 
     New material, check outcomes, or a needed exact input binding count as progress.
     New action/attempt IDs and costs alone do not. This explicit local host does
     not provide background work, forced timeouts, crash recovery or a sandbox.
+    Optional ``selector`` replaces only eligible-action ranking, using the same
+    current planning, issuance, receipt, progress and stop path as the default.
     """
     if isinstance(max_steps, bool) or not isinstance(max_steps, int) or max_steps < 1:
         raise ValueError("max_steps must be a positive finite integer")
@@ -341,7 +363,9 @@ def run(
     for _ in range(max_steps):
         previous_state = state
         before = _progress(state)
-        decision, error_stop, error, current = _recommend(state, candidates, budget, effective)
+        decision, error_stop, error, current = _recommend(
+            state, candidates, budget, effective, selector
+        )
         report = (
             StepReport(state=state, decision=decision, stop_reason=error_stop, error=error)
             if error_stop is not None
@@ -371,7 +395,7 @@ def run(
         if _progress(state) == before and not _binding_progress(
             previous_state, state, current, budget, effective, report.decision.action
         ):
-            decision, stop, error, _ = _recommend(state, candidates, budget, effective)
+            decision, stop, error, _ = _recommend(state, candidates, budget, effective, selector)
             decisions.append(decision)
             return RunReport(
                 state=state,
@@ -383,7 +407,7 @@ def run(
                 or ("router_stopped" if decision.action is None else "no_progress"),
                 error=error,
             )
-    decision, stop, error, _ = _recommend(state, candidates, budget, effective)
+    decision, stop, error, _ = _recommend(state, candidates, budget, effective, selector)
     decisions.append(decision)
     return RunReport(
         state=state,

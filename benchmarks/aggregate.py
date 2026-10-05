@@ -10,6 +10,7 @@ import statistics
 from collections import defaultdict
 from pathlib import Path
 
+from benchmarks.erratum_021 import classify_stop
 from benchmarks.tasks import manifest
 
 
@@ -26,6 +27,53 @@ def paired_interval(differences):
         for _ in range(manifest()["aggregation"]["paired_bootstrap_resamples"])
     )
     return [boots[int(len(boots) * 0.025)], boots[min(len(boots) - 1, int(len(boots) * 0.975))]]
+
+
+def paired_costs(pairs):
+    """Paired parent differences, with explicit subsets and delay assumptions."""
+    costs = {}
+    for name in ("callbacks", "controller_wall_seconds", "controller_cpu_seconds", "cpu_seconds"):
+        differences = [
+            a[name] - b[name]
+            for a, b in pairs
+            if a.get(name) is not None and b.get(name) is not None
+        ]
+        costs[name] = {
+            "paired_parents": len(differences),
+            "difference_egr_minus_baseline": mean(differences),
+            "paired_bootstrap_95_percent_interval": paired_interval(differences),
+        }
+    complete = [
+        (a, b)
+        for a, b in pairs
+        if all(
+            p.get(k) is not None for p in (a, b) for k in ("callbacks", "controller_wall_seconds")
+        )
+    ]
+    sensitivity = []
+    for delay in (0, 0.001, 0.01, 0.1, 1):
+        differences = [
+            a["controller_wall_seconds"]
+            - b["controller_wall_seconds"]
+            + delay * (a["callbacks"] - b["callbacks"])
+            for a, b in complete
+        ]
+        sensitivity.append(
+            {
+                "assumed_equal_callback_delay_seconds": delay,
+                "paired_parents": len(complete),
+                "difference_egr_minus_baseline_seconds": mean(differences),
+                "paired_bootstrap_95_percent_interval": paired_interval(differences),
+            }
+        )
+    return {
+        "metrics": costs,
+        "delay_sensitivity": sensitivity,
+        "scope": (
+            "Both oracle-complete known-cost pairs; success-selected subset. Equal additive "
+            "delay is an assumption, not observed LLM cost or commercial ROI."
+        ),
+    }
 
 
 def summarize(rows: list[dict]) -> dict:
@@ -59,15 +107,7 @@ def summarize(rows: list[dict]) -> dict:
         def cost(name, supported=supported):
             return mean([r[name] for r in supported if r.get(name) is not None])
 
-        def abstained(row):
-            return (
-                row.get("status") == "completed"
-                and not row.get("timeout")
-                and not row.get("exception")
-                and not row.get("router_satisfied")
-                and row.get("stop_reason") == "router_stopped"
-                and row.get("domain_stop") in {"blocked", "budget_exhausted", "escalation_required"}
-            )
+        classification = classify_stop(original or {"status": "unexecuted", "task": first["task"]})
 
         parents.append(
             {
@@ -84,6 +124,12 @@ def summarize(rows: list[dict]) -> dict:
                 "unexecuted": sum(r.get("status") == "unexecuted" for r in variants),
                 "unsupported": sum(r.get("status") == "unsupported" for r in variants),
                 "timeouts": sum(bool(r.get("timeout")) for r in variants),
+                "resource_limits": sum(
+                    r.get("worker_status", r.get("status")) == "resource_limit" for r in variants
+                ),
+                "unavailable_workers": sum(
+                    r.get("worker_status", r.get("status")) == "unavailable" for r in variants
+                ),
                 "exceptions": sum(
                     r.get("status") == "exception"
                     or bool(r.get("exception"))
@@ -92,7 +138,12 @@ def summarize(rows: list[dict]) -> dict:
                 ),
                 "completion": mean([float(completed(r)) for r in supported]) or 0,
                 "primary_original_completion": int(completed(original)) if original else 0,
-                "correct_abstention": int(abstained(original)) if original else 0,
+                "known_correct_abstention": int(classification["known_correct_abstention"]),
+                "uncertain_incomplete_stop": int(classification["uncertain_incomplete_stop"]),
+                "execution_fault": int(classification["execution_fault"]),
+                "erroneous_stop": int(classification["erroneous_stop"]),
+                "terminal_class": classification["terminal_class"],
+                "uncertainty_reasons": classification["uncertainty_reasons"],
                 "false_satisfied": any(r.get("false_satisfied") is True for r in variants),
                 "false_satisfied_trials": sum(r.get("false_satisfied") is True for r in supported),
                 "unassessed_false_satisfied_repetitions": sum(
@@ -108,6 +159,8 @@ def summarize(rows: list[dict]) -> dict:
                 ),
                 "cpu_seconds": cost("cpu_seconds"),
                 "planning_cpu_seconds": cost("planning_cpu_seconds"),
+                "controller_wall_seconds": cost("controller_wall_seconds"),
+                "controller_cpu_seconds": cost("controller_cpu_seconds"),
                 "end_to_end_seconds": cost("end_to_end_seconds"),
                 "peak_traced_python_allocation_bytes": max(
                     (
@@ -157,10 +210,15 @@ def summarize(rows: list[dict]) -> dict:
                     "cluster_mean_completion_rate": mean([p["completion"] for p in solvable]),
                     "false_satisfied_count": sum(p["false_satisfied"] for p in supported),
                     "false_satisfied_denominator": len(supported),
-                    "correct_abstention_numerator": sum(
-                        p["correct_abstention"] for p in stop_tasks
+                    "known_correct_abstention_numerator": sum(
+                        p["known_correct_abstention"] for p in stop_tasks
                     ),
-                    "correct_abstention_denominator": len(stop_tasks),
+                    "known_correct_abstention_denominator": len(stop_tasks),
+                    "uncertain_incomplete_stop_numerator": sum(
+                        p["uncertain_incomplete_stop"] for p in stop_tasks
+                    ),
+                    "execution_fault_numerator": sum(p["execution_fault"] for p in supported),
+                    "semantic_erroneous_stop_numerator": sum(p["erroneous_stop"] for p in solvable),
                     "erroneous_stop_numerator": sum(1 - p["completion"] for p in solvable),
                     "unsupported_repetitions": sum(p["unsupported"] for p in values),
                     "unexecuted_repetitions": sum(p["unexecuted"] for p in values),
@@ -178,6 +236,8 @@ def summarize(rows: list[dict]) -> dict:
                         p["unknown_verification_cost_repetitions"] for p in supported
                     ),
                     "timeout_repetitions": sum(p["timeouts"] for p in values),
+                    "resource_limit_repetitions": sum(p["resource_limits"] for p in values),
+                    "unavailable_worker_repetitions": sum(p["unavailable_workers"] for p in values),
                     "exception_repetitions": sum(p["exceptions"] for p in values),
                     "callbacks_all_tasks_mean": mean(
                         [p["callbacks"] for p in supported if p["callbacks"] is not None]
@@ -202,6 +262,46 @@ def summarize(rows: list[dict]) -> dict:
                             if p["end_to_end_seconds"] is not None
                         ]
                     ),
+                    "controller_wall_seconds_all_tasks_mean": mean(
+                        [
+                            p["controller_wall_seconds"]
+                            for p in supported
+                            if p["controller_wall_seconds"] is not None
+                        ]
+                    ),
+                    "controller_cpu_seconds_all_tasks_mean": mean(
+                        [
+                            p["controller_cpu_seconds"]
+                            for p in supported
+                            if p["controller_cpu_seconds"] is not None
+                        ]
+                    ),
+                    "costs_by_outcome": [
+                        {
+                            "outcome": outcome,
+                            "parents": len(selected),
+                            "known_callback_parents": sum(
+                                p["callbacks"] is not None for p in selected
+                            ),
+                            "callbacks_mean": mean(
+                                [p["callbacks"] for p in selected if p["callbacks"] is not None]
+                            ),
+                            "controller_wall_seconds_mean": mean(
+                                [
+                                    p["controller_wall_seconds"]
+                                    for p in selected
+                                    if p["controller_wall_seconds"] is not None
+                                ]
+                            ),
+                        }
+                        for outcome, selected in (
+                            ("oracle_complete", [p for p in supported if p["completion"] == 1]),
+                            (
+                                "incomplete_or_execution_failure",
+                                [p for p in supported if p["completion"] != 1],
+                            ),
+                        )
+                    ],
                     "peak_traced_python_allocation_bytes_max": max(
                         (
                             p["peak_traced_python_allocation_bytes"]
@@ -252,6 +352,7 @@ def summarize(rows: list[dict]) -> dict:
                         "ties": sum(d == 0 for d in differences),
                         "losses": sum(d < 0 for d in differences),
                         "both_success_cost_subset_parents": len(both),
+                        "paired_costs_on_selected_subset": paired_costs(both),
                         "callback_difference_on_selected_subset": mean(
                             [
                                 a["callbacks"] - b["callbacks"]
@@ -275,12 +376,16 @@ def summarize(rows: list[dict]) -> dict:
     old = {
         p["task_id"]: p
         for p in parents
-        if p["version"] == "0.2.0" and p["method"] == "egr" and p["supported"]
+        if p["version"] == manifest()["baseline_version"]
+        and p["method"] == "egr"
+        and p["supported"]
     }
     new = {
         p["task_id"]: p
         for p in parents
-        if p["version"] == "0.2.1" and p["method"] == "egr" and p["supported"]
+        if p["version"] == manifest()["candidate_version"]
+        and p["method"] == "egr"
+        and p["supported"]
     }
     for family in ["all", *manifest()["families"]]:
         common = [
@@ -297,8 +402,8 @@ def summarize(rows: list[dict]) -> dict:
                 "question": "Q1",
                 "comparison_kind": "matched-version EGR",
                 "family": family,
-                "old_version": "0.2.0",
-                "new_version": "0.2.1",
+                "old_version": manifest()["baseline_version"],
+                "new_version": manifest()["candidate_version"],
                 "compatible_attempted_parents": len(common),
                 "paired_solvable_parents": len(solvable),
                 "completion_difference": mean(differences),
@@ -322,6 +427,7 @@ def summarize(rows: list[dict]) -> dict:
             }
         )
     return {
+        "schema_version": "egr-aggregate-022-1",
         "parents": parents,
         "tables": tables,
         "paired_comparisons": comparisons,
@@ -357,8 +463,11 @@ def summarize(rows: list[dict]) -> dict:
             "Synthetic finite CPU-only experiment; clusters are generated task parents, "
             "not external populations. No LLM accuracy, money saving, independence, "
             "capability growth or intelligence phase claim. Zero observed false-satisfied "
-            "is not zero risk. Method timings include Python-allocation tracing overhead; "
-            "Q3 has separate uninstrumented timing processes."
+            "is not zero risk. All four methods share current necessity/helper gates and "
+            "the public finite runner; ranking is the only method difference. Normal "
+            "timings have no allocation tracing/profile. Proof/helper memory and visits "
+            "are separate processes. The previously observed 240-parent set is a "
+            "regression set; only original/seed17 was rerun."
         ),
     }
 
@@ -380,6 +489,14 @@ def export(rows: list[dict], destination: Path) -> None:
         "random_seed",
         "method",
         "status",
+        "worker_status",
+        "runner_stop",
+        "domain_stop",
+        "terminal_class",
+        "known_correct_abstention",
+        "uncertain_incomplete_stop",
+        "execution_fault",
+        "erroneous_stop",
         "false_satisfied",
         "callbacks",
         "verifications",
@@ -431,9 +548,10 @@ def export(rows: list[dict], destination: Path) -> None:
                 solved_required=assessed.get("solved_required"),
                 required=assessed.get("required"),
             )
+            values.update(classify_stop(row))
             writer.writerow(values)
     lines = [
-        "# v0.2.1 model-free engineering experiment",
+        "# v0.2.2 common-loop regression experiment",
         "",
         summary["limitations"],
         "",

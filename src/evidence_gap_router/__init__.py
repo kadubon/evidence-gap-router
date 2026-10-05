@@ -49,12 +49,13 @@ from .router import (
     resolve,
     start,
 )
-from .runner import CallbackView, RunReport, StepReport, run, step
+from .runner import ActionSelector, CallbackView, RunReport, StepReport, run, step
 
 __all__ = [
     "MAX_JSON_BYTES",
     "MAX_SNAPSHOT_BYTES",
     "ActionCandidate",
+    "ActionSelector",
     "Attempt",
     "Budget",
     "CheckResult",

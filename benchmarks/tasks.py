@@ -43,8 +43,8 @@ class Task:
 
 def generate(phase: str, *, limit: int | None = None) -> tuple[Task, ...]:
     protocol = manifest()
-    if phase not in {"development", "holdout"}:
-        raise ValueError("phase must be development or holdout")
+    if phase not in {"development", "holdout", "regression"}:
+        raise ValueError("phase must be development, holdout or regression")
     count = protocol[f"{phase}_tasks_per_family"]
     if limit is not None:
         if limit < 1 or limit > count:
@@ -107,7 +107,7 @@ def generate(phase: str, *, limit: int | None = None) -> tuple[Task, ...]:
                 raw_valid, minimum_calls = solvable, 4
             tasks.append(
                 Task(
-                    f"{phase}-{family}-{index:02d}",
+                    f"{'holdout' if phase == 'regression' else phase}-{family}-{index:02d}",
                     family,
                     seed,
                     index,

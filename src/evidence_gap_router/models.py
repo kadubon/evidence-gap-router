@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Iterable
 from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
@@ -167,6 +168,42 @@ class Contradiction(IdentifiedRecord):
         if not self.evidence_ids or len(set(self.evidence_ids)) != len(self.evidence_ids):
             raise ValueError("contradiction needs unique evidence targets")
         return self
+
+
+def _contradiction_inputs_match(
+    conflict: Contradiction, target_evidence_id: str, input_evidence_ids: Iterable[str]
+) -> bool:
+    """A fingerprint cannot substitute for disclosure of every exact related ID."""
+    return target_evidence_id in conflict.evidence_ids and set(conflict.evidence_ids).issubset(
+        input_evidence_ids
+    )
+
+
+def _resolution_basis_subject_error(
+    basis: VerificationBasis, subject: CheckResult | Contradiction | None
+) -> str | None:
+    """Match mechanical resolution inputs; history may retain inapplicable old bases."""
+    if basis.purpose == "content":
+        return None
+    if subject is None:
+        return "resolution_target_missing"
+    if subject.id != basis.resolution_target_id or (subject.obligation_id, subject.scope) != (
+        basis.obligation_id,
+        basis.scope,
+    ):
+        return "resolution_target_mismatch"
+    if basis.purpose == "check_resolution":
+        if not isinstance(subject, CheckResult) or subject.target_digest != basis.target.digest:
+            return "resolution_target_mismatch"
+        if subject.basis is None or subject.basis.target.evidence_id != basis.target.evidence_id:
+            return "resolution_subject_id_mismatch_or_unassessed"
+    elif not isinstance(subject, Contradiction) or not _contradiction_inputs_match(
+        subject,
+        basis.target.evidence_id,
+        (basis.target.evidence_id, *(d.evidence_id for d in basis.dependencies)),
+    ):
+        return "resolution_related_evidence_missing"
+    return None
 
 
 class Supersession(IdentifiedRecord):
@@ -422,6 +459,9 @@ class State(Record):
             basis = checked.basis
             if basis is None or basis.purpose == "content":
                 continue
+            # Old typed/imported resolution bases remain history. Their complete
+            # exact-input suitability is assessed by the current-policy router,
+            # rather than filling missing bindings or discarding charged records.
             resolution_records = checks if basis.purpose == "check_resolution" else contradictions
             resolution_target = resolution_records.get(basis.resolution_target_id or "")
             if resolution_target is None or (

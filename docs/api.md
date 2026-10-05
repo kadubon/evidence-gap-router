@@ -1,8 +1,53 @@
-# SDK operations in 0.2.1
+# SDK operations in 0.2.2
 
 The existing `plan`, `start`, `observe`, `resolve`, `step` and `run` signatures
 remain available. Planning is pure. The host controls declarations, registrations,
 callbacks, execution effects and measurements; a snapshot is not authenticated.
+
+## One finite runner, optional pure selection
+
+`step(state, candidates, budget, policy, handlers, *, selector=None)` invokes at
+most one callback. `run(..., max_steps=32, selector=None)` uses the same issuance,
+receipt, progress and replanning path with a finite callback limit. Existing calls
+without a selector retain the default `plan` ordering.
+
+An optional `ActionSelector` has the contract
+`selector(state, full_pool, eligible) -> ActionCandidate`. Both pools are finite
+tuples; `eligible` keeps declaration order. Return an unchanged member of that
+tuple. The runner calls the selector only when there is eligible work. It retains
+the complete pool for dependency/helper eligibility and passes it to issuance;
+passing only the chosen action would lose that context.
+
+For example, pass this function as `selector=first_eligible` to the complete
+[callback example](../README.md#connect-a-callback):
+
+```python
+from evidence_gap_router import ActionCandidate, State
+
+
+def first_eligible(
+    state: State,
+    full_pool: tuple[ActionCandidate, ...],
+    eligible: tuple[ActionCandidate, ...],
+) -> ActionCandidate:
+    return eligible[0]
+```
+
+The host must keep selection pure: it chooses a candidate, rather than invoking
+callbacks, changing policy, mutating material or measuring execution as a side
+effect. Python does not enforce that purity or isolate the function. A selector
+exception, altered candidate or ineligible return is a `planning_error` before
+callback invocation. Handler availability, budget, target/dependency contracts,
+issued-receipt validation, no-progress replanning and step limits remain common.
+An empty receipt is assessed by the same replan path for every selection rule;
+the runner returns `router_stopped` when no eligible action remains and
+`no_progress` when eligible work remains without material progress.
+
+Keep worker execution status, runner stop, domain decision and independent task
+outcome separate. A timeout/exception is an execution fault, and unknown actual
+use, effects or pending execution is an uncertain incomplete stop. Neither is a
+known safe abstention merely because execution halted. A step limit is not a
+forced wall/CPU timeout: the host supplies external process limits when needed.
 
 ## Host invalidation
 
@@ -44,6 +89,17 @@ are insufficient. Old inappropriate alias-resolution history can be retained,
 but cannot erase the original current negative result. A legacy check without
 a recorded subject basis is not retroactively supplied one.
 
+A contradiction-resolution basis must target one of the contradiction's exact
+evidence IDs and include **every related ID** in its target/dependencies. Equal
+digests under other IDs do not fill an omitted input. The same subject condition
+applies to issuance, imported checks, explicit resolution and current acceptance
+after loading. Each binding must still match its owner/scope/digest, current
+contract and required applicability, with authorized checker revision/purpose.
+A matching resolution fingerprint alone does not disclose the related material.
+Old structurally readable checks/events with missing related inputs are retained
+but cannot establish current resolution; no missing dependency or execution cost
+is invented. Legitimate fully bound imported records remain supported.
+
 `resolve(state, event, policy)` retains all resolution history. If an earlier
 ground becomes inapplicable after contract/dependency/check invalidation, a new
 currently applicable dedicated PASS may resolve the reopened issue. Identical
@@ -57,10 +113,19 @@ The same pool must be passed to `start(..., candidates=pool)`; `step`/`run` do t
 Known self-verification prohibited by policy is rejected before invocation.
 
 `feasible_actions(state, candidates, budget, policy)` returns eligible candidates
-in declaration order, applying common execution/acceptance safety gates without
-the gap/provenance ordering of `plan`. It consumes no work and grants no new
-authority. This small shared operation supports explicit host selection and
-fair benchmark baselines; hosts still issue and observe the actual invocation.
+in declaration order. Eligibility includes permissions, resources, current
+acceptance gaps/necessity and exact finite helper paths; it is more than a security
+filter. It excludes `plan`'s gap/provenance ranking, consumes no execution budget
+and grants no new authority. Selecting among these candidates compares ordering
+conditional on that common mechanism, rather than EGR against an independent
+scheduler. Use the runner's selector to keep actual execution and stops common.
+
+The helper candidate graph has an indexed finite AND/OR worklist, distinct from
+the existing checked-proof worklist. Shared prerequisite subproblems are reused
+within the current evaluation, preserving compatible alternatives and grounded
+cycle exits. Memoization is not carried across state, contract, invalidation,
+candidate pool, permission, availability or resource changes. Finite inputs do
+not by themselves guarantee a particular wall time or memory footprint.
 
 ## Bounded serialization and numbers
 

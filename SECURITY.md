@@ -24,12 +24,29 @@ history and costs. Acquisition callbacks have no such event channel. Resolution
 must match the negative check's exact subject even when another ID has the same
 bytes. Preserved old inappropriate resolution history cannot establish acceptance.
 
+In 0.2.2, contradiction resolution requires every exact related evidence ID in
+the pinned target/dependencies, with the target among those IDs. The same subject
+condition applies to issuance, imported check reuse and loaded current acceptance.
+Equal digests or a matching fingerprint do not prove that all material was
+disclosed. Old readable but inappropriate grounds remain history and cannot
+establish resolution; the router does not fabricate inputs or paid execution.
+
 Callback views disclose only explicitly selected material. They do not prevent
 same-process Python code from reading globals, files or other data, and do not
 prove secrecy or statistical independence. The host must enforce real isolation,
 external authentication, access control, timeout and resource controls as needed.
 The finite runner preserves callback uncertainty and never automatically retries
 an unknown effect; it is not crash recovery or exactly-once execution.
+
+The optional host selector in `step`/`run` must return an unchanged currently
+eligible action from the full finite pool. It replaces ordering only; issuance,
+receipt binding, permission/resource gates and stop behavior remain common.
+Purity is a host contract, not a sandbox. Eligibility itself includes declared
+unmet gaps and helper necessity, rather than only security checks. An indexed
+AND/OR helper worklist reuses current-evaluation subproblems without granting
+new authority; finite input is not a universal CPU or memory guarantee.
+Unknown actual use, effects and pending execution stay uncertain. A runner label,
+worker fault or halt alone is not evidence of known safe abstention.
 
 CLI planning input is bounded local operator material. References are not fetched
 and handler strings are not imported. A service receiving untrusted evidence must

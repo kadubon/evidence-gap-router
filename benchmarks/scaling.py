@@ -226,7 +226,7 @@ def worker(size: int, checkers: int, graph: str, mode: str) -> dict:
             }
         )
     else:
-        repeats = 10 if size <= manifest()["scaling"]["small_max_size"] else 1
+        repeats = manifest()["scaling"]["warm_repeats"]
         s.plan(state, (), budget, policy)
         wall = []
         cpu = []
@@ -256,10 +256,12 @@ def worker(size: int, checkers: int, graph: str, mode: str) -> dict:
 
 def frozen_metadata(frozen: dict) -> dict:
     measured = environment()
-    old = measured["package"] == "0.2.0"
+    old = measured["package"] == manifest()["baseline_version"]
     return {
         "environment": measured,
         "implementation_commit": frozen.get("implementation_commit"),
+        "harness_commit": frozen.get("implementation_commit"),
+        "runtime_commit": frozen.get("baseline_runtime_commit" if old else "implementation_commit"),
         "wheel_sha256": frozen.get("baseline_wheel_sha256" if old else "wheel_sha256"),
         "package_sha256": frozen.get(
             "baseline_package_sha256" if old else "candidate_package_sha256"

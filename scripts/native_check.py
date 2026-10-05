@@ -10,6 +10,25 @@ import tempfile
 import tomllib
 from pathlib import Path
 
+SOURCE_ONLY_TESTS = {
+    "test_release_guard.py",
+    "test_package_audit.py",
+    "test_publication_verification.py",
+    "test_benchmarks.py",
+    "test_benchmark_erratum.py",
+    "test_benchmark_loop_022.py",
+    "test_audit_022.py",
+    "test_controller_022.py",
+    "test_helper_scaling_022.py",
+    "test_worker_limits.py",
+    "test_summarize_022.py",
+}
+V022_INSTALLED_TESTS = {
+    "test_v022_helpers.py",
+    "test_v022_resolution.py",
+    "test_v022_selector.py",
+}
+
 
 def call(arguments: list[str], *, cwd: Path) -> None:
     subprocess.run(arguments, cwd=cwd, check=True)
@@ -98,17 +117,15 @@ def main() -> None:
         # These inspect repository orchestration/archives or experiment code.
         # Runtime regressions still run against the installed release wheel;
         # the portable benchmark smoke is exercised separately below.
-        source_tests = {
-            "test_release_guard.py",
-            "test_package_audit.py",
-            "test_publication_verification.py",
-            "test_benchmarks.py",
-        }
         selected = [
-            p for p in sorted((root / "tests").glob("test_*.py")) if p.name not in source_tests
+            p for p in sorted((root / "tests").glob("test_*.py")) if p.name not in SOURCE_ONLY_TESTS
         ]
         if not selected:
             raise ValueError("No installed regression tests selected")
+        if args.version == "0.2.2" and not V022_INSTALLED_TESTS.issubset(
+            {test.name for test in selected}
+        ):
+            raise ValueError("All v0.2.2 runtime regressions must run against the installed wheel")
         for test in selected:
             shutil.copyfile(test, tests / test.name)
         for fixture in (root / "tests").iterdir():
@@ -142,6 +159,9 @@ def main() -> None:
         report.update(
             {
                 "installed_regression_tests": [test.name for test in selected],
+                "source_only_regression_tests": sorted(
+                    name for name in SOURCE_ONLY_TESTS if (root / "tests" / name).is_file()
+                ),
                 "pytest_exit_code": 0,
                 "installed_smoke": "passed",
                 "benchmark": benchmark,

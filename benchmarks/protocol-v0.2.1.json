@@ -1,0 +1,110 @@
+{
+  "protocol": "egr-021-engineering-v1",
+  "questions": {
+    "Q1": "oracle correctness and explicit continuation",
+    "Q2": "matched method utility",
+    "Q3": "controller CPU and memory costs"
+  },
+  "development_seed": 21041,
+  "holdout_seed": 982451653,
+  "development_tasks_per_family": 8,
+  "holdout_tasks_per_family": 30,
+  "families": [
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "F6",
+    "F7",
+    "F8"
+  ],
+  "variants": [
+    "original",
+    "reversed",
+    "renamed"
+  ],
+  "random_seeds": [
+    17,
+    71,
+    191
+  ],
+  "methods": [
+    "egr",
+    "fixed-feasible",
+    "verify-first",
+    "random-feasible"
+  ],
+  "ablations": {
+    "F1": "without-provenance-rank",
+    "F2": "without-gap-rank"
+  },
+  "direct_pipeline_reference_families": [
+    "F6",
+    "F8"
+  ],
+  "initialization": "Actual public start/observe callbacks; initialization costs reported separately and identical across methods. Initial material is explicitly disclosed; no free seed checks.",
+  "candidate_rule": "Finite material recipes. Read each exact ID once. Checks target observed material only, with explicit named dependencies/checkers. Factories inspect State only and never oracle labels or future observations.",
+  "baseline_rule": "Public feasible_actions safety gates, original finite pool preserved for public start; fixed keeps declaration order, verify-first stable verify-before-acquire, random uses seeded choice. No direct Attempt insertion.",
+  "checker_rule": "Parse raw JSON integers/declared rules; compute numeric condition. Special unknown/corrupt inputs produce UNKNOWN/FAIL from raw data. Local CSV/JSON uses actual bytes.",
+  "oracle_rule": "Independent raw arithmetic/exact Decimal/file contract and exact current target/scope/contract/dependency/checker/purpose/resolution fingerprint/receipt checks. Least grounded positive proof; every distinct active required target must be validated, positive aliases collapse while exact negative IDs remain. No plan, coverage, make_basis or private acceptance predicates; finite recipes are DAG dependencies, general cyclic alternatives are runtime regressions.",
+  "family_rules": {
+    "F1": "Repeated and distinct declared origins, 2/3 required origins, invalid raw numbers and unknown declared origin, tight/adequate continuation budgets.",
+    "F2": "Cross-obligation rules, satisfied or optional helper, exact-ID duplicate dependency, 1/2 stages, tight/adequate budgets and unrelated material.",
+    "F3": "1/2/3 required checkers, partial initialized PASS; dedicated self-verification branch has prohibited checker-0 with allowed checker-1 and no named required checker; unavailable checker and capacity 1/2/4.",
+    "F4": "Actual callback history and explicit initial contradiction resolution, then contract revision and re-resolution; host evidence/check invalidation, dependency update, unrelated host seed addition; new invalidation API explicitly unsupported in 0.2.0.",
+    "F5": "Actual FAIL/UNKNOWN history, equal-byte aliases, exact and wrong-alias check resolution, contradiction-specific resolution and unavailable resolution checker.",
+    "F6": "Simple 1/2/3-source fixed pipeline, valid/invalid data, initialized completion and adequate/tight budgets; direct pipeline reference.",
+    "F7": "Missing material/checker, throwing callback/factory, invalid receipt, unknown actual use, no-op and insufficient budget; abstention expected.",
+    "F8": "Local CSV/JSON varying row count, exact Decimal boundaries, duplicates, UTF-8 BOM/CRLF/Unicode path, maximal supported rows and snapshot continuation; direct pipeline reference."
+  },
+  "budget_rule": "Continuation limits: F1 actions=2 tight else8, verifications=sources(2/3), minimum2*(sources-1), unknown-origin mode3/invalid mode4 unsolvable; F2 actions=2 tight else10/verifications4, minimum3 or5 withstage; F3 actions=1 tight else6/verificationsN, partialinitialPASS whenN>1 exceptselfbranch mode2; minimum1 selfbranch else max(1,N-1), missinglastchecker mode3 unsolvable; F4 actions=1 tight else10/verifications4, modes minimum=[2,2,1,3,3,1], stricter-invalid mode4 unsolvable; F5 actions=0 tight else5/verifications3, minimum1 or2 withcontradiction, wrongalias/unavailable resolution unsolvable; F6 sources1 whenmode5 alreadycomplete else1/2/3, actions=1 tight else2*sources/verificationssources, minimum2*(sources-initialchecked), invalid mode4 unsolvable; F7 actions=2+(index%3)/verifications1, specified absent/fault/unknown/no-op tasks unsolvable; F8 actions4/verifications2, minimum4 validrawfiles, duplicateCSVheader mode4 index<12 else duplicateJSONkey. tight iff index%5==0. Numeric/file raw_world_valid is separate from authority/material/budget-aware solvable; initialization costs added equally to total SDK budget and disclosed.",
+  "max_steps": 32,
+  "task_timeout_seconds": 10,
+  "experiment_timeout_seconds": 7200,
+  "scaling": {
+    "graphs": [
+      "chain",
+      "diamond",
+      "branches",
+      "cycle"
+    ],
+    "sizes": [
+      4,
+      8,
+      16,
+      32,
+      64
+    ],
+    "checkers": [
+      1,
+      2,
+      3
+    ],
+    "warmup": 1,
+    "warm_repeats_small": 10,
+    "small_max_size": 8,
+    "large_repeats": 1,
+    "process_timeout_seconds": 3,
+    "max_total_seconds": 1200,
+    "instrumentation": "Separate processes: count actual new base/worklist check/target work and final memo lookups versus old recursive entries with method-specific labels; uninstrumented timing; single tracemalloc memory replay, peak traced Python allocations not RSS. Whole-worker timeouts right-censored, phase unknown.",
+    "small_timing_timeout_seconds": 20
+  },
+  "aggregation": {
+    "primary": "Oracle-confirmed completion/solvable parents, false-satisfied/all evaluated parents",
+    "cluster": "Parent task: variants and random seeds averaged within parent, never independent sample inflation",
+    "paired_bootstrap_seed": 2239,
+    "paired_bootstrap_resamples": 1000,
+    "confidence": 0.95,
+    "cost": "Both-success selected subset with denominator; all-task costs separately; no token/money estimate",
+    "tables": [
+      "overall",
+      "family",
+      "budget"
+    ]
+  },
+  "exclusions": "No outcome-based exclusions. Errors, timeouts, unsupported old API, unexecuted budget-limited trials remain explicit rows. Solvable labels are raw-world and bound-aware, not router status. No LLMs, GPUs or external paid API.",
+  "holdout_rule": "Freeze implementation commit, wheel hashes, manifest and harness hashes, interpreter/dependencies/environment before running holdout. Require installed wheel outside source. Changed implementation/protocol requires a new protocol and unused holdout seed; retain old results.",
+  "baseline_wheel_sha256": "039594d7fc5e39ab7b600c71f54682bb2d46147ba4e69a05a55f255a1806f3bf",
+  "deadline_scope": "Identical whole-worker subprocess deadline for every method/variant/seed (startup/import/trial/serialization included); cap also limited by experiment time remaining. Native smoke direct calls are finite recipes. Timeout oracle/cost unknown, no fabricated zero; startup/import/IPC recorded separately."
+}

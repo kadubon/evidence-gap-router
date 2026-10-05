@@ -12,7 +12,7 @@ Python **3.12 or newer** · Apache-2.0 · [日本語](README.ja.md)
 ## Install and use your own files
 
 ```sh
-python -m pip install evidence-gap-router==0.2.1
+python -m pip install evidence-gap-router==0.2.2
 egr --version
 egr check-data --data ./orders.csv --dictionary ./rules.json --json
 egr demo --json
@@ -150,6 +150,12 @@ from the router's domain stop. Exceptions and invalid receipts retain issued
 attempts, invocation cost and uncertain effects. A pending attempt is never
 reissued. Attempt IDs avoid the entire existing history.
 
+Both accept an optional pure `selector(state, full_pool, eligible)`. It returns
+an unchanged eligible action and replaces ordering only: the complete finite
+pool, issuance, permissions/budget, receipt handling, progress and stops remain
+common. A selector error is a planning failure before invocation. Omitting it
+keeps the default routing. See the [selector example and contract](docs/api.md).
+
 Acquisition views disclose only explicitly declared dependencies; the bundled
 independent initial reads declare none. A verification view receives its declared
 target and exact dependency material. Views are frozen
@@ -245,6 +251,12 @@ Resolution needs host permission and a matching target/fingerprint/basis. Generi
 content PASS cannot resolve a contradiction. All original records remain visible;
 identical receipt replay is idempotent and ID collisions fail.
 
+Contradiction resolution must target one related exact evidence ID and disclose
+every related ID in its target/dependencies. Issued, imported, reused and loaded
+grounds use the same condition. Equal digests and a matching fingerprint cannot
+substitute for missing inputs. Old readable inappropriate grounds remain history
+and cannot close the issue; a new authorized check must use the missing material.
+
 Router stops remain `satisfied`, `budget_exhausted`, `blocked` and
 `escalation_required`. Satisfaction is relative to declared required conditions
 and current host policy. Coverage reports its numerator, denominator, scopes and
@@ -252,6 +264,8 @@ policy; it is not a correctness probability or intelligence score. States with z
 obligations are rejected. Actions, verifications and optional tokens remain separate
 integer dimensions; unknown budgeted/bounded actual consumption and uncertain
 execution effects stop automatic continuation.
+An execution fault, runner halt or uncertain incomplete stop is not a known safe
+abstention. Keep worker status, runner stop, domain stop and oracle outcome separate.
 
 The host owns authentic checker registration, input trust, costs, permissions,
 external effects, timeouts and single-writer consistency. Structurally valid JSON
@@ -285,7 +299,7 @@ The [comparison](docs/comparison.md) records fixed-order and gap-routing outcome
 from the same materials, checker, callbacks and limits. These finite model-free
 examples do not establish general AI improvement, cost savings or intelligence growth.
 
-The [frozen v0.2.1 benchmark](docs/benchmark.md) adds 240 generated parents,
+The [preserved v0.2.1 benchmark](docs/benchmark-v0.2.1.md) adds 240 generated parents,
 strong feasible baselines, an independent oracle and retained raw results.
 In original-order runs (random seed 17), completion among 145 solvable parents
 was EGR 145, fixed 142, verify-first 143 and random 145. The 95% intervals for
@@ -296,6 +310,24 @@ with allocation tracing enabled, including cold imports and desktop noise;
 this is not an all-task savings estimate. Simple fixed pipelines remain
 appropriate for predetermined work; the report retains ties, overhead and
 bounded old-version performance failures.
+
+The [v0.2.1 erratum](docs/benchmark-v0.2.1-erratum.md) reconstructs the original raw
+counts: the reported 80/95 versus 70/95 stop difference came from ten identical
+F7 execution meanings with different runner labels. Every main method has 75/95
+known correct abstentions, 5/95 uncertain incomplete stops and 15/95 execution
+faults under the corrected definition. Unknown verification use is still unknown.
+Completion and false-satisfaction observations are retained; old unequal-loop
+CPU values remain historical observations, not pure ranking costs.
+
+The [current experiment report](docs/benchmark.md) separates the observed old
+240-task regression set from a new frozen confirmation set. Method comparison
+uses the same public finite runner, changing only selection. Its common
+`feasible_actions` mechanism includes unmet-gap/necessity and helper eligibility,
+as well as permissions and bounds: it measures additional ordering value within
+that mechanism, not EGR versus an independent scheduler. Indexed candidate-helper
+evaluation is distinct from the existing checked-proof worklist. Fixed pipelines
+remain suitable when steps are known; routing is useful when the next permitted
+step depends on current targets, evidence, prerequisites or reopened checks.
 
 [Validation profiles](docs/validation.md) distinguish executed results from planned
 profiles. CI builds once on Linux/Python 3.12, installs the same wheel on Windows
