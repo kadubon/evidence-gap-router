@@ -63,6 +63,13 @@ to make a model trial succeed.
 
 ## Limits
 
+The final pre-confirmation source revision passed 683 tests in 28.18 seconds,
+Ruff check/format and mypy. The added ten raw-extraction regressions reject
+escaped paths, symlinks, case collisions, Windows special names/streams,
+incorrect archive hashes, oversized expansion and existing destinations.
+They are source-only checks, separate from the unchanged 296 installed SDK
+regressions and 210 portable optional-experiment contracts.
+
 Fake HTTP checks establish local transport and ledger contracts. They do not
 establish live-model correctness or speed. Process-handle evidence is supplied
 by the trusted local host, not cryptographic authentication. Resource samples

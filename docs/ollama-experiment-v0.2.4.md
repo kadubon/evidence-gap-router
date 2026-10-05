@@ -1,8 +1,8 @@
 # Local Ollama experiment — v0.2.4
 
-The final development calibration has completed; the separate end-to-end pilot
-is running. Primary A/B/C and stop-policy measurements have not started.
-Qwen completes the current CPU measurement path. That is not a routing advantage.
+Calibration and the separate 24-trial pilot have completed. The frozen 16-parent
+confirmation is running, followed by 64 fresh stop-policy trials. Qwen completes
+the current CPU measurement path. That is not a routing advantage.
 
 Both current local models completed two reader/integrator/reviewer rounds,
 including a longer input and a changed Q fact. Every operation has a known
@@ -115,11 +115,45 @@ supported completion are distinct. The last maps to the old
 unknown usage and unexecuted trials remain distinct. A recorded check is not a
 semantic guarantee; a short fixed workflow may suffice when all records fit.
 
-Primary settings will be frozen after the four-parent/24-trial pilot and actual
-template/tokenizer input-room checks. The largest 24/16 balanced profile must
-fit speed/resources including 64 fresh sensitivity trials. One seed per
+Primary settings were frozen after the four-parent/24-trial pilot and actual
+template/tokenizer input-room checks. The balanced 16-parent profile fits
+speed/resources including 64 fresh sensitivity trials. One seed per
 parent/model/arm, shuffled parents, counterbalanced arms, Qwen first and 2,000
 prespecified parent-bootstrap resamples are used. Small-N intervals are descriptive.
+
+### Completed pilot and context checks
+
+| Model | Arm | Terminal /4 | Answer correct /4 | Grounded independent of review /4 | Verified complete /4 | Paid calls |
+|---|---|---:|---:|---:|---:|---:|
+| Qwen | A | 4 | 1 | 0 | 0 | 12 |
+| Qwen | B | 4 | 3 | 2 | 1 | 19 |
+| Qwen | C | 4 | 4 | 4 | 4 | 8 |
+| Gemma | A | 4 | 2 | 2 | 0 | 29 |
+| Gemma | B | 4 | 4 | 4 | 0 | 19 |
+| Gemma | C | 4 | 4 | 3 | 0 | 8 |
+
+All 95 pilot calls have known usage: 12,621 generated / 69,525 total tokens.
+One Qwen B trial retains a schema fault and its paid repair. C shows a usable
+Qwen path and a Gemma final-acceptance floor despite mostly grounded answers;
+Gemma routing results therefore remain diagnostic. No criterion was lowered.
+These four development parents are excluded from primary denominators.
+
+The pinned debug-render branch returns before inference. Its rendered template
+and the actual owned llama-server tokenizer checked 765 full-public base and
+previously paid inputs, with full output-cap room: maxima Qwen 3,506 and Gemma
+3,630 versus context 8,192. Two empty preloads were charged, zero generation
+requests made. This does not assert arbitrary maximum-length schema strings fit;
+dynamic over-context input is rejected by `truncate:false`/`shift:false`.
+
+Freeze selects 16 parents: 12 answerable / four insufficient, four per family,
+96 main trials and 64 fresh sensitivity trials. Under ten calls/trial and the
+maximum selected cap 2,048, the 24-parent plan would reserve 4,259,840 generated
+tokens before development, exceeding four million. The 16-parent plan bounds
+future generated tokens at 3,276,800; 3,920,551 remain at freeze. This is a
+resource decision, not an A−B result decision. Predetermined parents 4/5 in each
+family are excluded before confirmation; their XOR, waiver, explicit exception,
+destination and other variants are not live-confirmed here. Task families are
+shared with development; fresh instances are not held-out reasoning families.
 
 ## Measurement and publication boundary
 
@@ -127,8 +161,11 @@ The measured ordinary outside-checkout candidate wheel SHA256 is
 `715b2785d3dab1f8b2b7076f8307efdc7fa6105547e5fbf5f0093b4701dec80c`;
 its 25-file runtime fingerprint is
 `cd0ac5397f5636fb797e9ec5e64ae740bbc3d4130b120d5c4ed73fd8ade4fbc9`.
-Runtime/harness bytes use exact canonical Git LF equality. Main freeze,
-custom live example, final native CI and public downloads are pending.
+Runtime/harness bytes use exact canonical Git LF equality. Main freeze binds
+implementation `bb6304e2f8b58b98feb9ce3010a0b8e2055eae57`; freeze SHA256 is
+`f4268bcd25bac6d1d152e2d59e6f06bce61f967be1373cad9d553623297d4061`.
+Final main/sensitivity outcomes, custom live example, native CI and public
+downloads are pending at this source snapshot.
 The old v0.2.3 unknown Qwen request stays unknown in its original ledger.
 
 See [the source-level guide](ollama-guide.md), [audit](audit-024.md) and

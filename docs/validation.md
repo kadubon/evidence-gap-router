@@ -2,6 +2,14 @@
 
 ## v0.2.4 development validation
 
+Immediately before confirmation, `bb6304e2f8b58b98feb9ce3010a0b8e2055eae57`
+passed **683 source tests in 28.18 seconds**, Ruff check/format (119 Python
+files) and mypy (14 SDK modules). The measured ordinary candidate's latest
+native Windows check passed 296 SDK regressions, 210 portable contracts,
+44 benchmark-smoke trials and three complete example documents. Later complete
+README/getting-started copies were again executed outside the checkout with
+182 local links checked. No live inference belongs to these test counts.
+
 The unchanged v0.2.3 source passed 630 tests on Windows x64 / Python 3.12.14.
 Its fresh official wheel passed 296 installed SDK regressions, 172 portable
 fake-HTTP contracts and smoke. These are model-free checks.

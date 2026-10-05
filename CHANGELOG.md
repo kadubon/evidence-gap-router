@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.4
+
+- Keep Python >=3.12 and existing core acceptance/continuation semantics.
+  The optional Ollama controller now uses finite long-response deadlines,
+  durable campaign clocks and receipts, retained unknown reservations and
+  native owned-process exit proof for bounded recovery.
+- Clarify artificial task contracts and independent minimal-witness scoring;
+  separate answer correctness, grounding, review and current accepted completion.
+  Common bounded paid format repair and fresh stop-policy comparisons preserve
+  every original result and expense. Existing experiment archives are unchanged.
+- Reorganize English/Japanese entry points, execute ordinary installed callback
+  and UTF-8 file examples, and add hash-pinned bounded raw extraction/reanalysis.
+  See the current experiment reports for measured conditions and limitations.
+
 ## 0.2.3
 
 - Correct the English/Japanese continuation example's import path, verified against

@@ -1,0 +1,1299 @@
+{
+  "candidate_package_sha256": "cd0ac5397f5636fb797e9ec5e64ae740bbc3d4130b120d5c4ed73fd8ade4fbc9",
+  "candidate_wheel_sha256": "715b2785d3dab1f8b2b7076f8307efdc7fa6105547e5fbf5f0093b4701dec80c",
+  "evaluation_only_gold_sha256": "f0848e2798f716e7aa01767a2b5a3b13caa1c168d9722f6589e9e8230c46f4a1",
+  "excluded_parent_ids": [
+    "confirmation024-L1-4",
+    "confirmation024-L1-5",
+    "confirmation024-L2-4",
+    "confirmation024-L2-5",
+    "confirmation024-L3-4",
+    "confirmation024-L3-5",
+    "confirmation024-L4-4",
+    "confirmation024-L4-5"
+  ],
+  "exclusion_reason": "Predeclared balanced profile chosen from speed/resource budgets",
+  "harness_files": {
+    "__init__.py": "0df1f307e9326e624e0b18cccbc15ab7fec0b76ef1e3d06cbca0cc89b94d3298",
+    "analysis.py": "5754cfd0fdbd70d31adf7d66762aed6caa0026170cb6a25fed49d0724db5797d",
+    "cli.py": "e043918da02f8fa6483b3ace42adc79568d63c7402f3f18efcb595336510bf4d",
+    "client.py": "c8c19b13bbef3e6d4b0d8258833bc21da7fe6283c309e25abb2180fdc56e6dc0",
+    "environment.py": "7cbd4efff55ecf493ebe665af14d856adbd7b5d0615e28a2952315ed81eeb740",
+    "harness.py": "44e10196b9a09cde3754126c1a3f5cc581e565c63358d42ce9f266600e9c62c1",
+    "oracle.py": "bfb7cfb24b1248f27c3276f9e332c7a02f11974ca6a71118b0bbef7e8d9b8116",
+    "ownership.py": "5714f731f1dc3f5cef129af27991fc47d421765cc27fdad39e85fabed0b8d995",
+    "prompts.py": "8ec5aa45c57f63b43b82f5314b468b5fca7aab4220213ca42878ea6c1c0628a6",
+    "tasks.py": "788ba7bbd3a9f6ea544a6fb868f57d9b9ffd1d0b84785807664460bd2748ce37"
+  },
+  "harness_sha256": "09415c373e1db3ad7a3e1528db609710142e9165ffe876dc38749de61e345bc5",
+  "implementation_commit": "bb6304e2f8b58b98feb9ce3010a0b8e2055eae57",
+  "input_provenance": "new artificial parents, distinct from the older model-free regression",
+  "installed_runtime": {
+    "package_sha256": "cd0ac5397f5636fb797e9ec5e64ae740bbc3d4130b120d5c4ed73fd8ade4fbc9",
+    "pydantic": "2.13.5",
+    "pydantic_core": "2.46.5",
+    "python": "3.12.14",
+    "sdk_import_scope": "outside-repository/site-packages",
+    "sdk_version": "0.2.4"
+  },
+  "ledger_sha256_at_freeze": "3787465c9aeacc5a55f4ac77ccbf5da3188d8502b74b5941837c6a14946882e6",
+  "limits": {
+    "calls": 4000,
+    "disk_bytes": 4294967296,
+    "generated_tokens": 4000000,
+    "total_tokens": 40000000,
+    "wall_seconds": 172800
+  },
+  "manifest_sha256": "0a9ee79369effcfd635fa3632927e30a62fe45b0af360896ebe81a41154e3e35",
+  "no_result_based_profile_choice": true,
+  "original_first_reservation_epoch": 1791212209.9767654,
+  "planned_auxiliary_source_keys": [],
+  "planned_sensitivity_keys": [
+    {
+      "arm": "A",
+      "key": "sensitivity-strict-qwen-confirmation024-L4-1-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-1"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-strict-qwen-confirmation024-L4-1-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-1"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-strict-qwen-confirmation024-L1-1-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-1"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-strict-qwen-confirmation024-L1-1-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-1"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-strict-qwen-confirmation024-L4-6-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-6"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-strict-qwen-confirmation024-L4-6-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-6"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-strict-qwen-confirmation024-L2-6-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-6"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-strict-qwen-confirmation024-L2-6-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-6"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-strict-qwen-confirmation024-L2-1-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-1"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-strict-qwen-confirmation024-L2-1-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-1"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-strict-qwen-confirmation024-L1-6-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-6"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-strict-qwen-confirmation024-L1-6-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-6"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-strict-qwen-confirmation024-L3-1-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-1"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-strict-qwen-confirmation024-L3-1-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-1"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-strict-qwen-confirmation024-L3-6-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-6"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-strict-qwen-confirmation024-L3-6-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-6"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-strict-gemma-confirmation024-L4-1-A-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-1"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-strict-gemma-confirmation024-L4-1-B-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-1"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-strict-gemma-confirmation024-L1-1-B-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-1"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-strict-gemma-confirmation024-L1-1-A-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-1"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-strict-gemma-confirmation024-L4-6-A-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-6"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-strict-gemma-confirmation024-L4-6-B-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-6"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-strict-gemma-confirmation024-L2-6-A-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-6"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-strict-gemma-confirmation024-L2-6-B-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-6"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-strict-gemma-confirmation024-L2-1-B-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-1"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-strict-gemma-confirmation024-L2-1-A-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-1"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-strict-gemma-confirmation024-L1-6-B-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-6"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-strict-gemma-confirmation024-L1-6-A-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-6"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-strict-gemma-confirmation024-L3-1-A-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-1"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-strict-gemma-confirmation024-L3-1-B-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-1"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-strict-gemma-confirmation024-L3-6-B-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-6"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-strict-gemma-confirmation024-L3-6-A-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-strict",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-6"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-bounded-qwen-confirmation024-L4-6-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-6"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-bounded-qwen-confirmation024-L4-6-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-6"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-bounded-qwen-confirmation024-L2-1-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-1"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-bounded-qwen-confirmation024-L2-1-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-1"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-bounded-qwen-confirmation024-L1-6-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-6"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-bounded-qwen-confirmation024-L1-6-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-6"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-bounded-qwen-confirmation024-L3-1-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-1"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-bounded-qwen-confirmation024-L3-1-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-1"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-bounded-qwen-confirmation024-L4-1-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-1"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-bounded-qwen-confirmation024-L4-1-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-1"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-bounded-qwen-confirmation024-L1-1-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-1"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-bounded-qwen-confirmation024-L1-1-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-1"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-bounded-qwen-confirmation024-L2-6-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-6"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-bounded-qwen-confirmation024-L2-6-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-6"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-bounded-qwen-confirmation024-L3-6-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-6"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-bounded-qwen-confirmation024-L3-6-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-6"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-bounded-gemma-confirmation024-L4-6-A-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-6"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-bounded-gemma-confirmation024-L4-6-B-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-6"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-bounded-gemma-confirmation024-L2-1-B-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-1"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-bounded-gemma-confirmation024-L2-1-A-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-1"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-bounded-gemma-confirmation024-L1-6-A-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-6"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-bounded-gemma-confirmation024-L1-6-B-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-6"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-bounded-gemma-confirmation024-L3-1-A-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-1"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-bounded-gemma-confirmation024-L3-1-B-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-1"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-bounded-gemma-confirmation024-L4-1-B-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-1"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-bounded-gemma-confirmation024-L4-1-A-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-1"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-bounded-gemma-confirmation024-L1-1-B-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-1"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-bounded-gemma-confirmation024-L1-1-A-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-1"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-bounded-gemma-confirmation024-L2-6-A-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-6"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-bounded-gemma-confirmation024-L2-6-B-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-6"
+    },
+    {
+      "arm": "B",
+      "key": "sensitivity-bounded-gemma-confirmation024-L3-6-B-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-6"
+    },
+    {
+      "arm": "A",
+      "key": "sensitivity-bounded-gemma-confirmation024-L3-6-A-24041017",
+      "model": "gemma4:e4b",
+      "phase": "sensitivity-bounded",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-6"
+    }
+  ],
+  "planned_trial_keys": [
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation024-L2-1-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation024-L2-1-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-1"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation024-L2-1-C-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation024-L3-3-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-3"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation024-L3-3-C-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-3"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation024-L3-3-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-3"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation024-L2-2-C-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-2"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation024-L2-2-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-2"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation024-L2-2-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-2"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation024-L1-6-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-6"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation024-L1-6-C-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-6"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation024-L1-6-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-6"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation024-L4-2-C-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-2"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation024-L4-2-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-2"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation024-L4-2-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-2"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation024-L3-2-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-2"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation024-L3-2-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-2"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation024-L3-2-C-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-2"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation024-L4-1-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation024-L4-1-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-1"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation024-L4-1-C-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation024-L3-1-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-1"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation024-L3-1-C-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-1"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation024-L3-1-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-1"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation024-L1-1-C-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-1"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation024-L1-1-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation024-L1-1-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-1"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation024-L4-6-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-6"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation024-L4-6-C-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-6"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation024-L4-6-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-6"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation024-L2-6-C-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-6"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation024-L2-6-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-6"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation024-L2-6-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-6"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation024-L3-6-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-6"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation024-L3-6-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-6"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation024-L3-6-C-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-6"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation024-L1-2-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-2"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation024-L1-2-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-2"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation024-L1-2-C-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-2"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation024-L1-3-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-3"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation024-L1-3-C-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-3"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation024-L1-3-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-3"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation024-L2-3-C-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-3"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation024-L2-3-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-3"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation024-L2-3-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-3"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-qwen-confirmation024-L4-3-A-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-3"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-qwen-confirmation024-L4-3-C-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-3"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-qwen-confirmation024-L4-3-B-24041017",
+      "model": "qwen3.6:35b-a3b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-3"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation024-L2-1-A-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation024-L2-1-B-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-1"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation024-L2-1-C-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation024-L3-3-B-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-3"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation024-L3-3-C-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-3"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation024-L3-3-A-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-3"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation024-L2-2-C-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-2"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation024-L2-2-A-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-2"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation024-L2-2-B-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-2"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation024-L1-6-A-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-6"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation024-L1-6-C-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-6"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation024-L1-6-B-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-6"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation024-L4-2-C-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-2"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation024-L4-2-B-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-2"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation024-L4-2-A-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-2"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation024-L3-2-B-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-2"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation024-L3-2-A-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-2"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation024-L3-2-C-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-2"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation024-L4-1-A-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation024-L4-1-B-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-1"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation024-L4-1-C-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation024-L3-1-B-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-1"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation024-L3-1-C-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-1"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation024-L3-1-A-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-1"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation024-L1-1-C-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-1"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation024-L1-1-A-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-1"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation024-L1-1-B-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-1"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation024-L4-6-A-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-6"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation024-L4-6-C-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-6"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation024-L4-6-B-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-6"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation024-L2-6-C-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-6"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation024-L2-6-B-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-6"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation024-L2-6-A-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-6"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation024-L3-6-B-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-6"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation024-L3-6-A-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-6"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation024-L3-6-C-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L3-6"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation024-L1-2-A-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-2"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation024-L1-2-B-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-2"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation024-L1-2-C-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-2"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation024-L1-3-B-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-3"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation024-L1-3-C-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-3"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation024-L1-3-A-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L1-3"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation024-L2-3-C-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-3"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation024-L2-3-A-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-3"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation024-L2-3-B-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L2-3"
+    },
+    {
+      "arm": "A",
+      "key": "confirmation-gemma-confirmation024-L4-3-A-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-3"
+    },
+    {
+      "arm": "C",
+      "key": "confirmation-gemma-confirmation024-L4-3-C-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-3"
+    },
+    {
+      "arm": "B",
+      "key": "confirmation-gemma-confirmation024-L4-3-B-24041017",
+      "model": "gemma4:e4b",
+      "seed": 24041017,
+      "task_id": "confirmation024-L4-3"
+    }
+  ],
+  "preflight_sha256": "85357a51f7c6b4683a1cf7f1b04a8a354946d99cfcee96a713f539ce2c231eec",
+  "protocol_file": "protocol-v0.2.4.json",
+  "protocol_id": "egr-024-local-ollama-v1",
+  "public_tasks_sha256": "9ab8c7e2e383d6de04f4797dd5f8c2fde6eac476eb95eb7d0646d304a5308cf1",
+  "remaining_calls_at_freeze": 3477,
+  "remaining_generated_tokens_at_freeze": 3920551,
+  "remaining_total_tokens_at_freeze": 39578094,
+  "remaining_wall_at_freeze_seconds": 160813.94007778168,
+  "runtime_decode": {
+    "connect_timeout_seconds": 30,
+    "gemma_wall_seconds": 900,
+    "keep_alive": "60m",
+    "maximum_request_wall_seconds": 3600,
+    "num_ctx": 8192,
+    "num_predict": 4096,
+    "preload_wall_seconds": 1800,
+    "qwen_wall_seconds": 1800,
+    "read_until_deadline": true,
+    "shift": false,
+    "stream": false,
+    "temperature": 0.0,
+    "think": false,
+    "truncate": false
+  },
+  "selected_parent_count": 16,
+  "selected_settings": {
+    "actions": 32,
+    "calls": 10,
+    "context": 8192,
+    "format_repairs": 2,
+    "integrator_cap": 1536,
+    "reader_cap": 1024,
+    "repair_cap": 1024,
+    "reviewer_cap": 2048,
+    "verifications": 16
+  },
+  "selected_settings_sha256": "a987d740f12f39a74efa3bee5f346c34ac219befdcc6db01d0cecdc9baccd132",
+  "speed_only_profile_forecast_request_seconds": {
+    "gemma4:e4b": {
+      "missing_per_request_overhead_records": 0,
+      "observed_overhead_max_seconds": 1.7660000000032596,
+      "once_per_model_load_seconds": 21.7868207,
+      "per_request_seconds": 41.19959490000134,
+      "unknown_load_records": 0
+    },
+    "qwen3.6:35b-a3b": {
+      "missing_per_request_overhead_records": 0,
+      "observed_overhead_max_seconds": 2.062999999994645,
+      "once_per_model_load_seconds": 112.39100000000326,
+      "per_request_seconds": 48.044623899991386,
+      "unknown_load_records": 0
+    }
+  },
+  "trial_budget": {
+    "limits": {
+      "actions": 32,
+      "tokens": 102400,
+      "verifications": 16
+    }
+  }
+}
