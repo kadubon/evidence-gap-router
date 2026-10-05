@@ -3,9 +3,13 @@
 Baseline: tag `v0.2.1`, commit
 `3e6a547dd38af9668115aaad9d9d30129c018c1b`, official wheel SHA256
 `61129ec160c6c9d718f5173fa0281cdcc735cfdc9222138f45584a6b71202917`.
-The original 260 source tests passed before changes. New formal installed-version
-audit/measurement results are recorded separately after execution; this map
-describes the defects, implemented contracts and regression assertions.
+The original 260 source tests passed before changes. The frozen installed-version
+audit now meets14/14 candidate properties versus11/14 old properties, with no
+unassessed cases or case exceptions. The three old failures are partial external
+resolution basis, same-digest related alias and retained partial resolution history;
+legitimate full-input grounds remain usable. This map describes implemented
+contracts and regression assertions; the [formal report](benchmark.md) separately
+records helper censors, reference scope and common-loop comparison effects.
 
 | Audit item | Cause and correction | Meaningful regressions | Boundary |
 | --- | --- | --- | --- |

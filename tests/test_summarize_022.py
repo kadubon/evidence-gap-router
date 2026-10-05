@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import copy
 import json
+import sys
+from pathlib import Path
 
 import pytest
 
-from benchmarks.summarize_022 import render, summarize
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from benchmarks.summarize_022 import render, summarize  # noqa: E402
 
 
 def proof(version, *, size=4, mode="time", status="completed", **fields):

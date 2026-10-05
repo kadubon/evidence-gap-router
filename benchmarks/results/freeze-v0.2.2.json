@@ -1,0 +1,40 @@
+{
+  "protocol": "egr-022-engineering-v1",
+  "implementation_commit": "08c81a2387db7047b9599d153f48893e510fe85d",
+  "manifest_sha256": "4a0ef6b5d7fdcd474f260aba124851ca96d0b55b705ee58dd7d1a84ad7ff7faf",
+  "harness_sha256": "32512950572d2f78280f5fbda505d6c94a67e44c3c9d60337466f2bbde55aba5",
+  "candidate_wheel": "C:\\Users\\1991m\\AppData\\Local\\Temp\\egr-022-evaluation\\candidate-dist\\evidence_gap_router-0.2.2-py3-none-any.whl",
+  "wheel_sha256": "66b4cad4d4f80c81871c0caf6daa28c472d5fabef310a429bc59e2f85e6059e9",
+  "baseline_wheel": "C:\\Users\\1991m\\AppData\\Local\\Temp\\egr-021-evaluation\\official-0.2.1-37272621604\\evidence_gap_router-0.2.1-py3-none-any.whl",
+  "baseline_wheel_sha256": "61129ec160c6c9d718f5173fa0281cdcc735cfdc9222138f45584a6b71202917",
+  "baseline_runtime_commit": "3e6a547dd38af9668115aaad9d9d30129c018c1b",
+  "candidate_package_sha256": "b74c3e906270813246c3871e71a32c40900bbf4bfdc5a7d21577880fddec2afe",
+  "baseline_package_sha256": "5df6a0b5e7c521079e29475950addf6e1b84d62b3f3c70033307a82643e8341a",
+  "package_fingerprint_definition": "SHA256 of canonical sorted package-relative filename -> SHA256(bytes) JSON; UTF-8, separators=(',',':'), excludes generated __pycache__.",
+  "environment": {
+    "python": "3.12.14",
+    "os": "Windows-11-10.0.26300-SP0",
+    "machine": "AMD64",
+    "package": "0.2.2",
+    "package_import": "C:\\Users\\1991m\\AppData\\Local\\Temp\\egr-022-evaluation\\candidate-env\\Lib\\site-packages\\evidence_gap_router\\__init__.py",
+    "pydantic": "2.13.5",
+    "pydantic_core": "2.46.5",
+    "runtime_dependencies": {
+      "pydantic": "2.13.5",
+      "pydantic_core": "2.46.5",
+      "annotated-types": "0.8.0",
+      "typing-extensions": "4.16.0",
+      "typing-inspection": "0.4.4"
+    }
+  },
+  "measurement_host": {
+    "cpu": {
+      "Name": "AMD Ryzen 7 8840HS w/ Radeon 780M Graphics     ",
+      "NumberOfCores": 8,
+      "NumberOfLogicalProcessors": 16
+    },
+    "power_scheme": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
+    "measurement_control": "Serial workers; development/testing/writing completed before formal measurement. Codex desktop remains active; no affinity, priority, thermal or background-service control. Unknown load distribution and power-frequency variation retained as limits."
+  },
+  "frozen_at_utc": "2026-10-05T09:07:39Z"
+}

@@ -1,0 +1,313 @@
+{
+  "assets": {
+    "baseline/evidence_gap_router-0.2.1-py3-none-any.whl": {
+      "bytes": 61951,
+      "sha256": "61129ec160c6c9d718f5173fa0281cdcc735cfdc9222138f45584a6b71202917"
+    },
+    "baseline/evidence_gap_router-0.2.1.tar.gz": {
+      "bytes": 309316,
+      "sha256": "181faf12cf2eda0a812efabd639ad7748e1614a386d4244111dca3a7305474b9"
+    },
+    "benchmarks/__init__.py": {
+      "bytes": 75,
+      "sha256": "4fb811ab8e0f3a12ef8debdb5ae5adab1f8016abe67ff9adc759da5346fedf2d"
+    },
+    "benchmarks/aggregate.py": {
+      "bytes": 30070,
+      "sha256": "2bda76c18870d3b19e61b464d7475ae13f84e1df3028cb4a3f57073cae15c247"
+    },
+    "benchmarks/audit_022.py": {
+      "bytes": 30461,
+      "sha256": "5138beea9665d8b3181b208268e09a594fee07761d4339f5ed23db75585c42ec"
+    },
+    "benchmarks/controller_022.py": {
+      "bytes": 14719,
+      "sha256": "01eafc251173de8499cb3a373372bf02e8230f8c71705eced757ba804b6cd3c0"
+    },
+    "benchmarks/erratum_021.py": {
+      "bytes": 19729,
+      "sha256": "6f261768100731b45ff413472dc3f4adce227d67427c7b9b0a828a63280679fe"
+    },
+    "benchmarks/harness.py": {
+      "bytes": 71517,
+      "sha256": "fa98f4932b29c5e2eb61bc6fbef405ae21c0dfec47470813773456c59a761cee"
+    },
+    "benchmarks/helper_scaling_022.py": {
+      "bytes": 30897,
+      "sha256": "80193988de28d63ebe0ad75e9645c27d43814657eb9f003bd69c9741d4878f0f"
+    },
+    "benchmarks/protocol-v0.2.1.json": {
+      "bytes": 7112,
+      "sha256": "4bfb84ce958aab46890525ee9225832c950e03bbbdfd7266b320c595f65ca06a"
+    },
+    "benchmarks/protocol.json": {
+      "bytes": 11694,
+      "sha256": "4a0ef6b5d7fdcd474f260aba124851ca96d0b55b705ee58dd7d1a84ad7ff7faf"
+    },
+    "benchmarks/scaling.py": {
+      "bytes": 21782,
+      "sha256": "0dea16293d46c060bba87421ad25064efbee12480c26e78c96086d01c901d6a1"
+    },
+    "benchmarks/smoke.py": {
+      "bytes": 4166,
+      "sha256": "89edfa26bccc5d69ba538350c8c21ff1d67cfae92d04c57edcb65799c907b5da"
+    },
+    "benchmarks/summarize_022.py": {
+      "bytes": 18669,
+      "sha256": "1844bbecea5bd23f56aadbc9877d777a55cb2eeb45afd52ffa83b859a4eaca88"
+    },
+    "benchmarks/tasks.py": {
+      "bytes": 4867,
+      "sha256": "0c44fe4a376cad21116d9ab18c71771ee0e5ccfee81ff272adef3aef911e39f5"
+    },
+    "benchmarks/worker_limits.py": {
+      "bytes": 18744,
+      "sha256": "d08d6e4d4cc7de570d8b38bef571ae51021673b7388f831c56b8b5e91baa3904"
+    },
+    "candidate/evidence_gap_router-0.2.2-py3-none-any.whl": {
+      "bytes": 64757,
+      "sha256": "66b4cad4d4f80c81871c0caf6daa28c472d5fabef310a429bc59e2f85e6059e9"
+    },
+    "candidate/evidence_gap_router-0.2.2.tar.gz": {
+      "bytes": 399950,
+      "sha256": "75ac9e8d651519a764e43822af08766248433582f796607e3975be613e62756c"
+    },
+    "diagnostic-f7-v0.2.1/benchmarks/__init__.py": {
+      "bytes": 75,
+      "sha256": "4fb811ab8e0f3a12ef8debdb5ae5adab1f8016abe67ff9adc759da5346fedf2d"
+    },
+    "diagnostic-f7-v0.2.1/benchmarks/aggregate.py": {
+      "bytes": 24473,
+      "sha256": "5049e6649524a7a7741ecf011ef4f4f4008101d4c51566d8ed79eec63d9b7556"
+    },
+    "diagnostic-f7-v0.2.1/benchmarks/harness.py": {
+      "bytes": 71603,
+      "sha256": "1c59c9686f0ac9e881c72b7cc119cc4eafbcda5690d4020eea14fad94108851b"
+    },
+    "diagnostic-f7-v0.2.1/benchmarks/protocol.json": {
+      "bytes": 7112,
+      "sha256": "4bfb84ce958aab46890525ee9225832c950e03bbbdfd7266b320c595f65ca06a"
+    },
+    "diagnostic-f7-v0.2.1/benchmarks/scaling.py": {
+      "bytes": 21618,
+      "sha256": "3fc2bd328d383fc488b2200b673f9277194e2821bdd865c1706339bc34da9aa2"
+    },
+    "diagnostic-f7-v0.2.1/benchmarks/smoke.py": {
+      "bytes": 2887,
+      "sha256": "dff19b6460fa38b8346594a9527c2004e1c53f205368f7ccb46218d6c2e057bd"
+    },
+    "diagnostic-f7-v0.2.1/benchmarks/tasks.py": {
+      "bytes": 4801,
+      "sha256": "4c785cffa1317611ba97d1a17a9166bfd08185fc71a78769c6c4f46f71c49446"
+    },
+    "diagnostic-f7-v0.2.1/diagnostic-summary.json": {
+      "bytes": 42443,
+      "sha256": "8b0e5195ee7108fdc1516d6175f01960dfd5d0eedf223dad82415e507903becd"
+    },
+    "diagnostic-f7-v0.2.1/erratum_021.py": {
+      "bytes": 19729,
+      "sha256": "6f261768100731b45ff413472dc3f4adce227d67427c7b9b0a828a63280679fe"
+    },
+    "diagnostic-f7-v0.2.1/observed-f7.jsonl": {
+      "bytes": 322143,
+      "sha256": "3d13813e997d95b556001692bb2dc9b6d98b52fbf1c4c06e62973b0c37fdb9bd"
+    },
+    "diagnostic-f7-v0.2.1/original-freeze.json": {
+      "bytes": 1716,
+      "sha256": "1f7a1843027b36922a19afad4285c3aa5d087c8f8485ecf08bab948d62d7857f"
+    },
+    "diagnostic-f7-v0.2.1/reproduce_f7.py": {
+      "bytes": 7371,
+      "sha256": "7ad46e721c1a2f2de2380ce9bafbec7f546f7d212d194f6b862e8c5b45f9c584"
+    },
+    "erratum-v0.2.1/original-raw.zip": {
+      "bytes": 9502776,
+      "sha256": "9212ee2499df0b16b47b23ac3150f71b83b1db69abc85a7123a02044f4fa69a0"
+    },
+    "erratum-v0.2.1/summary.json": {
+      "bytes": 1586899,
+      "sha256": "63c052fd3f21903efcad303f45a12d205061ce3e0656ce1496ec8b52b3e5f019"
+    },
+    "formal/execution-manifest.json": {
+      "bytes": 1016740,
+      "sha256": "652f80e1627aaa4ab3a7b4b48f5884423b46284901c98c3294878ec70129a305"
+    },
+    "formal/execution-summary.json": {
+      "bytes": 1195,
+      "sha256": "bc79ffd91b82519ef82fd85ffd708463a0576ef4189371bbd1c75460241c1c42"
+    },
+    "formal/methods.jsonl": {
+      "bytes": 39219991,
+      "sha256": "176f837c8b1c4af0e7518ca49d2d5102346aa47be0b430927775069d6a055f5a"
+    },
+    "formal/raw.jsonl": {
+      "bytes": 42663826,
+      "sha256": "7c8d40a6dd80db41adfa91ce4e0ad581119032d421ccaaac22675b2b66473dd2"
+    },
+    "freeze-original.json": {
+      "bytes": 2392,
+      "sha256": "cebcf83c741581ca2205a4d942eac2a06cc10c5a94e20c432e20244cafc099eb"
+    },
+    "host-record.json": {
+      "bytes": 517,
+      "sha256": "77cd3cbbe0dbb9f4d7ef8e67cd780b859fef87fa590e9aa1b27b2595326e7133"
+    },
+    "implementation-lf-08c81a2.tar": {
+      "bytes": 2918400,
+      "sha256": "3d02f8dfbe822bad2d71ddd4f0ff52a94a283d207dec1c4297cccc81e33f7a97"
+    },
+    "postformal-diagnostic/diagnostic-eligibility-losses-v1-candidate-env.json": {
+      "bytes": 31134,
+      "sha256": "bb7003ae36f9bfbada3fab28e63c05b6cb3df9db1b0f6b47edbf7adc2219de3e"
+    },
+    "postformal-diagnostic/diagnostic-eligibility-losses-v1-old-env.json": {
+      "bytes": 31128,
+      "sha256": "bcf5d402d3c9676c6ffedb8ae69b1d6c33bc7addd8d6787adee8e2239c94d422"
+    },
+    "postformal-diagnostic/diagnostic-eligibility-losses-v1.py": {
+      "bytes": 1660,
+      "sha256": "fa825781d51a793557d7614ef35024d5d232a567e620e60bb3c7fbd634a95f87"
+    },
+    "postformal-diagnostic/diagnostic-loss-states-v1.json": {
+      "bytes": 1284339,
+      "sha256": "69cf13b648e60fd760e6ba0acce04abda8666189d88a548dc0bb4da5e14a6c33"
+    },
+    "postformal-diagnostic/verification-core-v1.json": {
+      "bytes": 223137,
+      "sha256": "4a7e253234b26859f6d1c508b14f13300284844a23e7cbe7a57a2888dcf27717"
+    },
+    "postformal-diagnostic/verification-demo-cli-v1.json": {
+      "bytes": 26593,
+      "sha256": "67a706cd2df505f635ca241e93e810926d5f6dbe90760d51fee767e3d385fb0a"
+    },
+    "preformal/candidate-benchmark-smoke.json": {
+      "bytes": 10563,
+      "sha256": "8987cadb889dc30ab183afbae509099f322d6996fd80470cbc6af22c9a27e13a"
+    },
+    "preformal/controller-development-preflight.json": {
+      "bytes": 336,
+      "sha256": "6791185cda54b5d86e2adf45eabde49c15e0bb39617350e4dc6d85a056a03169"
+    },
+    "preformal/native-candidate-windows.json": {
+      "bytes": 17253,
+      "sha256": "e8fae922451132c65e9bb4ea7c0ffcaaf0321ee48af18df39b6583ec17ffb5fa"
+    },
+    "preformal/preflight-freeze.json": {
+      "bytes": 2392,
+      "sha256": "383407f0aea634ea8b60f49576bf40e9b89b36c234ba79a0a81288f41cca3649"
+    },
+    "reports/controller-summary.json": {
+      "bytes": 1677157,
+      "sha256": "710c69d1e5d0c80a5c141ab903deeac50cd4d22a1eb49d54712ca89b26236211"
+    },
+    "reports/method-summary.json": {
+      "bytes": 1623621,
+      "sha256": "397a4974dbeba6a7e33eac2b9ccba323b2abe79bcd3964e550ee9cda75a15bc1"
+    },
+    "reports/trials.csv": {
+      "bytes": 595655,
+      "sha256": "71d00752ab9b189ea03d7a477d064868baa8c1879444476c3616ad5f027d8d11"
+    },
+    "reproduction/package_raw022.py": {
+      "bytes": 8954,
+      "sha256": "01de889c32e71d8ae399017038284a85d9782d81073791bf5f67d3d4af539a71"
+    },
+    "runtime-constraints.txt": {
+      "bytes": 518,
+      "sha256": "d3f71e4d63d1af6dfc4c822c7ecc4a348d647a6442c19e3677ec217a434e6508"
+    }
+  },
+  "baseline_package_sha256": "5df6a0b5e7c521079e29475950addf6e1b84d62b3f3c70033307a82643e8341a",
+  "baseline_runtime_commit": "3e6a547dd38af9668115aaad9d9d30129c018c1b",
+  "baseline_wheel_sha256": "61129ec160c6c9d718f5173fa0281cdcc735cfdc9222138f45584a6b71202917",
+  "candidate_package_sha256": "b74c3e906270813246c3871e71a32c40900bbf4bfdc5a7d21577880fddec2afe",
+  "environment": {
+    "machine": "AMD64",
+    "os": "Windows-11-10.0.26300-SP0",
+    "package": "0.2.2",
+    "package_import": "C:\\Users\\1991m\\AppData\\Local\\Temp\\egr-022-evaluation\\candidate-env\\Lib\\site-packages\\evidence_gap_router\\__init__.py",
+    "pydantic": "2.13.5",
+    "pydantic_core": "2.46.5",
+    "python": "3.12.14",
+    "runtime_dependencies": {
+      "annotated-types": "0.8.0",
+      "pydantic": "2.13.5",
+      "pydantic_core": "2.46.5",
+      "typing-extensions": "4.16.0",
+      "typing-inspection": "0.4.4"
+    }
+  },
+  "execution": {
+    "execution_manifest_sha256": "652f80e1627aaa4ab3a7b4b48f5884423b46284901c98c3294878ec70129a305",
+    "freeze_sha256": "cebcf83c741581ca2205a4d942eac2a06cc10c5a94e20c432e20244cafc099eb",
+    "parent_cpu_seconds": 66.578125,
+    "phase_worker_cpu_seconds": {
+      "audit": 1.34375,
+      "confirmation": 25.09375,
+      "regression": 429.9375,
+      "scaling": 482.015625
+    },
+    "protocol": "egr-022-engineering-v1",
+    "raw_sha256": "7c8d40a6dd80db41adfa91ce4e0ad581119032d421ccaaac22675b2b66473dd2",
+    "requested_keys": 1680,
+    "statuses": [
+      {
+        "count": 2,
+        "phase": "audit",
+        "worker_status": "completed"
+      },
+      {
+        "count": 64,
+        "phase": "confirmation",
+        "worker_status": "completed"
+      },
+      {
+        "count": 1020,
+        "phase": "regression",
+        "worker_status": "completed"
+      },
+      {
+        "count": 566,
+        "phase": "scaling",
+        "worker_status": "completed"
+      },
+      {
+        "count": 28,
+        "phase": "scaling",
+        "worker_status": "resource_limit"
+      }
+    ],
+    "unknown_worker_cpu_rows": 0,
+    "unknown_worker_memory_rows": 0,
+    "wall_seconds": 1093.9007585,
+    "worker_cpu_seconds": 938.390625
+  },
+  "freeze_sha256": "cebcf83c741581ca2205a4d942eac2a06cc10c5a94e20c432e20244cafc099eb",
+  "harness_sha256": "32512950572d2f78280f5fbda505d6c94a67e44c3c9d60337466f2bbde55aba5",
+  "implementation_commit": "08c81a2387db7047b9599d153f48893e510fe85d",
+  "measured_candidate_wheel_sha256": "66b4cad4d4f80c81871c0caf6daa28c472d5fabef310a429bc59e2f85e6059e9",
+  "measurement_host": {
+    "cpu": {
+      "Name": "AMD Ryzen 7 8840HS w/ Radeon 780M Graphics     ",
+      "NumberOfCores": 8,
+      "NumberOfLogicalProcessors": 16
+    },
+    "measurement_control": "Serial workers; development/testing/writing completed before formal measurement. Codex desktop remains active; no affinity, priority, thermal or background-service control. Unknown load distribution and power-frequency variation retained as limits.",
+    "power_scheme": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)"
+  },
+  "old_raw_archive_sha256": "9212ee2499df0b16b47b23ac3150f71b83b1db69abc85a7123a02044f4fa69a0",
+  "protocol": "egr-022-engineering-v1",
+  "protocol_sha256": "4a0ef6b5d7fdcd474f260aba124851ca96d0b55b705ee58dd7d1a84ad7ff7faf",
+  "publication_boundary": "Measurement candidate archives are retained. Final shipping wheel/sdist hashes are established by exact-commit CI and public byte verification; runtime package fingerprint must match the measured candidate.",
+  "raw_archive": {
+    "all_member_hashes_verified": true,
+    "bytes": 12592735,
+    "filename": "benchmark-raw-v0.2.2.zip",
+    "manifest_assets": 54,
+    "manifest_sha256": "3222268350d375f3e46639f345fc7f5a86c87ebb6ad8bb42aaba5f07e539ae7f",
+    "sha256": "e90060aae7c2fac6ebe3f920a74a7066a4b63353daf7f7f0ffdbc23440b3f37a",
+    "zip_entries": 56
+  },
+  "result_commit": "Tracked with the results-only commit; intentionally excluded to avoid a self-referential hash.",
+  "schema": "egr-022-artifact-provenance-v1"
+}

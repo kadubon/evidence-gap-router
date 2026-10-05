@@ -35,8 +35,49 @@ and five uncertain incomplete stops. This is a diagnostic replay, not a new
 holdout or performance measurement; its raw SHA256 is
 `3d13813e997d95b556001692bb2dc9b6d98b52fbf1c4c06e62973b0c37fdb9bd`.
 
-v0.2.2 runtime/runner regressions, fixed-set reruns and new confirmation/controller
-measurements are recorded separately after execution. The current release gate
+The frozen implementation `08c81a2387db7047b9599d153f48893e510fe85d`
+passed locked sync, Ruff lint, **84 formatted files**, mypy on **14 source modules**
+and **428 source tests in 12.27 seconds**, with no skips, on Windows/Python 3.12.14.
+Actionlint **1.7.12** accepted the only workflow (`-shellcheck=`; shellcheck was
+unavailable). These are local gates, separate from final exact-commit manual CI.
+
+After formal measurement/results collection, the local source suite passed again:
+**428 tests in 11.44 seconds**, no skips; Ruff84 files and mypy14 modules passed.
+Standalone source-test import setup was adjusted in `test_summarize_022.py`
+(10 focused tests passed), without changing measured package, benchmark harness,
+oracle or generator bytes. These source/test-only changes do not imply native
+release admission.
+
+The LF candidate wheel SHA256
+`66b4cad4d4f80c81871c0caf6daa28c472d5fabef310a429bc59e2f85e6059e9`
+was installed noneditable in a clean external Windows x64/Python 3.12.14 venv.
+Its **296 installed regressions passed in 3.51 seconds**; installed SDK/CLI smoke
+passed. Actual imports were under that venv's site-packages, with Pydantic 2.13.5,
+core 2.46.5 and core tag `cp312-cp312-win_amd64`. The portable benchmark completed
+**44 trials on 11 development parents**, four proof references and three helper
+references, all assessed expectations matching. Canonical outcome SHA256:
+`8ea97c81c637c02448626c704ff464ee31f3cb07ddfc7dd646246618f67707f8`.
+This is the measured candidate's local Windows profile, not six release CI profiles
+or installation from public PyPI 0.2.2.
+
+The serial frozen `egr-022-engineering-v1` experiment recorded all **1,680 worker
+keys**: 1,652 completed and 28 old-helper CPU-limit censors; no missing/unexecuted
+keys or unknown worker CPU/memory observations. All four current methods use the
+public finite runner. Their observed 240-parent regression completion is
+145/145, 122/145, 127/145 and 133/145 solvable parents; all assessed false
+satisfaction is 0/240. Each method's unsolvable outcomes split75 known, five
+uncertain and15 execution faults. The formal functional audit meets14/14 new
+properties versus11/14 old; new small-reference confirmation agrees32/32 for
+both versions. Detailed denominators, costs, differing progress paths and
+unassessed large helpers are in [the new report](benchmark.md).
+
+Formal raw SHA256:
+`7c8d40a6dd80db41adfa91ce4e0ad581119032d421ccaaac22675b2b66473dd2`.
+The generated `benchmark-raw-v0.2.2.zip` is 12,592,735 bytes; all 54 manifest
+asset hashes and ZIP integrity of all 56 entries verified. SHA256:
+`e90060aae7c2fac6ebe3f920a74a7066a4b63353daf7f7f0ffdbc23440b3f37a`.
+This records local archive construction/verification, not Release upload.
+The current release gate
 requires `benchmarks/results/freeze-v0.2.2.json`; it cannot reuse the v0.2.1
 candidate fingerprint. Method rows separate worker status, runner stop, domain
 stop and oracle outcome. Only actual unreceipted issued attempts indicate pending
@@ -61,11 +102,18 @@ set (512 MiB), and from separately traced Python allocations. Wall/CPU limits
 are enforced by the owned worker controller with possible sampling overshoot.
 These metrics must not be relabeled as one interchangeable resident-memory bound.
 
-No new v0.2.2 manual/native/publication result is asserted here before execution.
+v0.2.2 six-profile manual CI, tag workflow, public PyPI bytes/clean installation
+and GitHub Release/raw-asset upload remain pending in this record. The local
+Windows candidate result above does not imply those stages passed.
 The six required profiles below apply to v0.2.2. Prior macOS observations are
 published native records, not newly executed macOS checks by this local audit.
 
-## v0.2.1 facts available before publication
+## Archived v0.2.1 development snapshot before publication
+
+The following section retains facts and future-tense wording available before
+v0.2.1 publication. Its pending statements describe that historical snapshot,
+not the current status of v0.2.1 or v0.2.2. The actual official v0.2.1 release
+is the immutable baseline identified at the top of this document.
 
 The official v0.2.0 wheel (SHA256
 `039594d7fc5e39ab7b600c71f54682bb2d46147ba4e69a05a55f255a1806f3bf`)
@@ -152,7 +200,8 @@ completed cells had no reference disagreement or indexed-work-bound violation.
 Separate ordinary timing and traced-memory records are retained, including small
 warmup/ten-repeat measurements and the large single-repeat cells.
 
-[The English report](benchmark.md) and [Japanese report](benchmark.ja.md) give
+[The archived English report](benchmark-v0.2.1.md) and
+[Japanese report](benchmark-v0.2.1.ja.md) give
 family/budget/paired-cost tables and measurement limits. The immutable raw ZIP
 contains all method/version/scaling JSONL, CSV aggregates, frozen code/protocol,
 exact measured wheels and diagnostic development logs: 9,502,776 bytes, SHA256
@@ -177,6 +226,10 @@ for the expected non-yanked index files/hashes before installing; no successful
 upload is blindly repeated.
 
 ## Archived v0.2.0 development and release checks
+
+Statements below are historical v0.2.0 development/admission observations.
+Their pending wording does not describe current v0.2.2 validation; the current
+required-profile section is explicitly labeled after these local checks.
 
 This source document records facts available before the v0.2.0 release workflow.
 A configured runner is not an executed test. The exact tagged commit, successful
@@ -216,7 +269,7 @@ workflow builds and records its own single distribution artifact.
 | Windows 11 | x86_64 (`AMD64`) | 3.12.14 | 2.13.5 / 2.46.5 | 157 passed; smoke passed |
 | WSL2 Linux | x86_64 | 3.12.14 | 2.13.5 / 2.46.5 | 157 passed; smoke passed |
 
-## Required same-wheel CI profiles
+## Current required same-wheel CI profiles for v0.2.2
 
 | OS / runner | Required actual architecture | Python | Status in this source snapshot |
 | --- | --- | --- | --- |
@@ -255,6 +308,11 @@ The manual admission guard requires completed successful jobs for every profile;
 missing, skipped, failed and cancelled jobs are rejected. Publish also directly
 depends on the full native set in the tag run. See [the release procedure](releasing.md)
 for exact-commit checks, OIDC isolation and post-publication byte/install verification.
+
+## Archived v0.2.0 manual failures
+
+These failed runs are retained historical diagnostics, not current v0.2.2
+admission evidence or present blockers.
 
 The first v0.2 manual run, `37255060613` at
 `95776be77fefef96ec6b6020299bf1857735bf9c`, passed Linux and both native macOS

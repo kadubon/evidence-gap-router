@@ -1,425 +1,274 @@
-# v0.2.1 エンジニアリング評価
+# v0.2.2 工学測定
 
-この評価は三つの問いを分ける。Q1 は受入判定と明示的な継続処理が独立した
-契約 oracle に一致するか、Q2 は同じ実行可能な action・資源制限の下で選択方法に
-差があるか、Q3 は制御処理の CPU・メモリ・依存評価量がどう変わるかを調べる。
-正しさの修正だけでは選択方法の優位性は示せず、callback 数の減少だけでは CPU
-時間の減少も示せない。[英語版](benchmark.md) は同じプロトコルを記述している。
+固定した共通 runner の回帰セットでは、可解145親 task の完了は **EGR145/145**、
+fixed-feasible **122/145**、verify-first **127/145**、random-feasible **133/145**でした。
+各方式240親 task で、評価した誤完了は0件です。観測済み人工課題で共通の gap/必要性/
+helper 適格性を条件とした順位選択の結果であり、独立 scheduler に対する一般優位では
+ありません。検証済み proof の性能はほぼ同じです。別経路の候補 helper 修正は代替経路の
+再訪を除きますが、単純な入力では追加費用も観測しました。
 
-固定した実験は Q1/Q2 の 5,400 行（新版 4,680・旧版 720）と Q3 の 360 測定 cell を
-実行した。新版 EGR は solvable parent をすべて完了したが、強い baseline に対する選択上の
-差は小さく、clustered 区間はゼロを含む。両 method が成功した subset では callback 減少と
-traced trial CPU 増加が同時に観測された。Q3 は多くの完了 pair で依存評価時間が短く、
-traced allocation は大きかった。これらは別の結果として扱う。その他の完了済み検査は
-source の 260 テスト、インストール済み
-candidate の Windows 検査（portable 223 テストと SDK/CLI 実行）、portable smoke
-（11 parent・33 method trial・4 graph reference）である。残る 37 source-only テストは
-repository/release tooling を検査する。
-smoke の outcome digest は
-`b151304eaca99ad064b6a6ad6b27cb4a08361f8257438ec910d57ad6d78b35c5`。
-これは移植性・回帰検査であり、240 parent の holdout とは別の検査である。
+[元の v0.2.1 報告](benchmark-v0.2.1.ja.md)と[停止指標の訂正](benchmark-v0.2.1-erratum.ja.md)
+は別に保持します。旧80/95対70/95のラベル差は安全性の改善ではありません。新4方式は
+非可解95親 task に対して、既知の適切な停止75、不確実な未完了5、実行障害15で同じです。
+未知の消費・作用を残し、新測定で旧観測を書き換えません。
 
-## Q1/Q2 の観測結果
+## 識別子・環境・実行制御
 
-[aggregate summary](../benchmarks/results/summary.json) と
-[scaling summary](../benchmarks/results/scaling-summary.json) に完全な分母・評価状態を保持し、
-raw trace と CSV 表は後述の bundle に入っている。本報告の数値は表示用に丸めている。
+| 記録 | 値 |
+| --- | --- |
+| Protocol | `egr-022-engineering-v1` |
+| 測定実装 commit | `08c81a2387db7047b9599d153f48893e510fe85d` |
+| 公式旧 runtime commit | `3e6a547dd38af9668115aaad9d9d30129c018c1b` |
+| 固定時刻 | `2026-10-05T09:07:39Z` |
+| Protocol SHA256 | `4a0ef6b5d7fdcd474f260aba124851ca96d0b55b705ee58dd7d1a84ad7ff7faf` |
+| Harness SHA256 | `32512950572d2f78280f5fbda505d6c94a67e44c3c9d60337466f2bbde55aba5` |
+| 測定0.2.2 wheel SHA256 | `66b4cad4d4f80c81871c0caf6daa28c472d5fabef310a429bc59e2f85e6059e9` |
+| 公式0.2.1 wheel SHA256 | `61129ec160c6c9d718f5173fa0281cdcc735cfdc9222138f45584a6b71202917` |
+| 測定0.2.2 package fingerprint | `b74c3e906270813246c3871e71a32c40900bbf4bfdc5a7d21577880fddec2afe` |
+| 公式0.2.1 package fingerprint | `5df6a0b5e7c521079e29475950addf6e1b84d62b3f3c70033307a82643e8341a` |
+| OS / machine | Windows 11 `10.0.26300`、AMD64 |
+| CPU / 電源 | AMD Ryzen 7 8840HS、8 core / 16 logical processor、Balanced |
+| Python / Pydantic / core | 3.12.14 / 2.13.5 / 2.46.5 |
+| その他の一致した runtime 依存 | annotated-types0.8.0、typing-extensions4.16.0、typing-inspection0.4.4 |
 
-original 順の 240 parent task のうち、宣言した material・権限・budget で solvable と
-分類されたのは 145 件である。primary completion は original 順・random seed 17 の
-件数である。旧版は未対応 API のため互換 parent が 220 件、うち solvable が 132 件となる。
-次の件数は信頼区間ではない。cluster completion は各 solvable parent 内の variant/seed
-平均を別に集計した値である。
+新旧 SDK は checkout 外の通常の非 editable wheel install です。installed package の byte
+を宣言 wheel と照合しました。package fingerprint は package 相対 filename → byte SHA256
+を整列した compact canonical JSON の SHA256 で、生成 cache を除きます。後の文書/metadata
+build で wheel 全体の hash が変わっても、実行 package と harness/protocol の一致を要求します。
+[freeze](../benchmarks/results/freeze-v0.2.2.json) は repository 内の固定であり、外部事前登録
+ではありません。確認前に runtime/checker/generator を固定しました。
 
-| Version / method | Primary completion n/N | Cluster completion | False-satisfied parent n/N | Strict correct abstention n/N |
-| --- | --- | --- | --- | --- |
-| 0.2.0 EGR | 99/132 | 76.263% | 9/220 | 64/88 |
-| 0.2.1 EGR | 145/145 | 100% | 0/240 | 80/95 |
-| 0.2.1 fixed-feasible | 142/145 | 98.621% | 0/240 | 70/95 |
-| 0.2.1 verify-first | 143/145 | 99.080% | 0/240 | 70/95 |
-| 0.2.1 random-feasible | 145/145 | 98.544% | 0/240 | 70/95 |
+1,680 key を事前列挙した controller が直列実行し、対応 block 内を seed220229 で並べました。
+正式測定中は執筆・開発・テスト・別の重い測定を止めました。Codex desktop は稼働したままです。
+CPU affinity/priority、熱状態、background service、動作周波数は制御していません。
+残る desktop 変動を含む、一台の環境での工学観測です。
 
-観測した完了件数の差は小さく、fixed 順との比較で 3 件、verify-first で 2 件、seed 付き
-random selection との primary completion 差は 0 件である。別の順序・seed により random の
-cluster 平均は下がり、3 parent で EGR より低い平均となる。一般的な routing 優位や cost
-節約を示すものではない。新版 4,680 行には method variant・random 反復・ablation・
-pipeline reference が含まれ、4,680 個の独立 parent task ではない。
+worker 全体の上限は wall10秒、Job 累積 CPU8秒、peak aggregate private committed bytes
+256MiB です。venv の子 process も含めます。parent の peak working set は別枠512MiB。
+全体は wall7,200秒、CPU3,600秒と事前の phase 上限です。owned Windows Job へ実行前に
+割り当て、観測した超過でその Job だけを終了します。sampling の overshoot はあり得ます。
+private committed bytes、working set、traced Python allocation は異なる指標です。
 
-新版 4,680 行はすべて worker status `completed` で、oracle 評価済みである。worker の完了は
-task 成功と同義ではなく、guard した callback/factory/receipt fault を報告する場合がある。
-旧版は completed 660 行と unsupported 60 行（invalidation API を必要とする F4 の
-20 parent）である。両 version とも Q1/Q2 の worker timeout・unexecuted は 0 行。
-互換な trial の oracle 未評価は 0 だが、unsupported 60 行は未評価として明示的に残す。
+実行は **wall1,093.901秒、worker CPU938.391秒、parent CPU66.578秒**でした。
+worker CPU/memory の観測欠損はありません。観測最大は Job private committed bytes
+61,079,552、parent working set70,348,800でした。普遍的な memory 上限の保証ではありません。
 
-| Version / method | 互換な試行 trial | Unsupported trial | Exception を記録した trial | Verification cost 不明の trial |
-| --- | --- | --- | --- | --- |
-| 0.2.0 EGR | 660 | 60 | 57 | 57 |
-| 0.2.1 EGR | 720 | 0 | 45 | 45 |
-| 0.2.1 fixed-feasible | 720 | 0 | 45 | 45 |
-| 0.2.1 verify-first | 720 | 0 | 45 | 45 |
-| 0.2.1 random-feasible | 2,160 | 0 | 135 | 135 |
+| Phase | 要求 worker | 完了 worker | CPU 上限による打切り |
+| --- | --- | --- | --- |
+| B、主方式と固定参照 | 1,020 | 1,020 | 0 |
+| A、機能監査 | 2 | 2 | 0 |
+| C、proof と helper | 594 | 566 | 28 |
+| 新確認 | 64 | 64 | 0 |
+| 全体 | 1,680 | 1,652 | 28 |
 
-新版の exception trial は意図的に故障を含む F7 recipe であり、失敗した互換試行として
-保持する。新版全行では 270 trial が exception を記録した。
-旧 EGR の 57 trial は F7 の故障45 trialと F4 の再解消エラー12 trialからなる。strict correct
-abstention は error のない router stop を必要とするため、故障した F7 の 15 parent は安全に
-失敗しただけで clean abstention として数えない。旧版の false satisfaction は F5 の
-4 parent と F8 の 5 parent、variant 単位で 27 trial だった。新版はこの oracle 上で
-EGR 0/240 parent、reference を含む全新版 0/4,680 trial である。
+非対応・未実施・wall timeout・削除した key はありません。worker 完了は課題完了ではなく、
+callback/factory/receipt の処理済み障害も含みます。28 resource-limit は旧 helper worker で、
+内部 phase、不返却の outcome/cost は未知の右打切りです。plan 単体の時間下限、正確な秒数、
+費用0へ置き換えません。
 
-固定した parent record の `correct_abstention` field は、名前とは異なり error のない
-router-stop indicator である。誤った旧版/baseline stop を含む solvable な method/parent
-group 32 件でも true となる。この flag を正しい abstention と解釈するには
-`solvable == false` が必要である。上の aggregate n/N は既にこの条件を適用しており、
-表の件数は汚染されていない。測定後に field を黙って改名せず、元の記録と証拠を保持する。
+## B：共通 runner の方式回帰
 
-**互換な version subset** は全 220 parent、うち solvable 132 parent であり、primary
-completion は新版 132/132、旧版 99/132。parent 平均の差は 23.737 percentage point
-（95% bootstrap 区間 16.667–31.061）、wins/ties/losses は 33/99/0 である。
-false-satisfied parent は旧版 9/220、新版 0/220。残る要求 20 parent を旧版の成功・失敗に
-置き換えず、unsupported として上表に示す。F5/F8 の solvable completion が同じでも、
-旧版による unsolvable parent の誤受入は消えない。
+旧240親 task（F1〜F8各30、seed982451653）は **観測済み回帰データ**です。
+元の candidate 順、random seed17だけを再実行しました。主4方式960試行、別の固定参照60試行。
+旧 reversed/renamed/他 random seed は再実行せず、その反復を含む区間を作りません。
 
-### Family・budget 別件数
+F1は由来と同一由来の重複、F2はexactな段階的依存、F3は部分的必須 checker/自己検証、
+F4は契約・依存変更と再解消、F5は否定的記録の正確な対象と矛盾根拠、F6は固定手順と初期完了、
+F7は権限/資料不足・障害・不明消費・no-op、F8は実CSV/rules・厳密な十進数・snapshotを扱います。
+raw validity と許可/予算込みの可解性は別です。初期化も実際の発行 callback を使い、
+支出を別記して全方式の総予算へ同じように足します。固定 PASS や oracle label を返しません。
 
-各 cell は primary completion n/N。各 family は 30 parent を要求するが、旧 F4 の互換
-parent は 10 件だけである。`0/0` は solvable parent が存在しない層であり、完了率 0% の
-観測ではない。
+すべて公開 `run` を使い、純粋な selector だけを変えます。完全な pool、availability、発行、
+入力 view、receipt/error、進捗/再計画、有限回数、外部 worker 上限は共通です。
+`feasible_actions` は safety だけでなく未充足 gap/必要性/helper 適格性を含みます。
+その共通機構を条件とした順位付けの比較です。
 
-| Family | 0.2.0 EGR | 0.2.1 EGR | Fixed | Verify-first | Random |
-| --- | --- | --- | --- | --- | --- |
-| F1 | 18/18 | 18/18 | 16/18 | 16/18 | 18/18 |
-| F2 | 0/24 | 24/24 | 24/24 | 24/24 | 24/24 |
-| F3 | 19/24 | 24/24 | 24/24 | 24/24 | 24/24 |
-| F4 | 5/9 | 22/22 | 21/22 | 22/22 | 22/22 |
-| F5 | 16/16 | 16/16 | 16/16 | 16/16 | 16/16 |
-| F6 | 21/21 | 21/21 | 21/21 | 21/21 | 21/21 |
-| F7 | 0/0 | 0/0 | 0/0 | 0/0 | 0/0 |
-| F8 | 20/20 | 20/20 | 20/20 | 20/20 | 20/20 |
+独立 oracle は raw 数値/file 条件、receipt identity、active な exact target、owner/scope/
+契約、依存、checker 権限/revision/purpose、矛盾の全関連入力を確認します。`plan` や内部受入
+predicate を正解として使いません。異なる active required target はすべて検証を要求し、
+有限 recipe の least grounded support を評価します。一般的な negative cycle は別の runtime
+回帰であり、この方法 oracle の対象外です。
 
-| Budget | 要求 parent | 0.2.0 EGR | 0.2.1 EGR | Fixed | Verify-first | Random |
+| 方式 | 完了 / 可解 | 誤完了 / 全試行親 | 誤停止 / 可解 |
+| --- | --- | --- | --- |
+| EGR | 145/145 | 0/240 | 0/145 |
+| Fixed-feasible | 122/145 | 0/240 | 23/145 |
+| Verify-first | 127/145 | 0/240 | 18/145 |
+| Random-feasible、seed17 | 133/145 | 0/240 | 12/145 |
+
+各方式の非可解95親 task は **既知の適切な停止75、不確実な未完了5、実行障害15**です。
+oracle は各240件を評価しました。既知の停止には定義した非可解性、未完了、正常な domain 停止、
+上限のある消費/作用の既知性、pending invocation なしを要求します。不明な5件を既知の安全な
+成功にしません。各方式の検証費用15件は不明のままです。この費用件数は障害/不確実な停止の
+件数と同じ意味ではありません。失敗も支出済み試行として残ります。
+
+| Family | 可解N | EGR | Fixed | Verify-first | Random17 | 誤完了の全親分母 |
 | --- | --- | --- | --- | --- | --- | --- |
-| Adequate | 192 | 88/120 | 132/132 | 132/132 | 132/132 | 132/132 |
-| Tight | 48 | 11/12 | 13/13 | 10/13 | 11/13 | 13/13 |
+| F1 | 18 | 18 | 0 | 0 | 18 | 30 |
+| F2 | 24 | 24 | 24 | 24 | 24 | 30 |
+| F3 | 24 | 24 | 24 | 24 | 24 | 30 |
+| F4 | 22 | 22 | 17 | 22 | 22 | 30 |
+| F5 | 16 | 16 | 16 | 16 | 4 | 30 |
+| F6 | 21 | 21 | 21 | 21 | 21 | 30 |
+| F7 | 0 | 0 | 0 | 0 | 0 | 30 |
+| F8 | 20 | 20 | 20 | 20 | 20 | 30 |
+| Adequate budget | 132 | 132 | 112 | 116 | 120 | 192 |
+| Tight budget | 13 | 13 | 10 | 11 | 13 | 48 |
 
-旧版の互換 budget 層は adequate 176・tight 44 parent、新版は 192・48 parent。
-同一 version 内の primary 差は tight task に限られる。F1 は fixed/verify-first が未完了の
-2 parent、F4 は fixed の残る 1 parent に対応する。新版 main method は F2/F3/F5/F6/F8 の
-completion では同じ結果である。
+旧元順序の145/142/143/145に対し、現行は145/122/127/133です。独立した新旧 trace の点検では
+baseline 減少はすべて共通 runner の `no_progress` に対応しました。fixed は20件（F1の16、
+F4の4）、verify-first はF1の16、random はF5の12です。最初の action と初期poolのfeasible順は
+変わりません。F1は `read:repeat`、F4の4件はrules0の内容/source/groupを繰り返す `read:extra`、
+F5は `read:alias` です。旧手書きloopは非空 evidence payload を進捗として継続し、公開 `run` は
+不要な同一実質/入力bindingを1 callback後に止めます。例えばF1固定順index1は旧repeat→e1→e2→
+check-e1→check-e2から、repeatだけで止まる形になりました。EGRの完了減少はありません。
+共有する実質進捗契約の影響を含む差で、順位改善や独立stack優位と解釈しません。
+旧の全variant区間は0を含み、その記録は変更しません。
 
-### Paired な選択方法差と cost
-
-差は variant/seed の parent 内平均を使った EGR minus baseline。区間の単位は
-percentage point であり、primary 整数件数の比ではない。
-
-| Baseline | Paired solvable N | Completion 差、pp | 95% parent-bootstrap 区間、pp | Wins/ties/losses |
+| EGR − baseline | 対応可解N | 完了差 | 95%親paired bootstrap区間 | 勝ち / 同等 / 負け |
 | --- | --- | --- | --- | --- |
-| Fixed | 145 | 1.379 | [0, 3.218] | 3/142/0 |
-| Verify-first | 145 | 0.920 | [0, 2.299] | 2/143/0 |
-| Random | 145 | 1.456 | [0, 3.295] | 3/142/0 |
+| Fixed | 145 | 0.15862 | [0.10345,0.22069] | 23 / 122 / 0 |
+| Verify-first | 145 | 0.12414 | [0.07586,0.17931] | 18 / 127 / 0 |
+| Random17 | 145 | 0.08276 | [0.04138,0.13103] | 12 / 133 / 0 |
 
-全区間がゼロを含む。次の callback/check 平均は、別途記録した初期化を除く **継続部分**
-を数える。一方 trial CPU/end-to-end は共通 setup・cold library import・初期化・observer・
-snapshot 処理を含む。
-cost は parent 内で variant 平均を求め、次に parent を平均する。verification 平均は不明な
-観測を除き、known-cost N は旧版 201/220 parent、新版各 main method 225/240 parent。
-上表の不明 trial をゼロとして計算していない。
+seed2239で親をpairedに1,000回resampleしました。ここは方式ごとに各親1試行であり、欠けた
+variant のcluster平均を作りません。区間は人工課題構成内の変動を示します。実業務の無作為標本、
+未見母集団への効果、同等性検定ではありません。
 
-| Version / method | Callback 平均（parent N） | Known verification 平均（parent N） | Trial CPU 平均、s | Trial end-to-end 平均、s |
+## 同完了費用、全課題費用、固定参照
+
+通常方式時間にはprofile/tracemallocを入れません。controller区間は公開runの実行/再計画経路、
+trial CPU/end-to-endはsetup、実初期化、最終判定、oracle、snapshotも含みます。cold SDK importと
+whole-worker startup/IPCも別記します。これらを純粋な順位付け費用や最小pipeline費用と呼びません。
+
+| 両者成功pair | N | callback差 EGR − baseline（95%区間） | controller wall差ms（95%区間） | controller CPU差ms（95%区間） |
 | --- | --- | --- | --- | --- |
-| 0.2.0 EGR | 1.7439 (220) | 0.9983 (201) | 0.4471 | 0.4795 |
-| 0.2.1 EGR | 2.1375 (240) | 1.2578 (225) | 0.4868 | 0.5211 |
-| Fixed | 2.3319 (240) | 1.2963 (225) | 0.4843 | 0.5160 |
-| Verify-first | 2.2042 (240) | 1.2519 (225) | 0.4825 | 0.5149 |
-| Random | 2.3079 (240) | 1.2810 (225) | 0.4828 | 0.5158 |
+| Fixed | 122 | −0.16393 [−0.27049,−0.07377] | −0.16216 [−0.30154,−0.04763] | +0.12807 [−1.15266,+1.53689] |
+| Verify-first | 127 | 0 [0,0] | +0.00937 [−0.04216,+0.05986] | +0.49213 [−0.86122,+1.84547] |
+| Random17 | 133 | −0.06015 [−0.13534,−0.01504] | −0.11674 [−0.20776,−0.04043] | +0.35244 [−1.05733,+1.64474] |
 
-旧版の低い平均 work は低い completion と異なる互換分母を伴い、節約の証明ではない。
-EGR は新版 baseline より callback が少ないが、known verification は verify-first より少し
-多く、記述的 trial CPU は三つすべてより高かった。同一処理の純粋な plan version 比較は
-Q3 で行い、この method 間 observer 時間と混同しない。
+成功を条件に選んだ既知費用pairであり、全課題の節約率ではありません。verify-firstのcallbackは
+同じで、overhead差も区間が0を含みます。すべてのcontroller CPU区間が0を含み、desktop変動と
+Windows CPUの量子化がsubmillisecondの解釈を制約します。CPU中央値0は処理0ではありません。
 
-| Baseline | Both-success parent N | Callback 差 | Traced trial CPU 差、ms |
+| 全240親試行 | 平均callback | 既知検証平均（N225） | 平均controller wall ms |
 | --- | --- | --- | --- |
-| Fixed | 142 | -0.2723 | +3.558 |
-| Verify-first | 143 | -0.0932 | +5.390 |
-| Random | 142 | -0.2504 | +4.988 |
+| EGR | 2.13750 | 1.25778 | 2.32486 |
+| Fixed | 1.99583 | 1.10222 | 2.30581 |
+| Verify-first | 1.87917 | 1.07111 | 2.17171 |
+| Random17 | 2.20417 | 1.22667 | 2.44121 |
 
-これは両 method の全試行 variant が成功した selected subset である。失敗 pair を除く差で
-あり、全 task の効率推定ではない。F3/F6/F8 の成功 subset では callback 差がゼロ。
-F2 の EGR versus verify-first は call・completion が同じだが、記述的 trial CPU は EGR が
-16.710 ms 高く、混在または不利な結果を示す。
+baselineの小さい全課題平均には可解課題の失敗も含み、効率改善ではありません。全callback費用は
+既知ですが、各方式15件の検証費用は不明で、既知平均のNからだけ除き、0へ補いません。
+EGRの完了145親/未完了・障害95親の平均callbackは2.49655/1.58947です。
+[方法summary](../benchmarks/results/v0.2.2/summary.json)は全方式のoutcome/family/budget/
+全課題/選択pair費用と分母を保持します。
 
-### Ablation と direct pipeline
+callback一回に同じ0/0.001/0.01/0.1/1秒を加える感度分析も記録します。仮定0.01秒の選択pairで
+EGR wall差はfixed−1.8015ms、verify-first+0.00937ms、random−0.71824msです。
+実測latency、token節約、LLM料金、商用ROIではなく、加算仮定です。
 
-| Ablation | EGR / ablation primary completion | Paired N | Cluster 差、pp [95% 区間] | Both-success N; callback / CPU-ms 差 |
-| --- | --- | --- | --- | --- |
-| F1 without provenance rank | 18/18 / 16/18 | 18 | 7.407 [0, 18.519] | 16; -0.6667 / +3.255 |
-| F2 without gap rank | 24/24 / 24/24 | 24 | 0 [0, 0] | 24; -0.3333 / +6.510 |
+固定参照60件は別枠で、F6 raw完了25/30、F8 20/30、評価済み誤受入なしです。
+資料readはそれぞれ50/60回、validationは各30回。batching/receipt/SDK上限の契約が違い、
+callback/検証数を同じSDK費用として比べません。共通harness setupも残ります。F6/F8の可解な
+routed task は全方式同完了で、手順既知なら単純pipelineで足りる場合があります。
 
-gap ablation はこの F2 task の completion を変えず、call を増やした。provenance ablation は
-2 parent に影響したが、区間はゼロを含む。両 cost subset で EGR trial CPU は高いため、
-機構を無条件の効率改善として報告しない。
+## A：受入と継続の診断
 
-| Reference family | Routed EGR oracle completion / 全 parent | Direct pipeline oracle completion / 全 parent | Routed / pipeline trial CPU 平均、s |
+各installed版で固定14機能性質を確認しました。旧0.2.1は11/14、新0.2.2は14/14を満たし、
+未評価・case例外はありません。旧3件の不適合は部分的な外部解消basis、同digest関連alias、
+保持された部分解消履歴でした。旧は誤ってsatisfiedとなり、新版は履歴を保って未解消にします。
+正当な全関連入力の外部根拠は受け付けます。実支出を含む失効、契約/checker更新、保存/再解消、
+正確な否定的対象、自己検証禁止、helper binding、実fileの厳密decimal拒否、サポートする大きな
+snapshotは使えます。有限の機械的性質であり、認証や母集団CVEの主張ではありません。
+
+## C：proofと候補helper
+
+検証済みproofと未取得helper候補は別familyです。time、訪問数、traced allocationを別processで
+測り、通常timeはwarmup1回と10反復。入力/候補構築、実seed callback、snapshot、意味の判定を
+別記します。構築・初期化の値は単回であり、安定したpercentile推定ではありません。
+
+| Family / 版 | 完了 / 要求measurement | CPU打切り | reference一致 / 不一致 / 未評価 / 不完了 |
 | --- | --- | --- | --- |
-| F6 | 21/30 | 25/30 | 0.4760 / 0.4267 |
-| F8 | 20/30 | 20/30 | 0.5075 / 0.4717 |
+| Proof /0.2.1 | 180/180 | 0 | 180 / 0 / 0 / 0 |
+| Proof /0.2.2 | 180/180 | 0 | 180 / 0 / 0 / 0 |
+| Helper /0.2.1 | 89/117 | 28 | 63 / 0 / 26 / 28 |
+| Helper /0.2.2 | 117/117 | 0 | 63 / 0 / 54 / 0 |
 
-これは全 parent の件数であり、scheduler の solvable n/N ではない。F6 pipeline は SDK
-callback budget を越える正常 material を batch で処理でき、その 4 件の追加完了を matched
-scheduler の勝利として扱わない。F6 は 1/2/3 material read と 1 validation、F8 は 2 file read
-と 1 validation を実行する。raw world と異なる batching/receipt 契約を明示する。
-pipeline はこの観測では trial CPU が低い、より単純な reference だが、primary 推論から除く。
+Proofはchain/diamond/branches/pure-cycle、size4/8/16/32/64、checker1/2/3の60入力です。
+両版とも既にindexed proof evaluatorを使い、60対応plan時間の旧/新比中央値は **1.00600**
+（新が短い38、長い22）です。ほぼ変わらない観測で、proofを再高速化した証拠ではありません。
+制限したreferenceは同じrequired parentとungrounded cycleを確認し、一般negative/grounded
+alternativeは機能回帰で別に扱います。
 
-## 固定した入力と環境
+Helper39入力は代替1/2/4、深さ4/8/12/16/24/32/64、shared/diamond/branches、複数checker、
+current evidence、権限不足、exact scope/digest、optional/satisfied owner、失効/契約更新、
+grounded/ungrounded cycleを含みます。独立した走査AND/OR referenceはdepth≤8のpositive recipe
+だけを扱い、consumer rootを根拠にしません。小21入力×3modeは両版一致します。大入力の完了を
+独立reference一致とせず、未評価を残します。
 
-実行可能な仕様は [protocol.json](../benchmarks/protocol.json) にある。
-holdout の前に実装を commit し、両 wheel を別々の通常の非 editable 環境に
-インストールした。SDK は source checkout ではなく各環境の `site-packages` から
-読み込む。harness は Python・依存関係・platform・package bytes・protocol・harness
-fingerprint が freeze 記録に一致することを検査する。
-
-| 項目 | 記録値 |
-| --- | --- |
-| Protocol | `egr-021-engineering-v1` |
-| 実装 commit | `305eec2cbf4f16c7d50dbb8bad002bc0cbc6d1c5` |
-| 公開済み 0.2.0 runtime commit | `e8d77f210d7579d6a367b7564b485b2586ffd074` |
-| 固定時刻 | `2026-10-05T04:38:11Z` |
-| Protocol SHA-256 | `4bfb84ce958aab46890525ee9225832c950e03bbbdfd7266b320c595f65ca06a` |
-| Harness SHA-256 | `d3db76040403efbf802437c8a62514466c01ab0efdfec390823989224aeae4de` |
-| 測定した 0.2.1 wheel SHA-256 | `e8c2bead23b7c2cc622ff2a3215e262c23452f621d1298359dba520c027b01aa` |
-| 公開済み 0.2.0 wheel SHA-256 | `039594d7fc5e39ab7b600c71f54682bb2d46147ba4e69a05a55f255a1806f3bf` |
-| 測定した 0.2.1 package fingerprint | `5df6a0b5e7c521079e29475950addf6e1b84d62b3f3c70033307a82643e8341a` |
-| OS / architecture | Windows 11、`10.0.26300`、AMD64 |
-| CPU | AMD Ryzen 7 8840HS、8 core / 16 logical processor |
-| 物理 RAM | 66,363,183,104 bytes |
-| Python / Pydantic / pydantic-core | 3.12.14 / 2.13.5 / 2.46.5 |
-| その他の runtime package | annotated-types 0.8.0、typing-extensions 4.16.0、typing-inspection 0.4.4 |
-
-package fingerprint は package 相対 filename とその byte hash を整列した canonical
-記録の hash であり、生成された `__pycache__` を除く。後の文書・metadata 変更と
-測定済み runtime を区別するために使う。実際に測定した配布物の識別子は上記 wheel
-hash のままである。[freeze 記録](../benchmarks/results/freeze.json) と
-[artifact provenance](../benchmarks/results/artifact-provenance.json) は exact な識別子を保持し、
-大きな raw trace は package と別に保存する。
-この固定は repository 内の手続であり、外部機関への事前登録ではない。
-
-旧 runtime は元の commit から公開した 0.2.0 配布物である。一方、task generator・oracle・
-method/scaling harness は両 version とも固定した 0.2.1 実装 commit の file を使う。
-holdout はその commit の LF Git archive から、宣言した installed wheel を使って実行する。
-旧版の限定的 demo を旧 version 用 harness として置き換える比較ではない。raw record は
-runtime version/wheel/package fingerprint と、共通 implementation/protocol/harness の
-識別子を別々に記録する。
-
-## Task・選択方法・oracle
-
-holdout は各 family 30 件、合計 240 件の異なる生成 parent task を持つ。
-development は seed 21041・各 family 8 件、holdout は seed 982451653 を使う。
-original・reversed・renamed の candidate pool は同じ parent の variant であり、
-random method の seed は 17・71・191 である。これらの反復を独立 task として
-標本数に加算しない。
-
-| Family | 検査する契約 |
-| --- | --- |
-| F1 | 宣言された origin の反復・差異、不明 provenance、不正な数値、tight/adequate budget |
-| F2 | obligation 間の exact dependency、satisfied/optional helper、同一 content、1/2 段階の prerequisite |
-| F3 | 複数 required checker、部分 PASS、自己検証禁止、利用不能 checker、pending capacity |
-| F4 | 実 receipt による resolution 履歴、contract/material/check 変更後の再 resolution |
-| F5 | FAIL/UNKNOWN 履歴、同一 byte の alias、正しい subject・別 subject の resolution、権限不足 |
-| F6 | あらかじめ決まった 1/2/3 source pipeline、初期完了、正常・不正 material |
-| F7 | material・権限不足、callback/factory/receipt failure、不明 use、no-op、budget 不足 |
-| F8 | 実 CSV/JSON byte、正確な decimal 境界、重複構造、BOM/CRLF/Unicode path、snapshot 継続 |
-
-初期化も public `start`/`observe` を通る実 callback で行い、初期 cost を別途記録して
-全 method の総 budget に同じように加える。candidate factory が参照するのは現在の
-State と有限 material recipe であり、oracle label や未来の観測を参照しない。
-read は exact ID を一度取得し、check は観測済み material と明示された dependency を
-使う。数値・file checker は実際に渡した入力を parse する。
-
-0.2.1 内では EGR を三つの feasible baseline と比較する。`fixed-feasible` は宣言順、
-`verify-first` は安定した verify 優先、`random-feasible` は seed 付きの選択である。
-いずれも public `feasible_actions` の safety gate を使い、public `start` に元の有限
-pool を渡す。Attempt の直接挿入や、budget を消費するための valid target 再検証は
-行わない。F1 では provenance ranking、F2 では gap ranking を除いた ablation も行う。
-0.2.0 EGR の別 run は互換な version pair を比較し、version 修正と同一 version 内の
-選択方法の比較を混同しない。
-
-oracle は raw の arithmetic・exact decimal・file 条件、receipt identity、現在の
-exact target、owner/scope/contract、dependency、checker/revision/purpose、resolution
-fingerprint を独立に検査する。`plan`・coverage・`make_basis`・private acceptance
-predicate を正解判定として呼ばない。異なる active required target はそれぞれ valid
-support を必要とする。正の content alias は重複として扱う一方、negative check は
-exact subject ID を保つ。この有限 DAG recipe 上で least grounded positive proof を
-評価する。一般の grounded alternative・negative cycle は runtime 回帰テストの範囲で
-あり、この holdout oracle の対象ではない。raw-world validity と、権限・material・
-budget を含めた solvability は別 label である。
-
-## 分母と paired 集計
-
-primary completion は original 順・random seed 17 における **solvable parent の n/N**
-である。false satisfaction は **互換で試行した parent の n/N** であり、一つでも
-評価済み variant が誤って satisfied となれば、その parent を数える。trial 単位の
-件数と未評価 outcome も残す。旧 API の unsupported、unexecuted、exception、timeout
-は明示的に数える。互換な exception/timeout は失敗した試行であり、正しい停止や
-cost ゼロには置き換えない。旧版で未対応の invalidation は version pairing からのみ
-除外し、旧 version の表には残す。
-
-method 差では variant・random seed を parent 内で平均する。その paired parent 差を
-seed 2239 で 1,000 回 bootstrap し、95% 区間を計算する。paired N、wins/ties/losses、
-overall・family・budget 別結果を残す。生成 family は有限の設計 workload であり、
-すべての利用者 task の標本ではない。区間はこの task 構成内の変動を示すものであり、
-母集団全体への因果的な便益を証明しない。
-
-全 task の cost と **both-success subset** の cost は分ける。後者は両 method の
-すべての試行 variant が成功した parent に限定し、cost 差にはその N を併記する。
-低 cost の失敗は効率改善ではなく、成功 subset の差は全 task の節約率でもない。
-token・金額は測定せず、CPU/callback 数から金額への換算もしない。
-
-## 時間・メモリ・pipeline reference
-
-Q1/Q2 は同条件の isolated worker を使い、whole worker の deadline は 10 秒である。
-7,200 秒の cap は `run_trials` 呼出しごとに、新版 method run と旧版 version-only run に
-別々に適用する。startup/import・trial・serialization・IPC を
-worker limit に含む。timeout 後に不明な cost は不明のまま保持し、cap による未実行行も
-残す。trial CPU/end-to-end、planning、callback、serialization、初期化、worker の
-startup/import/IPC を記録した field がある。trial CPU/end-to-end と allocation tracing は、
-`environment()` が初めて SDK/Pydantic を import する前に開始する。その cold library import
-は traced trial cost と allocation peak に含まれる。`startup_import_and_ipc_seconds` は
-whole-worker の残差であり、trial 外の process/harness startup と IPC を含むが、すべての
-library import 時間を分離・除去する field ではない。trial 値は純粋な controller resource
-測定ではない。Q1/Q2 時間には `tracemalloc` の overhead も含まれる。
-`planning_cpu_seconds` は EGR では runner の `plan` call を測るが、host baseline では
-candidate factory・`feasible_actions`・selection を含む。phase の定義が異なるため、この
-列を method 間の純粋な planner 時間として比較しない。両 branch は最後の共通 public
-`plan` assessment も含む。trial 全体の CPU/end-to-end は
-宣言した observer と method の実処理を測る。peak traced Python allocation は resident
-memory ではなく、spawn cost は planner CPU cost ではない。旧・新版の pure-plan 性能比較は
-別に実行する instrumentation なしの Q3 `plan` 時間である。
-
-測定機は通常の Windows desktop であり、電源・熱状態、background process、scheduler の
-挙動を実験的に制御していない。初期の installed-candidate Windows 検査（223 テスト、
-SDK/CLI、smoke）は F1 の一部と重なった。したがって Q1/Q2 時間は tracing と変動する
-desktop 負荷を含む実行の記述的観測であり、wall time の性能優位を主張する根拠には
-しない。Q3 は両 version の Q1/Q2 完了後に直列実行し、時間・count・memory を別 worker で
-測定したが、引き続きこの一台の通常 host 上の測定である。
-
-Q3 は Q1/Q2 の並行負荷を避けて、その後に別に実行した。chain・diamond・branches・
-pure cycle をサイズ 4/8/16/32/64、checker 数 1/2/3 で測る。旧・新版は同じ意味の record と
-required 条件を使い、新版の default invalidation field は権限を追加しない。構築・
-dump/load・worker end-to-end と `plan` CPU/wall time は分ける。warmup は 1 回、サイズ
-4/8 は 10 回、それより大きいサイズは 1 回測定する。時間・diagnostic count・traced memory
-は別 process で測り、時間測定には count instrumentation を入れない。
-
-新版の count は実際の base-check/worklist-check/worklist-target 評価と最終 memo lookup を
-別々に記録する。旧版は recursive trusted-check entry を数える。異なる作業単位であり、
-比だけから CPU 高速化を主張しない。memory は別の 1 回の traced-allocation replay である。
-通常の scaling worker は 3 秒、小さいサイズの timing worker は 20 秒、version ごとの
-scaling run の cap は 1,200 秒である。whole-worker timeout は phase 不明の右打切りであり、startup・構築・
-評価のどこで制限に達したか確定しない。正確な plan 時間やその下限には置き換えない。
-
-F6/F8 の direct-pipeline reference も実 material を read/parse/validate し、routing 用の
-初期化を省く。batching・receipt・SDK resource bound の契約が異なるため primary scheduler
-表から除く。ただし共通 World/State/Policy/material setup は CPU/end-to-end に含まれ、
-通常の最小 pipeline はこの reference より安く実装できる場合がある。依存順序が既知なら、
-routing は call 数を減らさず overhead を増やす場合がある。同等・不利・指標間で混在する
-結果も評価結果として保持する。
-
-## Q3 の制御処理量・cost の観測
-
-各 version は graph/size/checker の 60 input に count・timing・memory arm を適用し、
-180 cell を要求した。新版は全 cell 完了し、旧版は whole-worker timeout 65 cell と
-count instrumentation exception 1 cell を保持する。
-
-| Version | 完了 cell | Timeout | Exception | Unexecuted |
+| 対応normal-time範囲 | 正の有限pair / 入力 | 旧/新比中央値 | 不完了pair | 完了した0/不在phase pair |
 | --- | --- | --- | --- | --- |
-| 0.2.0 | 114/180 | 65 | 1 | 0 |
-| 0.2.1 | 180/180 | 0 | 0 | 0 |
+| Helper plan | 29/39 | 1.02193 | 10 | 0 |
+| Helper plan+start/observe+binding progress | 29/39 | 1.19479 | 10 | 0 |
+| Helper start/observe | 23/39 | 1.28855 | 10 | 6 |
+| Helper binding progress | 23/39 | 1.02900 | 10 | 6 |
+| Proof plan | 60/60 | 1.00600 | 0 | 0 |
 
-評価できた完了 cell の reference disagreement はなく、新版 indexed-work bound 違反も
-なかった。新版 60 count input では、記録した各 check の base と最終 memo lookup を
-一度ずつ評価し、check-truth step は recorded check 数と verified-dependency edge 数の和
-以下だった。これは観測した fixture の bound であり、任意の履歴の cost 定理ではない。
+6件の継続phase不在はcallback未選択であり、正の費用欠損ではありません。打切り/0phaseに
+速度比を作りません。helper対応29planの新は短い16、長い13。代替1のchain7件の比中央値は
+0.816で旧単純経路が有利でした。指数的再訪の除去はすべての入力の低費用化を意味しません。
 
-| Graph / target 数 / checker 数 | 旧 recursive entry | 新 base / check-truth / target-truth / memo |
+| Helper入力 | 旧 / 新normal plan中央値ms | 旧 / 新normal sequence中央値ms |
 | --- | --- | --- |
-| Branches / 4 / 1 | 7 | 4 / 7 / 7 / 4 |
-| Chain / 4 / 2 | 52 | 8 / 14 / 7 / 8 |
-| Chain / 8 / 2 | 1,004 | 16 / 30 / 15 / 16 |
-| Diamond / 8 / 2 | 4,452 | 16 / 42 / 15 / 16 |
-| Branches / 64 / 3 | 759 | 192 / 381 / 127 / 192 |
-| Chain / 64 / 3 | Whole-worker timeout | 192 / 381 / 127 / 192 |
-| Cycle / 64 / 3 | Count-arm RecursionError | 192 / 192 / 64 / 192 |
+| Chain深さ4、代替2 | 0.19175 / 0.15790 | 0.67470 / 0.45170 |
+| Chain深さ8、代替2 | 1.15370 / 0.22105 | 3.36725 / 0.60160 |
+| Chain深さ12、代替2 | 15.96050 / 0.30435 | 47.76690 / 0.77745 |
+| Chain深さ8、代替4 | 157.40240 / 0.35425 | 474.34600 / 0.88090 |
+| Chain深さ16、代替2 | whole-worker CPU上限 / 0.38700 | whole-worker CPU上限 / 0.97575 |
+| Chain深さ24、代替2 | whole-worker CPU上限 / 0.52315 | whole-worker CPU上限 / 1.28315 |
+| Chain深さ64、代替1 | 0.59660 / 0.70430 | 1.37910 / 1.74480 |
 
-diagnostic の単位は異なり、旧 entry を新 memo lookup だけで割ると新版の実 work を省く。
-次の表は同じ graph の **別々の** time/memory arm をまとめたもので、同時 instrumentation
-付きの時間ではない。小さいサイズの timing は 10 回、大きいサイズは 1 回測定した。
-1 回の値は安定した percentile 推定ではない。traced allocation は replay の input 構築・
-dump/load・reference・plan を含み、planner だけの memory ではない。
+別count workerの旧action-path訪問は深さ12/代替2で8,191、深さ16で131,071。
+新は各phaseでaction subproblem25/33、rule edge59/79です。単位が違うため普遍的な訪問数
+速度比ではありません。深さ16はcount/memoryが完了しても、通常timeの10反復workerはCPU上限を
+超えます。plan outcomeの矛盾ではありません。旧28打切りはcount9/memory9/time10のCPU超過で、
+内部phase不明を保持します。
 
-| Graph / target 数 / checker 数 | 旧 / 新 median plan wall、ms | 旧 / 新 peak traced allocation、bytes | Timing 反復数 |
-| --- | --- | --- | --- |
-| Branches / 4 / 1 | 0.1196 / 0.1238 | 878,939 / 1,116,880 | 10 |
-| Chain / 4 / 2 | 0.6565 / 0.1747 | 904,004 / 1,142,605 | 10 |
-| Chain / 8 / 2 | 13.1176 / 0.3159 | 972,324 / 1,208,581 | 10 |
-| Diamond / 8 / 2 | 57.3133 / 0.3895 | 991,121 / 1,227,389 | 10 |
-| Branches / 64 / 3 | 16.2565 / 4.2293 | 3,275,593 / 3,834,572 | 1 |
-| Chain / 64 / 3 | Timeout / 4.1350 | Timeout / 3,835,571 | 1 |
-| Cycle / 64 / 3 | Timeout / 4.3264 | Timeout / 3,847,591 | 1 |
+Memoryは別の単回traced replayであり、通常time、RSS、Job memoryではありません。
+helper完了memory30pairでは新が小26/大4、proof60pairでは小41/大19でした。一般的なmemory改善の
+証明ではありません。例えば深さ64/代替1は旧/新769,199/671,327 traced bytesですが、新の通常
+planは遅くなります。単一指標の利点を総合効率改善にしません。
+非対応集合のhelper中央値は旧393,774bytes（完了30入力）、新407,896bytes（39入力）です。
+完了した入力集合が異なるため、この差をmemory優位や悪化と解釈しません。
 
-両 version が完了した timing input 39 件では、新 plan wall は 38 件で短く、1 件
-（branches・4 target・1 checker）で長かった。両 version が完了した memory input
-36 件では、新 peak traced allocation は全 36 件で大きかった。短い plan 時間と多い replay
-allocation が同時に観測され、小さい単純 input は改善しない場合もある。Windows の
-submillisecond CPU median は量子化によりゼロとなることがあるが、CPU work ゼロではない。
-打切りとなった旧 input に速度比や高速化の下限を補完しない。完全な表には、この例だけで
-なく全 360 cell を保持する。
+## 新確認と保持した証拠
 
-exception は **旧 cycle / 64 target / 3 checker / count arm** の `RecursionError` である。
-recursive counting wrapper が stack depth を増やした arm の失敗であり、instrumentation
-なしの runtime crash の証拠ではない。65 timeout に混ぜず、元の stderr と row を raw
-archive に保持する。完了した pure-cycle cell は、grounding のない cycle を satisfied と
-しない reference に一致した。一般の grounded/negative cycle authority は protocol に
-記したとおり scaling reference の対象外である。
+未使用seed49979687で32条件を生成し、実topology、代替、前提/current validity、availability/
+budget、更新条件を変えました。両版semantic worker32/32完了、small独立helper reference32/32一致、
+不一致/未評価なしです。観測済み回帰とは別です。有限の意味を確認し、実アプリ完了率ではなく、
+数値/ID変更だけを独立した外部課題として増やしません。
 
-## 再実行と証拠の境界
+[Controller summary](../benchmarks/results/v0.2.2/controller-summary.json)は全cell、打切り、
+reference状態、時間分母、count、allocation範囲を保持します。formal raw JSONL SHA256は
+`7c8d40a6dd80db41adfa91ce4e0ad581119032d421ccaaac22675b2b66473dd2`、
+execution-manifest SHA256は
+`652f80e1627aaa4ab3a7b4b48f5884423b46284901c98c3294878ec70129a305`。
+[Provenance](../benchmarks/results/v0.2.2/artifact-provenance.json)は測定candidateと最終配布物を
+分けます。旧証拠、診断再現、exact source/constraints、wheel、freeze、新traceを保持します。
+新 `benchmark-raw-v0.2.2.zip` を生成し、manifest資料54件のhashと全56entryのZIP整合性を
+確認しました。12,592,735bytes、
+SHA256 `e90060aae7c2fac6ebe3f920a74a7066a4b63353daf7f7f0ffdbc23440b3f37a`。
+manifest資料54件と `MANIFEST.json` / `BUNDLE_README.txt` からなり、変更していない旧ZIP、
+formal raw/CSV、固定LF source/wheel/constraints、旧40診断、別labelの測定後独立確認を含みます。
+[Checksum](../benchmarks/results/v0.2.2/BENCHMARK_SHA256SUMS)にarchiveを識別します。
+[予定raw Release asset](https://github.com/kadubon/evidence-gap-router/releases/download/v0.2.2/benchmark-raw-v0.2.2.zip)
+のupload済みとはここでは記録していません。archive生成、upload、native CI、PyPI確認の状態は
+[validation](validation.md)で分けます。[再実行手順](../benchmarks/README.md)も参照してください。
 
-測定した exact wheel を別の通常環境へインストールし、固定した Python・runtime
-version を合わせる。次の command は `src/` を import path に加えず benchmark code を
-実行する。外部の新規 output path を使い、既存 freeze/results を上書きしない。
-
-```sh
-NEW_PYTHON -m benchmarks.harness freeze --output EXTERNAL/freeze.json --implementation-commit 305eec2cbf4f16c7d50dbb8bad002bc0cbc6d1c5 --wheel CANDIDATE_WHEEL --baseline-wheel OFFICIAL_020_WHEEL
-NEW_PYTHON -m benchmarks.harness run --phase holdout --freeze EXTERNAL/freeze.json --output EXTERNAL/methods.jsonl
-OLD_PYTHON -m benchmarks.harness run --phase holdout --freeze EXTERNAL/freeze.json --version-only --output EXTERNAL/old-version.jsonl
-NEW_PYTHON -m benchmarks.aggregate EXTERNAL/methods.jsonl EXTERNAL/old-version.jsonl --output EXTERNAL/report
-NEW_PYTHON -m benchmarks.scaling run --python NEW_PYTHON --freeze EXTERNAL/freeze.json --output EXTERNAL/scaling-new.jsonl
-NEW_PYTHON -m benchmarks.scaling run --python OLD_PYTHON --freeze EXTERNAL/freeze.json --output EXTERNAL/scaling-old.jsonl
-NEW_PYTHON -m benchmarks.scaling summarize EXTERNAL/scaling-new.jsonl EXTERNAL/scaling-old.jsonl --output EXTERNAL/scaling-report
-```
-
-protocol は新版の method/ablation/reference 合計 4,680 行、旧版 720 行と、別途制限した
-scaling を要求する。要求行数は完了観測数ではない。以前の development log には cap・
-metadata の変更過程が含まれ、診断用に保持するが confirmatory holdout 証拠には使わない。
-holdout 閲覧後に実装・checker・generator・protocol を変更する場合は、新しい protocol と
-未使用 seed が必要であり、以前の証拠は保存する。
-
-raw archive `benchmark-raw-v0.2.1.zip` を生成し、内容を検証した。サイズ 9,502,776 bytes、
-SHA-256 は `9212ee2499df0b16b47b23ac3150f71b83b1db69abc85a7123a02044f4fa69a0` である。
-[checksum 記録](../benchmarks/results/BENCHMARK_SHA256SUMS) に識別子がある。
-31 member は 29 source asset と `MANIFEST.json`・`BUNDLE_README.txt` からなり、変更して
-いない formal method/version/scaling trace と report、別に label した development trace、
-freeze/provenance/runtime constraint、固定 benchmark source、implementation LF archive、
-完了済み Windows candidate profile、旧公開版と測定 candidate の wheel/sdist pair を含む。
-manifest は member の byte size と hash を記録する。
-小さい summary/freeze は `benchmarks/results` に保存し、大きな trace を
-wheel に含めない。最終公開 wheel が文書のみの変更で METADATA と whole-wheel hash を
-変えても、測定した candidate wheel を保持する。package fingerprint と byte 比較により、
-metadata の変更と実行 package の変更を区別する。最終 CI は実 package・protocol・harness
-byte の一致を検査し、それらの変更を文書のみの rebuild として扱わない。
-[Release asset reference](https://github.com/kadubon/evidence-gap-router/releases/download/v0.2.1/benchmark-raw-v0.2.1.zip)
-と `BENCHMARK_SHA256SUMS` は公開先である。archive の生成・検証は Release upload や
-PyPI installation の完了を意味せず、実際の公開状態は [validation](validation.md) に別に記録する。
-この CPU のみ・model 不使用の人工 task 評価は、LLM accuracy・統計的独立性・金銭節約・
-capability growth・intelligence phase を示さない。観測された false satisfaction がゼロでも
-risk ゼロとはならない。旧公開版の実際の不具合・履歴は [0.2.0 audit](audit-020.md)、
-実装の境界は [design](design.md) を参照する。
+この正式実行後にruntime/oracle/generator/protocolは変更していません。結果/文書収録はmetadataを
+変えても、公開時に測定済みpackage/harness/protocolの一致を要求します。
+結果収録時に `test_summarize_022.py` の単独source-test import設定も調整しましたが、
+測定したruntime/harness/generatorのbyteは変えません。CPUのみでLLM/GPU/有料推論を
+使わず、source独立性、金額節約、能力成長、リスク0を実証しません。条件によって仕事が変わる証拠
+処理にはroutingが候補で、既知の固定手順はより単純で低費用なpipelineが適する場合があります。

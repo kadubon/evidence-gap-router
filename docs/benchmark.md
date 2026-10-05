@@ -1,468 +1,338 @@
-# v0.2.1 engineering benchmark
+# v0.2.2 engineering measurements
 
-This experiment separates three questions: Q1 asks whether acceptance and explicit
-continuation agree with an independent contract oracle; Q2 compares scheduling
-methods under the same feasible actions and resources; Q3 measures controller
-CPU, memory and dependency-evaluation work. A correctness repair does not by itself
-establish a scheduling advantage, and fewer callbacks do not imply lower CPU cost.
-The [Japanese report](benchmark.ja.md) describes the same protocol.
+The frozen common-runner regression observed EGR completion **145/145** solvable
+parents, fixed-feasible **122/145**, verify-first **127/145** and random-feasible
+**133/145**, with zero assessed false satisfaction in 240 parents per method.
+This is additional ordering value under shared gap/necessity/helper eligibility,
+on an already observed synthetic set. It is not a general EGR advantage over an
+independent scheduler. Existing checked-proof performance is nearly unchanged;
+the distinct candidate-helper fix removes repeated alternative-path exploration,
+while some simpler inputs become slower.
 
-The frozen experiment completed 5,400 Q1/Q2 rows (4,680 new-version and 720
-old-version) and 360 Q3 measurement cells. New EGR completed every solvable
-parent; its scheduling gains over strong baselines were small, with clustered
-intervals including zero. Callback reductions on selected successful pairs came
-with higher traced trial CPU. Q3 observed faster dependency evaluation in most
-completed pairs, with higher traced allocations. These are distinct findings.
-The completed checks also include the 260-test source suite, an installed-candidate Windows check
-with 223 portable tests plus SDK/CLI execution, and a portable smoke covering
-11 generated parents, 33 method trials and four graph references. The remaining
-37 source-only tests exercise repository/release tooling. The smoke's
-outcome digest is
-`b151304eaca99ad064b6a6ad6b27cb4a08361f8257438ec910d57ad6d78b35c5`;
-that smoke is a portability/regression check, not the 240-parent holdout.
+The [original v0.2.1 report](benchmark-v0.2.1.md) and
+[stop-metric erratum](benchmark-v0.2.1-erratum.md) remain separate immutable evidence.
+The old 80/95 versus 70/95 label difference is not a safety improvement. Every
+new main method has 75 known correct abstentions, five uncertain incomplete stops
+and 15 execution faults among 95 unsolvable parents. Unknown use/effects are
+retained. New measurement does not rewrite old observations.
 
-## Q1/Q2 observed outcomes
+## Identity, environment and execution control
 
-The saved [aggregate summary](../benchmarks/results/summary.json) and
-[scaling summary](../benchmarks/results/scaling-summary.json) retain complete
-denominators and assessment status; raw traces and CSV tables are in the bundle
-described below. Figures in this report are rounded for display.
+| Recorded identity | Value |
+| --- | --- |
+| Protocol | `egr-022-engineering-v1` |
+| Measured implementation commit | `08c81a2387db7047b9599d153f48893e510fe85d` |
+| Official baseline runtime commit | `3e6a547dd38af9668115aaad9d9d30129c018c1b` |
+| Freeze time | `2026-10-05T09:07:39Z` |
+| Protocol SHA256 | `4a0ef6b5d7fdcd474f260aba124851ca96d0b55b705ee58dd7d1a84ad7ff7faf` |
+| Harness SHA256 | `32512950572d2f78280f5fbda505d6c94a67e44c3c9d60337466f2bbde55aba5` |
+| Measured 0.2.2 wheel SHA256 | `66b4cad4d4f80c81871c0caf6daa28c472d5fabef310a429bc59e2f85e6059e9` |
+| Official 0.2.1 wheel SHA256 | `61129ec160c6c9d718f5173fa0281cdcc735cfdc9222138f45584a6b71202917` |
+| Measured 0.2.2 package fingerprint | `b74c3e906270813246c3871e71a32c40900bbf4bfdc5a7d21577880fddec2afe` |
+| Official 0.2.1 package fingerprint | `5df6a0b5e7c521079e29475950addf6e1b84d62b3f3c70033307a82643e8341a` |
+| OS / machine | Windows 11 `10.0.26300`, AMD64 |
+| CPU / power | AMD Ryzen 7 8840HS, 8 cores / 16 logical processors; Balanced |
+| Python / Pydantic / core | 3.12.14 / 2.13.5 / 2.46.5 |
+| Other matched runtime dependencies | annotated-types 0.8.0, typing-extensions 4.16.0, typing-inspection 0.4.4 |
 
-The 240 original-order parent tasks include 145 classified as solvable under their
-declared material, authority and budget. Primary completion uses original order
-and random seed 17. Old unsupported APIs leave 220 compatible parents, 132 of
-which are solvable. Counts below are not confidence intervals. Cluster completion
-separately averages variants/seeds within each solvable parent.
+Both SDKs were ordinary noneditable wheel installs outside the checkout. Installed
+package bytes were compared with their declared wheels. Package fingerprint is
+SHA256 of canonical sorted package-relative filename → SHA256(bytes) JSON, with
+compact separators, excluding generated caches. It permits a later docs/metadata
+build to have a different whole-wheel hash while requiring identical measured
+runtime bytes. Harness/protocol identity is also required. The
+[freeze](../benchmarks/results/freeze-v0.2.2.json) is repository-local freezing,
+not external registration; runtime/checker/generator were fixed before confirmation.
 
-| Version / method | Primary completion n/N | Cluster completion | False-satisfied parents n/N | Strict correct abstention n/N |
-| --- | --- | --- | --- | --- |
-| 0.2.0 EGR | 99/132 | 76.263% | 9/220 | 64/88 |
-| 0.2.1 EGR | 145/145 | 100% | 0/240 | 80/95 |
-| 0.2.1 fixed-feasible | 142/145 | 98.621% | 0/240 | 70/95 |
-| 0.2.1 verify-first | 143/145 | 99.080% | 0/240 | 70/95 |
-| 0.2.1 random-feasible | 145/145 | 98.544% | 0/240 | 70/95 |
+One serial controller enumerated 1,680 keys and shuffled matched blocks with seed
+220229. Development, writing, testing and other heavy experiments stopped during
+formal measurement. Codex desktop remained active; CPU affinity/priority, thermals,
+background services and frequency were not controlled. These are one-host
+engineering observations with remaining desktop noise.
 
-These observed completion differences are modest: three parents relative to fixed
-order, two relative to verify-first, and no primary completion difference relative
-to seeded random selection. Other orders/seeds reduce random's cluster mean;
-three parents have a lower mean than EGR. No general routing advantage or cost
-saving follows. The 4,680 new-version rows include method
-variants, random repeats, ablations and pipeline references; they are not 4,680
-independent parent tasks.
+Per-worker limits were 10 wall seconds, eight cumulative Job CPU seconds and
+256 MiB peak aggregate private committed bytes, including venv descendants.
+The parent had a separate 512 MiB peak working-set cap. Overall limits were
+7,200 wall and 3,600 CPU seconds, with preregistered phase caps. Workers were
+assigned to an owned Windows Job before execution; observed crossing terminates
+only that Job, with possible sampling overshoot. Private committed bytes,
+working set and traced Python allocations are different metrics.
 
-All 4,680 new rows have worker status `completed` and an assessed oracle. A
-completed worker can report a guarded callback/factory/receipt fault rather than
-task completion. Old rows comprise 660 completed and 60 unsupported trials
-(20 F4 parents requiring the absent invalidation API). Neither version has a
-Q1/Q2 worker timeout or unexecuted row. Compatible oracle-unassessed counts are
-zero; the 60 unsupported rows have no oracle assessment and remain explicit.
+The run took **1,093.901 wall seconds**, **938.391 worker CPU seconds** and
+**66.578 parent CPU seconds**. All worker CPU/memory observations were available.
+Observed maximum Job private committed bytes were 61,079,552; maximum parent
+working set was 70,348,800. These observed maxima are not universal memory bounds.
 
-| Version / method | Attempted compatible trials | Unsupported trials | Exception-bearing trials | Unknown verification-cost trials |
-| --- | --- | --- | --- | --- |
-| 0.2.0 EGR | 660 | 60 | 57 | 57 |
-| 0.2.1 EGR | 720 | 0 | 45 | 45 |
-| 0.2.1 fixed-feasible | 720 | 0 | 45 | 45 |
-| 0.2.1 verify-first | 720 | 0 | 45 | 45 |
-| 0.2.1 random-feasible | 2,160 | 0 | 135 | 135 |
+| Phase | Requested workers | Completed workers | CPU-limited workers |
+| --- | --- | --- | --- |
+| B, main methods and direct references | 1,020 | 1,020 | 0 |
+| A, fixed functional audit | 2 | 2 | 0 |
+| C, proof and helper measurements | 594 | 566 | 28 |
+| New confirmation | 64 | 64 | 0 |
+| All | 1,680 | 1,652 | 28 |
 
-The new exception-bearing trials are deliberately faulty F7 recipes; they are
-retained as failed compatible attempts: 270 across all new rows. Old EGR's 57
-exception-bearing rows comprise 45 F7 faults and 12 F4 re-resolution errors.
-Strict correct abstention requires a clean router stop:
-15 faulty F7 parents therefore do not become clean abstentions merely because
-they fail safely. Old false satisfaction occurs on four F5 parents and five F8
-parents, 27 variant trials. New false satisfaction is 0/240 EGR parents and
-0/4,680 new-version trials, including the separate references, within this oracle.
+No worker keys were deleted, unsupported, unexecuted or timed out. Worker completion
+does not mean task completion: the method workers include handled callback/factory/
+receipt faults. The 28 resource-limit rows are old helper workers and remain
+right-censored whole-worker observations with unknown internal phase, outcome and
+unreturned costs. They are not plan-time lower bounds, exact times or zero cost.
 
-The frozen parent-record field `correct_abstention` is an error-free router-stop
-indicator, despite its name. It is also true for 32 solvable method/parent groups,
-including erroneous old/baseline stops. Interpret that flag as correct abstention
-only with `solvable == false`. The aggregate n/N tables above already apply that
-condition; this naming caveat does not change their counts. The original field
-and its raw evidence are retained, rather than silently renamed after measurement.
+## B: common-runner method regression
 
-On the **matched version subset**, new EGR has primary completion 132/132 versus
-old 99/132, with 220 compatible parents total. The parent-mean difference is
-23.737 percentage points (95% bootstrap interval 16.667–31.061), wins/ties/losses
-33/99/0. False-satisfied parents are old 9/220 versus new 0/220. The other
-20 requested parents are not silently treated as old failures or successes;
-their unsupported operation is shown above. Equal completion in F5/F8 does not
-erase the old incorrect acceptance on unsolvable parents.
+The old 240 parents (30 per F1–F8, seed982451653) are **observed regression data**.
+Only original candidate order and random seed17 were rerun: four methods, 960
+trials, plus 60 separate direct references. Old reversed/renamed/other random
+variants were not rerun and do not enter these intervals.
 
-### Family and budget counts
+F1 covers declared provenance/duplicate origin; F2 exact cross-obligation staged
+helpers; F3 partial required checkers/self-verification; F4 contract/dependency
+changes and re-resolution; F5 exact negative-subject and contradiction grounds;
+F6 fixed pipelines/initial completion; F7 missing authority/material, faults,
+unknown use and no-op; F8 actual bounded CSV/rules, exact decimals and snapshots.
+Raw validity and permitted within-budget solvability are separate labels.
+Initialization uses actual issued callbacks; paid initialization is recorded
+separately and added equally to total budgets. Callbacks check supplied raw material,
+not a fixed PASS or an oracle label.
 
-Entries are primary completion n/N. Each family requests 30 parents; old F4
-has only 10 compatible parents. `0/0` means no solvable parent in that stratum,
-not a measured zero-percent completion rate.
+All four methods use public `run`, changing only its pure selector. Complete pools,
+availability, issuance, callback views, receipt/error validation, progress/replan,
+finite step bounds and external worker supervision are common. `feasible_actions`
+includes unmet-gap/necessity and helper eligibility, not only safety filtering.
+Thus this is an ordering comparison conditional on EGR's common mechanism.
 
-| Family | 0.2.0 EGR | 0.2.1 EGR | Fixed | Verify-first | Random |
-| --- | --- | --- | --- | --- | --- |
-| F1 | 18/18 | 18/18 | 16/18 | 16/18 | 18/18 |
-| F2 | 0/24 | 24/24 | 24/24 | 24/24 | 24/24 |
-| F3 | 19/24 | 24/24 | 24/24 | 24/24 | 24/24 |
-| F4 | 5/9 | 22/22 | 21/22 | 22/22 | 22/22 |
-| F5 | 16/16 | 16/16 | 16/16 | 16/16 | 16/16 |
-| F6 | 21/21 | 21/21 | 21/21 | 21/21 | 21/21 |
-| F7 | 0/0 | 0/0 | 0/0 | 0/0 | 0/0 |
-| F8 | 20/20 | 20/20 | 20/20 | 20/20 | 20/20 |
+The independent oracle inspects raw numeric/file conditions, receipt identity,
+exact active targets, owner/scope/contracts, finite dependencies, checker authority/
+revision/purpose and full related resolution inputs. It calls neither `plan` nor
+private acceptance predicates. It requires all distinct active required targets
+to be checked and uses least grounded support for these finite recipes. General
+negative cyclic authority is outside this method oracle's scope and has separate
+runtime regressions.
 
-| Budget | Requested parents | 0.2.0 EGR | 0.2.1 EGR | Fixed | Verify-first | Random |
+| Method | Completion / solvable | False-satisfied / all attempted | Erroneous stop / solvable |
+| --- | --- | --- | --- |
+| EGR | 145/145 | 0/240 | 0/145 |
+| Fixed-feasible | 122/145 | 0/240 | 23/145 |
+| Verify-first | 127/145 | 0/240 | 18/145 |
+| Random-feasible, seed17 | 133/145 | 0/240 | 12/145 |
+
+For each method the 95 unsolvable parents split into **75 known correct
+abstentions, five uncertain incomplete stops and 15 execution faults**.
+All 240 oracle outcomes were assessed. Known abstention requires defined
+non-solvability, incomplete outcome, meaningful clean domain halt, known bounded
+use/effects and no pending invocation. The five unknown-effect/use cases are
+not promoted to known safe success. Fifteen verification-cost observations per
+method remain unknown; that count is not interchangeable with fault or uncertain
+stop counts. Faults remain paid attempted work.
+
+| Family | Solvable N | EGR | Fixed | Verify-first | Random17 | All-task false-satisfied denominator |
 | --- | --- | --- | --- | --- | --- | --- |
-| Adequate | 192 | 88/120 | 132/132 | 132/132 | 132/132 | 132/132 |
-| Tight | 48 | 11/12 | 13/13 | 10/13 | 11/13 | 13/13 |
+| F1 | 18 | 18 | 0 | 0 | 18 | 30 |
+| F2 | 24 | 24 | 24 | 24 | 24 | 30 |
+| F3 | 24 | 24 | 24 | 24 | 24 | 30 |
+| F4 | 22 | 22 | 17 | 22 | 22 | 30 |
+| F5 | 16 | 16 | 16 | 16 | 4 | 30 |
+| F6 | 21 | 21 | 21 | 21 | 21 | 30 |
+| F7 | 0 | 0 | 0 | 0 | 0 | 30 |
+| F8 | 20 | 20 | 20 | 20 | 20 | 30 |
+| Adequate budget | 132 | 132 | 112 | 116 | 120 | 192 |
+| Tight budget | 13 | 13 | 10 | 11 | 13 | 48 |
 
-Old compatible budget strata have 176 adequate and 44 tight parents; new has
-192 and 48. Within-version primary differences are confined to tight tasks.
-F1 provides two of fixed/verify-first's missed parents; F4 provides fixed's
-third. All main new methods tie on F2, F3, F5, F6 and F8 completion.
+The 0.2.1 original-order counts were 145/142/143/145; current counts are
+145/122/127/133. Independent old/new trace review attributes the baseline decline
+entirely to common-runner `no_progress`: fixed loses20 parents (16 F1, four F4),
+verify-first loses16 F1 and random loses12 F5. First actions and initial full-pool
+feasible order are unchanged. F1 first reads `read:repeat`; the four F4 cases read
+`read:extra` duplicating rules0's content/source/group; F5 reads `read:alias`.
+The old manual baseline treated any nonempty evidence payload as progress and
+continued. Public `run` stops unneeded duplicate substance/bindings after one
+callback. For example F1 fixed index1 previously executed repeat → e1 → e2 →
+check-e1 → check-e2; it now stops after repeat. EGR loses no completed parent.
+Thus the changed difference includes a shared semantic-progress contract, not
+improved ranking or an independent-stack gain. Original observations are preserved.
+The old all-variant
+intervals included zero; the current original-only paired intervals below answer
+a narrower regression question, not an unseen population claim or equivalence test.
 
-### Paired scheduling differences and costs
-
-Differences are EGR minus baseline, using parent means across variants/seeds.
-Intervals are percentage points, not ratios of the primary integer counts.
-
-| Baseline | Paired solvable N | Completion difference, pp | 95% parent-bootstrap interval, pp | Wins/ties/losses |
+| EGR minus baseline | Paired solvable N | Completion difference | 95% parent-paired bootstrap interval | Wins / ties / losses |
 | --- | --- | --- | --- | --- |
-| Fixed | 145 | 1.379 | [0, 3.218] | 3/142/0 |
-| Verify-first | 145 | 0.920 | [0, 2.299] | 2/143/0 |
-| Random | 145 | 1.456 | [0, 3.295] | 3/142/0 |
+| Fixed | 145 | 0.15862 | [0.10345, 0.22069] | 23 / 122 / 0 |
+| Verify-first | 145 | 0.12414 | [0.07586, 0.17931] | 18 / 127 / 0 |
+| Random17 | 145 | 0.08276 | [0.04138, 0.13103] | 12 / 133 / 0 |
 
-All intervals include zero. Callback/check means below measure **continuation**,
-excluding separately recorded initialization; trial CPU/end-to-end include
-common setup, cold library import, initialization, observer and snapshot work. Costs average variants
-within parent, then parents. Verification means omit unknown observations:
-known-cost N is 201/220 old parents and 225/240 for each new main method.
-The unknown trial counts above are not zeros.
+Bootstrap seed2239 uses 1,000 paired parent resamples. Each parent has one
+declared trial per method here; no missing-variant cluster mean is invented.
+The synthetic families are designed finite workloads, not a random sample of
+real business tasks. Intervals describe variation within this task construction.
 
-| Version / method | Callback mean (parent N) | Known verification mean (parent N) | Trial CPU mean, s | Trial end-to-end mean, s |
+## Same-completion costs, all-task costs and fixed references
+
+Normal method time has no profile/tracemalloc. The controller interval is the
+common public-run execution/replanning path; trial CPU/end-to-end additionally
+include setup, actual initialization, final assessment, oracle and snapshot work.
+Cold SDK import and whole-worker startup/IPC are separately recorded. These
+different scopes must not be called a pure ranking cost or a pure minimal pipeline.
+
+| Both-success pair | N | Callback difference EGR − baseline (95% interval) | Controller wall difference, ms (95% interval) | Controller CPU difference, ms (95% interval) |
 | --- | --- | --- | --- | --- |
-| 0.2.0 EGR | 1.7439 (220) | 0.9983 (201) | 0.4471 | 0.4795 |
-| 0.2.1 EGR | 2.1375 (240) | 1.2578 (225) | 0.4868 | 0.5211 |
-| Fixed | 2.3319 (240) | 1.2963 (225) | 0.4843 | 0.5160 |
-| Verify-first | 2.2042 (240) | 1.2519 (225) | 0.4825 | 0.5149 |
-| Random | 2.3079 (240) | 1.2810 (225) | 0.4828 | 0.5158 |
+| Fixed | 122 | −0.16393 [−0.27049, −0.07377] | −0.16216 [−0.30154, −0.04763] | +0.12807 [−1.15266, +1.53689] |
+| Verify-first | 127 | 0 [0, 0] | +0.00937 [−0.04216, +0.05986] | +0.49213 [−0.86122, +1.84547] |
+| Random17 | 133 | −0.06015 [−0.13534, −0.01504] | −0.11674 [−0.20776, −0.04043] | +0.35244 [−1.05733, +1.64474] |
 
-Old lower average work accompanies poorer completion and a different compatible
-denominator; it is not demonstrated savings. EGR uses fewer callbacks than the
-new baselines, but slightly more known verifications than verify-first and more
-descriptive trial CPU than all three. The separate pure-plan version timing is
-Q3, not this cross-method observer timing.
+These are success-selected known-cost pairs, not all-task savings. Verify-first
+has equal callbacks and no resolved overhead difference; every controller CPU
+interval includes zero. Desktop noise and coarse Windows CPU quantization limit
+submillisecond interpretations. Zero CPU median does not imply no CPU work.
 
-| Baseline | Both-success parent N | Callback difference | Traced trial CPU difference, ms |
+| All 240 task attempts | Mean callbacks | Known verification mean (N=225) | Mean controller wall, ms | Complete / incomplete-or-fault callback mean (N) |
+| --- | --- | --- | --- | --- |
+| EGR | 2.13750 | 1.25778 | 2.32486 | 2.49655 (145) / 1.58947 (95) |
+| Fixed | 1.99583 | 1.10222 | 2.30581 | 2.66393 (122) / 1.30508 (118) |
+| Verify-first | 1.87917 | 1.07111 | 2.17171 | 2.44094 (127) / 1.24779 (113) |
+| Random17 | 2.20417 | 1.22667 | 2.44121 | 2.69173 (133) / 1.59813 (107) |
+
+The baseline's low all-task mean may reflect failed solvable work; it is not an
+efficiency advantage. All callback costs are known, while 15 verification costs
+per method are unknown and excluded only from the known-cost mean, never replaced
+by zero. [Method summary](../benchmarks/results/v0.2.2/summary.json) retains outcome,
+family/budget, all-task and selected-pair costs with their denominators.
+
+Delay sensitivity adds an assumed equal delay of 0/0.001/0.01/0.1/1 seconds to
+every callback. At 0.01 seconds, selected-pair EGR wall differences are −1.8015 ms
+for fixed, +0.00937 ms for verify-first and −0.71824 ms for random. This is an
+additive assumption, not measured latency, token savings, LLM fees or commercial ROI.
+
+The 60 direct references are separate: F6 raw completion25/30 and F8 20/30,
+with no assessed false acceptance. They perform 50/60 material reads respectively
+and 30 validations each. Batching, receipts and SDK resource-bound contracts
+differ; callback/verification counts are not comparable SDK costs. Shared harness
+setup remains measured. F6/F8 solvable routed tasks have equal method completion,
+and predetermined steps may be better served by a simple fixed pipeline.
+
+## A: acceptance and continuation diagnostics
+
+Each installed version ran 14 fixed functional properties. Old 0.2.1 met11/14;
+candidate 0.2.2 met14/14, with no unassessed cases or case exceptions. The three
+old failures were a partial external resolution basis, a same-digest related alias
+and retained partial resolution history. They incorrectly reported satisfied;
+the candidate retains the history but leaves the issue unresolved. Valid all-related
+external grounds remain accepted. Actual paid invalidation, contract/checker updates,
+save/load/re-resolution, exact negative subject, prohibited self-check, helper
+bindings, exact decimal file rejection and supported large snapshots remain usable.
+These are mechanical finite properties, not authentication or population CVE claims.
+
+## C: proof and candidate-helper graphs
+
+Existing proof graphs and unacquired helper candidates are measured separately.
+Time, diagnostic visits and traced allocation run in separate processes. Normal
+time has one warmup and ten repeats. Input/candidate construction, real seed
+callbacks, snapshot dump/load and semantic assessment are separate recorded scopes.
+Construction/initialization observations are single samples, not stable percentiles.
+
+| Family / version | Completed / requested measurement rows | CPU-limited | Reference agree / disagree / unassessed / not completed |
 | --- | --- | --- | --- |
-| Fixed | 142 | -0.2723 | +3.558 |
-| Verify-first | 143 | -0.0932 | +5.390 |
-| Random | 142 | -0.2504 | +4.988 |
+| Proof / 0.2.1 | 180/180 | 0 | 180 / 0 / 0 / 0 |
+| Proof / 0.2.2 | 180/180 | 0 | 180 / 0 / 0 / 0 |
+| Helper / 0.2.1 | 89/117 | 28 | 63 / 0 / 26 / 28 |
+| Helper / 0.2.2 | 117/117 | 0 | 63 / 0 / 54 / 0 |
 
-This selected subset requires full success across attempted variants for both
-methods. Its cost differences exclude failing pairs and do not estimate all-task
-efficiency. F3, F6 and F8 have zero callback difference on their successful
-subsets. In F2, EGR versus verify-first has identical calls and completion but
-16.710 ms more descriptive trial CPU, illustrating a mixed or unfavorable result.
+Proof uses 60 chain/diamond/branches/pure-cycle inputs, sizes4/8/16/32/64 and
+checkers1/2/3. Both versions already use the indexed proof evaluator. All 60
+paired normal plan timings completed; median old/new ratio is **1.00600** (new
+shorter38, longer22). This is nearly unchanged observed performance, not a second
+proof-graph speedup. The restricted proof reference checks identical required
+parents and ungrounded cycles; arbitrary negative/grounded alternatives have
+separate functional regressions.
 
-### Ablations and direct pipelines
+Helpers use 39 declared inputs: alternatives1/2/4, depths4/8/12/16/24/32/64,
+shared/diamond/branching inputs, multiple checkers, current evidence, unavailable
+authority, exact scope/digest, optional/satisfied ownership, invalidation/contract
+changes and grounded/ungrounded cycles. The independent scanning AND/OR reference
+is deliberately limited to positive recipes of depth≤8 with the consuming root
+blocked. The 21 small inputs ×three modes agree for both versions. Larger
+completion is not independent reference agreement; its unassessed rows remain.
 
-| Ablation | EGR / ablation primary completion | Paired N | Cluster difference, pp [95% interval] | Both-success N; callback / CPU-ms difference |
+| Paired normal-time scope | Positive finite pairs / inputs | Median old/new ratio | Noncompleted pairs | Completed zero/missing phase pairs |
 | --- | --- | --- | --- | --- |
-| F1 without provenance rank | 18/18 / 16/18 | 18 | 7.407 [0, 18.519] | 16; -0.6667 / +3.255 |
-| F2 without gap rank | 24/24 / 24/24 | 24 | 0 [0, 0] | 24; -0.3333 / +6.510 |
+| Helper plan | 29/39 | 1.02193 | 10 | 0 |
+| Helper plan + start/observe + binding progress | 29/39 | 1.19479 | 10 | 0 |
+| Helper start/observe | 23/39 | 1.28855 | 10 | 6 |
+| Helper binding progress | 23/39 | 1.02900 | 10 | 6 |
+| Proof plan | 60/60 | 1.00600 | 0 | 0 |
 
-The gap ablation does not change completion on these F2 tasks, although it adds
-calls. The provenance ablation affects two parents; its interval still includes
-zero. Both cost subsets retain higher EGR trial CPU, so the mechanisms are not
-reported as unqualified efficiency wins.
+The six absent continuation phases reflect no selected callback, not missing
+positive cost. No speed ratio is assigned to censored or zero phases. Of29 paired
+helper plan timings, new is shorter16 and longer13. The median conceals important
+alternative-branch differences and overhead on simple inputs.
+For the seven one-alternative chains, the median old/new plan ratio is0.816,
+favoring the old simpler path; removal of exponential revisit does not imply
+every input becomes cheaper.
 
-| Reference family | Routed EGR oracle completions / all parents | Direct pipeline oracle completions / all parents | Routed / pipeline trial CPU mean, s |
-| --- | --- | --- | --- |
-| F6 | 21/30 | 25/30 | 0.4760 / 0.4267 |
-| F8 | 20/30 | 20/30 | 0.5075 / 0.4717 |
-
-These are all-parent counts, not the scheduler's solvable n/N. F6's pipeline can
-batch valid material beyond the SDK callback budget, explaining its four
-additional completions without treating them as a matched scheduler win. F6
-reads one/two/three materials and performs one validation; F8 reads two files
-and performs one validation. Their raw worlds and differing batching/receipt
-contracts are explicit. The pipeline is a useful simpler reference with lower
-observed trial CPU here; it is excluded from primary inference.
-
-## Frozen inputs and execution environment
-
-The executable protocol is [protocol.json](../benchmarks/protocol.json). The
-implementation was committed and both distributions installed into separate
-ordinary, noneditable environments before holdout execution. SDK imports resolve
-to those environments' `site-packages`, outside the source checkout. The harness
-verifies interpreter, runtime dependencies, platform, package bytes, protocol and
-harness fingerprints against its freeze record.
-
-| Item | Recorded value |
-| --- | --- |
-| Protocol | `egr-021-engineering-v1` |
-| Implementation commit | `305eec2cbf4f16c7d50dbb8bad002bc0cbc6d1c5` |
-| Official 0.2.0 runtime commit | `e8d77f210d7579d6a367b7564b485b2586ffd074` |
-| Freeze time | `2026-10-05T04:38:11Z` |
-| Protocol SHA-256 | `4bfb84ce958aab46890525ee9225832c950e03bbbdfd7266b320c595f65ca06a` |
-| Harness SHA-256 | `d3db76040403efbf802437c8a62514466c01ab0efdfec390823989224aeae4de` |
-| Measured 0.2.1 wheel SHA-256 | `e8c2bead23b7c2cc622ff2a3215e262c23452f621d1298359dba520c027b01aa` |
-| Official 0.2.0 wheel SHA-256 | `039594d7fc5e39ab7b600c71f54682bb2d46147ba4e69a05a55f255a1806f3bf` |
-| Measured 0.2.1 package fingerprint | `5df6a0b5e7c521079e29475950addf6e1b84d62b3f3c70033307a82643e8341a` |
-| Operating system / architecture | Windows 11, `10.0.26300`, AMD64 |
-| CPU | AMD Ryzen 7 8840HS, 8 cores / 16 logical processors |
-| Physical RAM | 66,363,183,104 bytes |
-| Python / Pydantic / pydantic-core | 3.12.14 / 2.13.5 / 2.46.5 |
-| Other runtime packages | annotated-types 0.8.0; typing-extensions 4.16.0; typing-inspection 0.4.4 |
-
-The package fingerprint hashes canonical sorted package-relative filenames and
-their byte hashes, excluding generated `__pycache__`. It distinguishes the measured
-runtime from later documentation/metadata changes; the measured wheel hash remains
-the identity of the actual input distribution. The [freeze record](../benchmarks/results/freeze.json)
-and [artifact provenance](../benchmarks/results/artifact-provenance.json) retain
-the exact identities; large raw traces are separate from the package. Freezing here is a
-repository procedure, not external preregistration.
-
-The old runtime is the published 0.2.0 distribution from its original commit;
-the task generator, oracle and method/scaling harness are the frozen 0.2.1
-implementation-commit files for both version arms. Holdout executes from the LF
-Git archive of that commit with the declared installed wheel. Thus an old/new
-runtime comparison does not silently substitute the old release's limited demo
-as its harness. Raw records retain the runtime version/wheel/package fingerprint
-and the common implementation/protocol/harness identity separately.
-
-## Tasks, methods and oracle
-
-The holdout has 240 distinct generated parent tasks: 30 per family. Development
-uses seed 21041 and eight parents per family; the frozen holdout uses seed
-982451653. Original, reversed and renamed candidate pools are variants of the same
-parent. Random scheduling uses seeds 17, 71 and 191. These repetitions do not create
-additional independent tasks.
-
-| Family | Contract exercised |
-| --- | --- |
-| F1 | Repeated/distinct declared origins, unknown provenance, invalid numbers and tight/adequate budgets |
-| F2 | Exact cross-obligation dependencies, satisfied/optional helpers, duplicate content and one/two prerequisite stages |
-| F3 | Multiple required checkers, partial PASS, self-verification prohibition, unavailable checker and pending capacity |
-| F4 | Real resolution history followed by contract/material/check changes and explicit re-resolution |
-| F5 | FAIL/UNKNOWN history, same-byte aliases, exact/wrong-subject resolution and unavailable resolution authority |
-| F6 | Simple predetermined one/two/three-source pipelines, initial completion and valid/invalid material |
-| F7 | Missing material/authority, callback/factory/receipt failures, unknown use, no-op and insufficient budget |
-| F8 | Actual CSV/JSON bytes, exact decimal boundaries, duplicate structures, BOM/CRLF/Unicode paths and snapshot continuation |
-
-Initialization uses actual public `start`/`observe` callbacks. Its cost is recorded
-separately and added equally to each method's total budget. Candidate factories
-inspect current State and finite material recipes, never oracle labels or future
-observations. A read acquires an exact ID once; a check uses observed material and
-explicit dependencies. Numerical/file checkers parse the real supplied data.
-
-Within 0.2.1, EGR competes with three feasible baselines: `fixed-feasible` preserves
-declaration order; `verify-first` stably selects verification before acquisition;
-`random-feasible` makes a seeded choice. All use the public `feasible_actions`
-safety gates and preserve the original finite pool for public `start`; no baseline
-injects Attempts or repeats an already valid target merely to waste its budget.
-F1 additionally removes provenance ranking, and F2 removes gap ranking, as bounded
-ablations. A separate 0.2.0 EGR run compares compatible version pairs rather than
-mixing a version repair with the within-version scheduler comparison.
-
-The oracle independently examines raw arithmetic/exact decimal/file conditions,
-receipt identity, current exact targets, owner/scope/contract, dependencies,
-checker/revision/purpose and resolution fingerprints. It does not call `plan`,
-coverage, `make_basis` or private acceptance predicates. Every distinct active
-required target needs valid support. Positive content aliases collapse; a negative
-check retains its exact subject ID. A least grounded positive proof is evaluated
-over these finite DAG recipes. General grounded alternatives and indeterminate
-negative cycles are runtime regression cases outside this holdout oracle's domain.
-Raw-world validity and solvability under available authority/material/budgets are
-separate labels; valid data alone does not imply a solvable task.
-
-## Denominators and paired analysis
-
-The primary completion statistic is integer **n/N solvable parent tasks**, using
-original order and random seed 17. False satisfaction is **n/N compatible attempted
-parents**, where any evaluated variant falsely satisfied makes that parent positive;
-per-trial counts and unassessed outcomes are also retained. Unsupported old APIs,
-unexecuted trials, exceptions and timeouts are explicitly counted. Compatible
-exceptions/timeouts are failed attempts, not correct abstentions or free runs.
-An old unsupported invalidation operation is excluded only from matched-version
-pairing and remains visible in the old-version table.
-
-For method differences, variants and random seeds are averaged within each parent.
-Paired bootstrap resamples these parent differences 1,000 times with seed 2239 to
-form a 95% interval. The report retains paired N and wins/ties/losses, overall and
-family/budget strata. Generated families are a finite engineered workload, not a
-sample from all user tasks. A confidence interval expresses variability within that
-task construction; it does not establish a population-wide causal benefit.
-
-All-task costs are reported separately from the selected **both-success subset**,
-which requires every attempted variant in both paired methods to succeed. A subset
-cost difference always includes its N. Cheap failure is not an efficiency win, and
-conditioning on this successful subset is not an all-task savings estimate. Tokens
-and money are unmeasured; no conversion from CPU/callback counts is supplied.
-
-## Timing, memory and reference pipelines
-
-Q1/Q2 uses identical isolated workers and a 10-second whole-worker deadline.
-The 7,200-second cap applies per `run_trials` invocation, separately to the new
-method run and old version-only run. Startup/import, trial, serialization and IPC are
-within that worker limit. Costs unavailable after timeout stay unknown; the cap
-leaves explicit unexecuted rows. Trial CPU/end-to-end, planning, callbacks,
-serialization, initialization and worker startup/import/IPC are recorded fields.
-Trial CPU/end-to-end and allocation tracing start before `environment()` first
-imports the SDK/Pydantic. Their cold library import is therefore inside the
-traced trial cost and allocation peak. `startup_import_and_ipc_seconds` is a
-whole-worker residual covering outside-trial process/harness startup and IPC;
-it neither isolates nor removes all library import time. These trial values
-are not pure controller-resource measurements.
-Q1/Q2 timing also includes `tracemalloc` overhead. Its `planning_cpu_seconds` field
-times EGR runner `plan` calls, whereas the host-baseline branch includes candidate
-factory evaluation, `feasible_actions` and selection. These are different phase
-definitions, so that field is not a cross-method pure-planner timing comparison.
-Both branches additionally include the final common public `plan` assessment.
-Total trial CPU/end-to-end still measure the declared observer and method work.
-Peak traced Python allocations are not resident memory, and worker-spawn cost is
-not planner CPU cost. The separate uninstrumented Q3 `plan` timing is the pure-plan
-old/new performance comparison.
-
-Measurements use an ordinary Windows desktop. Power/thermal state, background
-processes and scheduler behavior were not experimentally controlled. The early
-installed-candidate Windows check (223 tests, SDK/CLI and smoke) overlapped part
-of F1. Q1/Q2 timings therefore describe this traced run under variable desktop
-load; they do not support a wall-time performance-superiority claim. Q3 ran
-serially after both Q1/Q2 version runs, with timing/count/memory in
-separate workers, but remains a measurement on this one ordinary host.
-
-Q3 ran separately after Q1/Q2 to avoid that workload's concurrent timing load.
-It uses chain, diamond, branches and pure cycle histories of sizes 4, 8, 16, 32 and
-64 with one/two/three checkers. Old and new graph inputs have the same semantic
-records and required conditions; the new default invalidation field does not add
-authority. Construction, dump/load and end-to-end worker time are recorded apart
-from `plan` CPU/wall time. Timings have one warmup, ten repetitions for sizes 4/8
-and one repetition for larger sizes. Timing, diagnostic counts and traced memory
-use separate processes; timing is uninstrumented.
-
-Counts name actual new base-check/worklist-check/worklist-target evaluations and
-final memo lookups separately. The old count names recursive trusted-check entries.
-These are different work units; their ratio alone is not a CPU speedup. Memory uses
-one separate traced-allocation replay. Ordinary scaling workers have a 3-second
-deadline, small timing workers 20 seconds, and each version's scaling run has a
-1,200-second cap.
-Whole-worker timeouts are right-censored with unknown phase: startup, construction
-or evaluation may be responsible. They are neither exact plan times nor plan-time
-lower bounds, and remain in the report.
-
-F6/F8 also have actual direct-pipeline references. They read/parse materials and
-validate them without routed initialization. Batching, receipts and SDK resource
-bounds differ, so they are excluded from primary scheduler tables. Shared
-World/State/Policy/material setup still contributes to their CPU/end-to-end costs;
-a minimal ordinary pipeline can be cheaper than this harness reference. When a
-fixed dependency order already suffices, routing can add overhead without reducing
-calls. Equal, worse and mixed outcomes remain part of the experiment.
-
-## Q3 observed controller work and cost
-
-The two versions each requested 180 cells: 60 graph/size/checker inputs times
-count, timing and memory arms. All new cells completed. Old results retain
-65 whole-worker timeouts and one count-instrumentation exception.
-
-| Version | Completed cells | Timeouts | Exceptions | Unexecuted |
-| --- | --- | --- | --- | --- |
-| 0.2.0 | 114/180 | 65 | 1 | 0 |
-| 0.2.1 | 180/180 | 0 | 0 | 0 |
-
-There are no reference disagreements among assessed completed cells and no new
-indexed-work bound violations. Each of the 60 new count inputs evaluated every
-recorded check once for its base and final memo lookup, and check-truth steps
-were at most recorded checks plus verified-dependency edges. This observed
-fixture bound is not a universal cost theorem for arbitrary histories.
-
-| Graph / targets / checkers | Old recursive entries | New base / check-truth / target-truth / memo |
+| Helper input | Old / new normal median plan, ms | Old / new normal median sequence, ms |
 | --- | --- | --- |
-| Branches / 4 / 1 | 7 | 4 / 7 / 7 / 4 |
-| Chain / 4 / 2 | 52 | 8 / 14 / 7 / 8 |
-| Chain / 8 / 2 | 1,004 | 16 / 30 / 15 / 16 |
-| Diamond / 8 / 2 | 4,452 | 16 / 42 / 15 / 16 |
-| Branches / 64 / 3 | 759 | 192 / 381 / 127 / 192 |
-| Chain / 64 / 3 | Whole-worker timeout | 192 / 381 / 127 / 192 |
-| Cycle / 64 / 3 | Count-arm RecursionError | 192 / 192 / 64 / 192 |
+| Chain depth4, alternatives2 | 0.19175 / 0.15790 | 0.67470 / 0.45170 |
+| Chain depth8, alternatives2 | 1.15370 / 0.22105 | 3.36725 / 0.60160 |
+| Chain depth12, alternatives2 | 15.96050 / 0.30435 | 47.76690 / 0.77745 |
+| Chain depth8, alternatives4 | 157.40240 / 0.35425 | 474.34600 / 0.88090 |
+| Chain depth16, alternatives2 | Whole-worker CPU limit / 0.38700 | Whole-worker CPU limit / 0.97575 |
+| Chain depth24, alternatives2 | Whole-worker CPU limit / 0.52315 | Whole-worker CPU limit / 1.28315 |
+| Chain depth64, alternatives1 | 0.59660 / 0.70430 | 1.37910 / 1.74480 |
 
-These diagnostic units differ; dividing old entries by new memo lookups would
-omit real new work. The tables below combine **separate** time and memory arms
-for the same graph, not simultaneously instrumented timing. Small timings have
-ten measured repetitions, larger timings one; a single-repeat value is not a
-stable percentile estimate. Traced allocation covers the memory replay's input
-construction, dump/load, reference and plan, rather than isolated planner memory.
+Separate count workers record old depth12/alternatives2 action-path entries8,191
+and depth16 entries131,071, while new expands25/33 action subproblems and consumes
+59/79 rule edges in each assessed phase. Old/new counts are different units,
+not a universal count speed ratio. The depth16 count/memory arms can complete
+even though the ten-repeat normal-time worker crosses its CPU bound; this is not
+an inconsistent plan outcome. All28 old helper limits are CPU crossings: count9,
+memory9 and time10. The unknown internal phase is retained.
 
-| Graph / targets / checkers | Old / new median plan wall, ms | Old / new peak traced allocation, bytes | Timing repetitions |
-| --- | --- | --- | --- |
-| Branches / 4 / 1 | 0.1196 / 0.1238 | 878,939 / 1,116,880 | 10 |
-| Chain / 4 / 2 | 0.6565 / 0.1747 | 904,004 / 1,142,605 | 10 |
-| Chain / 8 / 2 | 13.1176 / 0.3159 | 972,324 / 1,208,581 | 10 |
-| Diamond / 8 / 2 | 57.3133 / 0.3895 | 991,121 / 1,227,389 | 10 |
-| Branches / 64 / 3 | 16.2565 / 4.2293 | 3,275,593 / 3,834,572 | 1 |
-| Chain / 64 / 3 | Timeout / 4.1350 | Timeout / 3,835,571 | 1 |
-| Cycle / 64 / 3 | Timeout / 4.3264 | Timeout / 3,847,591 | 1 |
+Memory is a separate single traced replay, not normal timing, RSS or Job memory.
+Across30 completed helper memory pairs, new traced allocation is lower26 and
+higher4; across60 proof pairs it is lower41 and higher19. These small differences
+do not establish a general memory improvement. For example helper chain64 with
+one alternative uses769,199/671,327 old/new traced bytes, yet normal new plan is
+slower. A memory or timing win alone is not an overall efficiency result.
+The unmatched helper medians are393,774 old bytes (30 completed inputs) versus
+407,896 new bytes (39); different completed-input sets prevent interpreting that
+contrast as a memory advantage or regression.
 
-Among the 39 matched completed timing inputs, new plan wall time is lower in
-38 and higher in one (branches, four targets, one checker). Among 36 matched
-completed memory inputs, new peak traced allocations are higher in all 36.
-Thus faster plan observations accompany higher replay allocations, and small
-simple inputs need not improve. Submillisecond Windows CPU medians can quantize
-to zero; that is not zero CPU work. No rate or lower-bound speedup is imputed to
-censored old inputs. The complete table retains all 360 cells rather than just
-these examples.
+## New confirmation and retained evidence
 
-The exception is **old cycle / 64 targets / 3 checkers / count arm**:
-`RecursionError` occurs with the recursive counting wrapper adding stack depth.
-It is a failed diagnostic arm, not evidence of an uninstrumented runtime crash,
-and is not merged with the 65 timeouts. Its original stderr and row remain in
-the raw archive. Completed pure-cycle cells agree that an ungrounded cycle is
-not satisfied. More general grounded/negative cycle authority stays outside this
-scaling reference, as stated in the protocol.
+Unused seed49979687 generated32 conditions with actual topology, alternative,
+prerequisite/current-validity, availability/budget and update differences. Both
+versions completed32/32 semantic workers and agreed with the small independent
+helper reference32/32, with no disagreement or unassessed outcomes. These
+confirmation cases are separate from the observed regression set. They check
+finite semantics, not completion frequency in real applications; numeric/ID
+changes are not inflated into independent external tasks.
 
-## Reproduction and evidence boundaries
+The [controller summary](../benchmarks/results/v0.2.2/controller-summary.json)
+retains every measurement cell, censor, reference status, timing denominator,
+work count and allocation scope. Formal raw JSONL SHA256 is
+`7c8d40a6dd80db41adfa91ce4e0ad581119032d421ccaaac22675b2b66473dd2`;
+execution-manifest SHA256 is
+`652f80e1627aaa4ab3a7b4b48f5884423b46284901c98c3294878ec70129a305`.
+The [provenance](../benchmarks/results/v0.2.2/artifact-provenance.json) separates
+measured candidate and final release bytes. Original v0.2.1 evidence, diagnostic
+replay, exact source/constraints, wheels, freeze and new raw traces are retained.
+The new `benchmark-raw-v0.2.2.zip` was generated: all 54 manifest asset hashes
+and all 56 entries' ZIP integrity verified.
+Size 12,592,735 bytes, SHA256
+`e90060aae7c2fac6ebe3f920a74a7066a4b63353daf7f7f0ffdbc23440b3f37a`.
+Its 54 manifest assets plus `MANIFEST.json` and `BUNDLE_README.txt` include the
+unchanged old raw ZIP, formal records/CSV, frozen LF source/wheels/constraints,
+old40-case diagnostic and separately labeled post-formal independent review.
+[Checksums](../benchmarks/results/v0.2.2/BENCHMARK_SHA256SUMS) identify the archive.
+The planned [raw release asset](https://github.com/kadubon/evidence-gap-router/releases/download/v0.2.2/benchmark-raw-v0.2.2.zip)
+has not been reported uploaded here; archive generation, upload, native CI and
+PyPI verification have separate states in [validation](validation.md).
 
-Use separate ordinary installations of the exact measured wheels, with the frozen
-Python/runtime versions. The commands below run benchmark code without putting
-`src/` on the import path. Use fresh external output paths; existing freeze/results
-are not replaced.
-
-```sh
-NEW_PYTHON -m benchmarks.harness freeze --output EXTERNAL/freeze.json --implementation-commit 305eec2cbf4f16c7d50dbb8bad002bc0cbc6d1c5 --wheel CANDIDATE_WHEEL --baseline-wheel OFFICIAL_020_WHEEL
-NEW_PYTHON -m benchmarks.harness run --phase holdout --freeze EXTERNAL/freeze.json --output EXTERNAL/methods.jsonl
-OLD_PYTHON -m benchmarks.harness run --phase holdout --freeze EXTERNAL/freeze.json --version-only --output EXTERNAL/old-version.jsonl
-NEW_PYTHON -m benchmarks.aggregate EXTERNAL/methods.jsonl EXTERNAL/old-version.jsonl --output EXTERNAL/report
-NEW_PYTHON -m benchmarks.scaling run --python NEW_PYTHON --freeze EXTERNAL/freeze.json --output EXTERNAL/scaling-new.jsonl
-NEW_PYTHON -m benchmarks.scaling run --python OLD_PYTHON --freeze EXTERNAL/freeze.json --output EXTERNAL/scaling-old.jsonl
-NEW_PYTHON -m benchmarks.scaling summarize EXTERNAL/scaling-new.jsonl EXTERNAL/scaling-old.jsonl --output EXTERNAL/scaling-report
-```
-
-The full protocol requests 4,680 new-version method/ablation/reference rows, plus
-720 old-version rows and the separately bounded scaling runs. Requested rows are
-not completed observations. Earlier development logs include cap and metadata
-revisions; they are retained diagnostic work, not confirmatory holdout evidence.
-Any changed implementation/checker/generator/protocol after viewing holdout requires
-a new protocol and unused seed, with the previous evidence preserved.
-
-The raw archive `benchmark-raw-v0.2.1.zip` was generated and its contents verified:
-9,502,776 bytes, SHA-256
-`9212ee2499df0b16b47b23ac3150f71b83b1db69abc85a7123a02044f4fa69a0`.
-The [checksum record](../benchmarks/results/BENCHMARK_SHA256SUMS) identifies it.
-Its 31 members contain 29 source assets plus `MANIFEST.json` and `BUNDLE_README.txt`:
-the unmodified formal method/version/scaling traces and reports, separately labelled
-development traces, freeze/provenance/runtime constraints, frozen benchmark source,
-the implementation LF archive, the completed Windows candidate profile, and both
-official baseline and measured candidate wheel/sdist pairs. Manifest entries record
-member byte sizes and hashes. Compact summaries/freeze
-records belong in `benchmarks/results`; large traces are not wheel contents.
-The measured candidate wheel is retained even if the final documentation-only
-release wheel has different METADATA and therefore a different whole-wheel hash.
-The frozen package fingerprint and byte comparisons distinguish those metadata
-changes from executable package changes. Final CI enforces the same actual
-package, protocol and harness bytes; changing them invalidates this measurement's
-identity rather than becoming a documentation-only rebuild.
-The designated [Release asset reference](https://github.com/kadubon/evidence-gap-router/releases/download/v0.2.1/benchmark-raw-v0.2.1.zip)
-and `BENCHMARK_SHA256SUMS` are publication targets. Archive generation/verification
-does not assert that Release upload or PyPI installation has already completed;
-their actual status is recorded separately in [validation](validation.md).
-This CPU-only, model-free synthetic experiment does not establish LLM accuracy,
-statistical independence, monetary savings, capability growth or intelligence phases.
-Zero observed false satisfaction does not imply zero risk. For the old published
-defects and their actual histories, see [the 0.2.0 audit](audit-020.md); implementation
-boundaries remain in [design](design.md).
+Reproduction commands are in [benchmarks/README](../benchmarks/README.md).
+No measured runtime, oracle, generator or protocol was changed after this formal
+run. Result/docs collection can change metadata, but release admission must match
+the measured runtime/package and harness/protocol.
+The final collection also includes standalone source-test import setup in
+`test_summarize_022.py`; it changes no measured runtime/harness/generator bytes.
+This CPU-only experiment uses
+no LLM/GPU/paid inference and establishes neither source independence, money
+savings, capability growth nor risk zero. Routing fits conditional evidence work;
+fixed known pipelines can remain simpler and cheaper.
