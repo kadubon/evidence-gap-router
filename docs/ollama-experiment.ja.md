@@ -473,7 +473,19 @@ helper内で既に固定されている。
 v0.2.3 manual/native CI、GitHub Release、PyPI、fresh official-index installは、
 この公開前snapshotで未検証の別段階である。実際の結果は後で添付する
 [publication verification asset](https://github.com/kadubon/evidence-gap-router/releases/download/v0.2.3/publication-verification-v0.2.3.json)
-へ記録する。利用者の明示 v0.2.3公開要求が、添付仕様の当初の新versionなしの仮定に
+へ記録する。
+
+最初のmanual run [37317646260](https://github.com/kadubon/evidence-gap-router/actions/runs/37317646260)、
+commit `f302f7f8c3681d47e294367f01748d6fbc73e650` はlint・mypy・Linux source
+suite（621 passed、Windows限定9 skip）を通過後、frozen-package byte equality
+で失敗した。測定したWindows Git archiveは`core.autocrlf=true`で非空package
+24 filesがCRLF、Linux checkout blobはLFだった。LF→CRLF変換後は全25 filesが
+完全一致した。`.gitattributes`に`src/evidence_gap_router/** text eol=crlf`を
+加え、測定済みcandidate bytesをCIで再現する。core semantics・freeze記録・
+一致gateは変更しない。このsnapshotでは第二manualと実公開は未実施であり、
+後日の結果は別のverification assetへ保存する。
+
+利用者の明示 v0.2.3公開要求が、添付仕様の当初の新versionなしの仮定に
 優先する。既存 v0.2.2成果物は不変に保つ。
 
 現時点の根拠は、明示的な権限、現行 evidence binding、保持された費用、有界継続

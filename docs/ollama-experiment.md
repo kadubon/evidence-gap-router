@@ -545,6 +545,18 @@ the future tagged download/installation has already passed. Manual/native CI,
 GitHub Release, PyPI and fresh official-index installation are pending in this
 pre-publication snapshot; their actual outcomes belong to the later
 [publication verification asset](https://github.com/kadubon/evidence-gap-router/releases/download/v0.2.3/publication-verification-v0.2.3.json).
+
+The first manual run [37317646260](https://github.com/kadubon/evidence-gap-router/actions/runs/37317646260),
+commit `f302f7f8c3681d47e294367f01748d6fbc73e650`, passed lint, mypy and the
+Linux source suite (621 passed, 9 Windows-only skips), then failed frozen-package
+byte equality. The measured Windows Git archive used `core.autocrlf=true`, so
+its 24 nonempty package files had CRLF; Linux checkout blobs had LF. All 25
+package files matched exactly after LF-to-CRLF conversion. Adding
+`src/evidence_gap_router/** text eol=crlf` to `.gitattributes` makes CI reproduce
+the measured candidate bytes, without changing core semantics, freeze records
+or equality gates. The second manual run and actual publication have not been
+executed at this snapshot; later outcomes belong to the separate verification asset.
+
 The user's explicit v0.2.3 publication request supersedes the supplied file's
 initial no-new-version assumption; existing v0.2.2 artifacts remain unchanged.
 

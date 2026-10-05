@@ -1,4 +1,7 @@
 # Preserve the exact bytes of newly recorded experiment artifacts.
+# The installed v0.2.3 experiment candidate contains CRLF package files.
+# Pin those measured bytes on every checkout without changing the Git blobs.
+src/evidence_gap_router/** text eol=crlf
 benchmarks/results/freeze-v0.2.2.json -text
 benchmarks/results/v0.2.2/*.json -text
 benchmarks/results/v0.2.1-erratum/*.json -text
