@@ -42,7 +42,9 @@ def main() -> None:
             raise RuntimeError("Rosetta translation is not a native architecture test")
     package_path = Path(evidence_gap_router.__file__).resolve()
     source = args.source_root.resolve()
-    if package_path.is_relative_to(source) or not package_path.is_relative_to(Path(sys.prefix)):
+    if package_path.is_relative_to(source) or not package_path.is_relative_to(
+        Path(sys.prefix).resolve()
+    ):
         raise RuntimeError(f"Package imported outside clean environment: {package_path}")
     if (
         evidence_gap_router.__version__ != args.version

@@ -23,7 +23,7 @@ def main() -> None:
     source = Path(__file__).resolve().parents[1] / "src"
     assert not package_path.is_relative_to(source), package_path
     assert egr.__version__ == importlib.metadata.version("evidence-gap-router") == expected_version
-    assert package_path.is_relative_to(Path(sys.prefix)), package_path
+    assert package_path.is_relative_to(Path(sys.prefix).resolve()), package_path
     command = Path(sys.executable).with_name("egr.exe" if sys.platform == "win32" else "egr")
     version = subprocess.run(
         [str(command), "--version"], capture_output=True, text=True, check=True

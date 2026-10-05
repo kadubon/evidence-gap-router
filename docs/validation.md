@@ -77,3 +77,12 @@ The manual admission guard requires completed successful jobs for every profile;
 missing, skipped, failed and cancelled jobs are rejected. Publish also directly
 depends on the full native set in the tag run. See [the release procedure](releasing.md)
 for exact-commit checks, OIDC isolation and post-publication byte/install verification.
+
+The first v0.2 manual run, `37255060613` at
+`95776be77fefef96ec6b6020299bf1857735bf9c`, passed Linux and both native macOS
+profiles but failed Windows's import-location check. Pip had correctly installed
+the package; the check compared a resolved long path against `sys.prefix` containing
+the runner's Windows 8.3 alias `RUNNER~1`. Both paths are now resolved before the
+containment check. The required Windows gate was retained, and full manual
+validation is repeated on the corrected commit; the failed run is not admission
+evidence for publication.
