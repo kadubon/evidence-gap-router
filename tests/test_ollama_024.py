@@ -489,6 +489,23 @@ def test_corrective_tasks_have_unused_material_and_exact_public_witnesses():
     assert any("12℃" in d.text for task, _ in new for d in task.documents)
 
 
+def test_corrective_rules_do_not_override_question_scope_with_internal_ids():
+    for task, gold in (*development_tasks("024r2"), *confirmation_tasks("024r2")):
+        rule = task.document("document-1").text
+        assert rule.startswith("規則委員会の公開条項である。")
+        assert task.task_id not in rule
+        assert "に適用する規則。" not in rule
+        target = task.question.split("対象", 1)[1].split("を", 1)[0]
+        facts = "".join(document.text for document in task.documents)
+        assert target in facts
+        assert task.task_id == gold.task_id
+        for witness in gold.witnesses:
+            assert witness.quote in task.document(witness.source_id).text
+    assert all(
+        task.task_id.startswith("development024r2b-") for task, _ in development_tasks("024r2")
+    )
+
+
 def test_grounded_correct_answer_survives_reviewer_failure_and_is_not_verified_complete():
     from experiments.ollama.harness import run_trial
     from experiments.ollama.oracle import evaluate

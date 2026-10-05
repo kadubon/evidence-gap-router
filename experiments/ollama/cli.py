@@ -1008,6 +1008,8 @@ def warmup(args: argparse.Namespace, client: OllamaClient) -> None:
     settings = trial_settings(args.directory)
     task, _ = development_tasks(task_edition())[0]
     prefix = "warmup" if args.development_cycle == 1 else f"warmup-cycle-{args.development_cycle}"
+    if task_edition() == "024r2":
+        prefix = "scope-v1-" + prefix
     prefix = PROTOCOL.get("request_key_prefix", "") + prefix
     for model in PROTOCOL["models"]:
         preload_id = prefix + "/" + model + "/preload"

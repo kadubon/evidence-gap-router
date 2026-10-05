@@ -21,6 +21,19 @@ contracts in 12.22 s**, 44 benchmark-smoke trials and three complete document
 examples (182 local links). These checks use fake HTTP/offline fixtures and are
 separate from live inference and later exact-commit release CI.
 
+Before the corrective main freeze, tracing also found that the fresh rule header
+named an internal task ID while its question and facts named a different entity.
+This was a task-scope defect, so the corrective warm/pilot worker was stopped at
+a durable boundary (991 cumulative reservations, 991 known responses, no pending
+or unknown call). Its exact inputs, source and checkpoints remain in development
+history. The header now identifies the public rule without overriding its scope;
+new development IDs prevent reusing those old calls. Prompts, caps, semantic
+criteria and the three completed tuning cycles are unchanged. The scope repair
+passed **697 complete source tests in 28.35 seconds**, lint/format and mypy.
+The unchanged ordinary candidate wheel also passed 296 installed SDK regressions,
+223 portable contracts in 13.81 s, 44 benchmark-smoke trials and three complete
+document examples (183 local links) on native Windows x64 / Python 3.12.14.
+
 The audit found experiment transport and output-contract limitations. It did
 not establish a new defect in the SDK's acceptance, permission or helper rules.
 Those rules continue to use schema 2 and the public `plan/start/observe/step/run`

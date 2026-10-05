@@ -557,7 +557,7 @@ def _corrective_tasks(*, development: bool) -> tuple[tuple[PublicTask, GoldTask]
     """
     substitutions = {
         "新規": "再確認024r2",
-        "予備": "再予備024r2",
+        "予備": "再予備024r2b",
         "条件P": "要件M",
         "条件Q": "要件N",
         "条件R": "要件S",
@@ -583,13 +583,11 @@ def _corrective_tasks(*, development: bool) -> tuple[tuple[PublicTask, GoldTask]
 
     result = []
     for task, gold in _new_tasks(development=development):
-        identity = task.task_id.replace("024-", "024r2-")
+        identity = task.task_id.replace("024-", "024r2b-" if development else "024r2-")
         docs = tuple(
             replace(
                 document,
-                text=(
-                    f"対象{identity}に適用する規則。" if document.source_id == "document-1" else ""
-                )
+                text=("規則委員会の公開条項である。" if document.source_id == "document-1" else "")
                 + text(document.text),
                 owner=text(document.owner),
                 origin=text(document.origin),

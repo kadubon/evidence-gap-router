@@ -2,6 +2,24 @@
 
 ## v0.2.4 development validation
 
+The corrective implementation `11a1c54764edbc0e390473929182a911f9e127b0`
+passed **696 complete source tests in 26.48 seconds**, lint/format (119 files)
+and mypy (14 SDK modules). The same ordinary candidate wheel then passed
+296 installed SDK regressions, **222** portable contracts (12.22 seconds),
+44 benchmark-smoke trials and three complete document examples (182 links).
+The initial optional-default receipt defect and its retained invalid confirmation
+are separate from the corrective protocol and its new freeze. Final exact-commit
+native release checks and public downloads are still pending in this snapshot.
+
+The subsequent pre-freeze task-scope repair passed **697 source tests in 28.35 s**,
+Ruff check/format (119 files) and mypy (14 SDK modules). The earlier 696-test run
+remains a separate executed observation; the new regression checks that internal
+task IDs cannot override the question's entity in public rule text.
+Its ordinary Windows candidate install passed 296 SDK regressions, **223 portable
+contracts in 13.81 s**, 44 benchmark-smoke trials and all three complete document
+examples (183 local links). These executed offline checks precede the new live
+warm/pilot observations and are not native release CI.
+
 Immediately before confirmation, `bb6304e2f8b58b98feb9ce3010a0b8e2055eae57`
 passed **683 source tests in 28.18 seconds**, Ruff check/format (119 Python
 files) and mypy (14 SDK modules). The measured ordinary candidate's latest

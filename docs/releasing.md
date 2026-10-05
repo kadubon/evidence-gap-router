@@ -35,7 +35,7 @@ are allowed. No legacy 4h→8h amendment resets this campaign.
 Primary-measured runtime/harness changes require retained old results and a new
 protocol with unused confirmation tasks. A later docs/results commit may change
 whole-wheel metadata, but every runtime fingerprint and measured source byte
-must still match `experiments/ollama/results/freeze-v0.2.4.json` exactly.
+must still match `experiments/ollama/results/freeze-v0.2.4-r2.json` exactly.
 The sdist-built wheel must have the same runtime fingerprint. AST equivalence
 and line-ending-insensitive comparisons do not pass the new gate.
 
@@ -68,7 +68,7 @@ uv run --locked pytest
 uv build --no-sources
 uv run --locked python -c 'from pathlib import Path; Path("dist/.gitignore").unlink(missing_ok=True)'
 uv run --locked twine check dist/*
-uv run --locked python scripts/package_audit.py dist --benchmark-freeze experiments/ollama/results/freeze-v0.2.4.json
+uv run --locked python scripts/package_audit.py dist --benchmark-freeze experiments/ollama/results/freeze-v0.2.4-r2.json
 ```
 
 Remove only uv's generated `dist/.gitignore`; other unexpected files remain errors.

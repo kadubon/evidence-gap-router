@@ -97,8 +97,9 @@ A minus B results. The independent oracle's gold is absent from model prompts.
 
 The v0.2.4 profile is nonstreaming, with a 30-second connection timeout and full
 hard-deadline response waits: Qwen 1,800 seconds, Gemma 900, preload 1,800.
-Initial stage caps are reader 1,024, integrator 1,536, reviewer 768 and repair
-1,024; calibration selects the common review cap. Context is 8,192, with explicit
+Selected stage caps are reader 1,024, integrator 1,536, reviewer 2,048 and repair
+1,024. The initial protocol's default review cap was 768; its complete calibration
+selected 2,048. Corrective v2 retains that effective selection. Context is 8,192, with explicit
 `think:false`, `truncate:false`, `shift:false`, temperature zero and 60-minute
 residency. No first-token latency is inferred from a nonstream response.
 
@@ -109,6 +110,14 @@ from actual counters. Free RAM must remain at least max(2 GiB, 10% installed
 RAM); disk needs 5 GiB plus raw-file margin. Low RAM, OOM or worsening swap
 observations prevent new dispatch. These are measured gates, not hard memory
 isolation of every inference process.
+
+The default source commands use `egr-024-local-ollama-v2` and fresh `024r2`
+public instances. The actual published campaign carries the original 957-call
+ledger prefix and durable clock into its corrective directory; it does not
+recharge those calls or reset its start. Earlier verification counts were
+invalidated by inserted optional defaults, and all original outputs remain.
+Running the commands in a new empty directory is an independent reproduction,
+with its own ledger. It is not continuation of the retained published campaign.
 
 The current Windows gate reads all pagefiles' CIM `CurrentUsage`. Four known
 consecutive increases totaling at least 256 MiB block a new dispatch. Unknown
