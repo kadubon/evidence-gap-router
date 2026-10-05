@@ -214,6 +214,30 @@ def policy_for(model_digest: str) -> Policy:
     )
 
 
+def _retrieval_documents(task: PublicTask, requested: set[str]) -> tuple[Document, ...]:
+    """Common catalogue: only explicit, byte-identical same-origin copies can be skipped.
+
+    A specific reviewer request still permits the copy. Different content, version
+    or origin is retained; source names and evaluation gold never determine this.
+    """
+    kept = []
+    for index, document in enumerate(task.documents):
+        header, separator, body = document.text.partition("。")
+        declared_copy = (
+            separator and header.startswith("以下は") and header.endswith("の転載である")
+        )
+        redundant = declared_copy and any(
+            previous.origin == document.origin
+            and previous.version == document.version
+            and previous.topic == document.topic
+            and previous.text == body
+            for previous in task.documents[:index]
+        )
+        if not redundant or document.source_id in requested:
+            kept.append(document)
+    return tuple(kept)
+
+
 def verify_first(
     task: PublicTask,
     state: State,
@@ -398,6 +422,18 @@ class _Trial:
         answers = tuple(
             e for e in state.evidence if e.obligation_id == "answer" and e.id not in superseded
         )
+        current = answers[-1] if answers else None
+        round_number = int(current.id.split(":")[1]) if current else -1
+        review = evidence.get(f"review:{round_number}") if current else None
+        requested = set(_data(review)["output"]["requested_sources"]) if review else set()
+        retrieved = {
+            d.source_id for d in self.task.documents if f"extracted:{d.source_id}" in evidence
+        }
+        retrieval = (
+            _retrieval_documents(self.task, requested | retrieved)
+            if self.settings is not None
+            else self.task.documents
+        )
         scope, output = self.task.task_id, []
         blocked = bool(self.client.summary().get("blocked")) or self.fault in (
             "pending_or_unknown_dispatch",
@@ -406,7 +442,7 @@ class _Trial:
         )
         llm_available = len(self.calls) < self.maximum_calls and not blocked
         if self.arm != "C":
-            for document in self.task.documents:
+            for document in retrieval:
                 source, owner = document.source_id, f"extract:{document.source_id}"
                 extracted_id = f"extracted:{source}"
                 if extracted_id not in evidence and llm_available:
@@ -440,9 +476,6 @@ class _Trial:
                             resources=Resources(actions=1, verifications=1, tokens=0),
                         )
                     )
-        current = answers[-1] if answers else None
-        round_number = int(current.id.split(":")[1]) if current else -1
-        review = evidence.get(f"review:{round_number}") if current else None
         checked = (
             any(
                 c.basis is not None and c.basis.target.evidence_id == current.id
@@ -495,12 +528,11 @@ class _Trial:
         )
         if llm_available and can_integrate:
             new_round = round_number + 1
-            requested = set(_data(review)["output"]["requested_sources"]) if review else set()
             subsets: tuple[tuple[str, ...], ...]
             if self.arm == "C":
                 subsets = (tuple(d.source_id for d in self.task.documents),)
             else:
-                catalogue = tuple(d.source_id for d in self.task.documents)
+                catalogue = tuple(d.source_id for d in retrieval)
                 subsets = tuple(
                     subset
                     for size in range(1, len(catalogue) + 1)

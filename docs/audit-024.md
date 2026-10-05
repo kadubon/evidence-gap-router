@@ -53,6 +53,7 @@ it does not make older artifact fingerprints interchangeable.
 | Arrival rules mixed a world fact with whether it had been confirmed; several parents differed only in names | Explicit world conditions and distinct AND/OR/XOR, report thresholds, current exceptions, deadlines and destinations | Separate public/gold types; distinct normalized parent signatures; 18/6 and 12/4 task counts; minimal source/version witnesses |
 | Success-only cost summaries hid missing trials and zero-member subsets | Planned-key accounting, nullable unresolved outcomes, paired bounds and subset denominators | Missing-key, no-success-cost, independent grounding and bounded-continuation tests |
 | The export path was pinned to the previous protocol and omitted the measured wheel | Version-bound freeze, candidate wheel hash and retained development implementations | Export rejects mismatched bytes and private paths without rewriting model output; no-overwrite tests |
+| Catalogue ordering forced an explicitly identical same-origin reprint | Common A/B retrieval catalogue omits only declared copies with identical full content, topic, origin and version | Reproduced forced-copy candidate; both selectors retain different information/versions/origins and any specifically requested copy |
 
 Old FAIL/UNKNOWN, pending invocation, withdrawal, contract changes, exact-ID
 resolution, helper/proof AND/OR and grounded-cycle behavior remain covered by
@@ -76,3 +77,8 @@ development limitation, not a retrospective correction to old model scores.
 The final bank uses 24 answer cases drawn from 12 underlying task parents; those
 cases are not 24 independent statistical parents. Main confirmation parents
 are unused until the frozen schedule dispatches them.
+
+The final common-catalogue change passed 668 source tests in 43.61 seconds,
+Ruff check/format and mypy. It does not alter core feasibility or acceptance.
+The pooled reference still receives all public records. Review requests can
+explicitly restore a copy to A/B retrieval, retaining that real extra cost.

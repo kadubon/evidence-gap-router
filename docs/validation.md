@@ -17,6 +17,10 @@ checker verified 181 local links. The earlier implementation
 197 portable contracts before the final task/resource/resume audit. These
 development counts are not a future release-CI claim.
 
+The subsequent common-catalogue fairness regression passed 668 source tests
+in 43.61 seconds plus Ruff check/format and mypy. It removes forced identical
+reprint reads symmetrically from A/B before the confirmation freeze.
+
 The release retains six native profiles: Linux 3.12 build/full, Windows x64
 3.12, macOS arm64 and Intel 3.12, Linux 3.13 and 3.14. The same universal wheel
 is installed in each profile; actual machine and native Pydantic/core imports

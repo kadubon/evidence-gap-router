@@ -718,3 +718,31 @@ def test_unknown_arrival_contract_depends_on_world_time_not_presence_of_a_check(
     assert "17時00分までに到着" in task.documents[0].text
     assert "到着時刻は未記録" in task.documents[1].text
     assert "確認したこと" not in task.documents[0].text
+
+
+def test_common_candidate_catalogue_does_not_force_identical_reprint_retrieval():
+    from experiments.ollama.harness import _Trial
+
+    task, _ = next((t, g) for t, g in confirmation_tasks("024") if t.task_id.endswith("L2-1"))
+    for arm in ("A", "B"):
+        trial = _Trial(task, arm, "fake", "a" * 64, 17, _CompactFake(), None, TrialSettings())
+        pool = trial.candidates(trial.state)
+        assert "read:document-3" not in {a.id for a in pool}
+        assert all("raw:document-3" not in {d.evidence_id for d in a.dependencies} for a in pool)
+        for changed in (
+            replace(task.documents[2], text=task.documents[2].text + "追加条件も記録した。"),
+            replace(task.documents[2], version="2"),
+            replace(task.documents[2], origin="different-origin"),
+        ):
+            distinct = replace(task, documents=(*task.documents[:2], changed, *task.documents[3:]))
+            other = _Trial(
+                distinct, arm, "fake", "a" * 64, 17, _CompactFake(), None, TrialSettings()
+            )
+            assert "read:document-3" in {a.id for a in other.candidates(other.state)}
+
+
+def test_explicit_request_for_known_copy_is_retained_in_common_catalogue():
+    from experiments.ollama.harness import _retrieval_documents
+
+    task, _ = next((t, g) for t, g in confirmation_tasks("024") if t.task_id.endswith("L2-1"))
+    assert "document-3" in {d.source_id for d in _retrieval_documents(task, {"document-3"})}
