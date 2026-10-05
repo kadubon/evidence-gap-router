@@ -115,6 +115,12 @@ of a general semantic benefit. Fixed blocks and shared prompt/KV cache confound
 latencies; faster later 2,048 cells do not establish a causal speed improvement.
 No generated answer is reused between arms or requests.
 
+The final choice was restricted to the compact output contract. Old 2,048 had
+18 combined false PASS across the two models, versus compact 2,048's 24.
+Selecting the compact contract therefore does not identify the best overall
+semantic-review cell; its operational contract and false-positive limitation
+remain explicit.
+
 An earlier 192-request matrix preceded the final explicit task contracts. Its
 original bank, implementation and 29,167 generated / 149,483 total tokens remain
 separately retained; it is not pooled into this final matrix. At final calibration
@@ -151,6 +157,11 @@ completion but the independent oracle did not support it; `router_satisfied` is
 recorded separately. Grounded abstention is a correct supported unknown-world
 answer, independent of review. `erroneous_stop` labels an assessed incomplete
 answerable trial; it is not, by itself, a causal diagnosis of the stop rule.
+
+`answer_correct` compares the final yes/no/unknown decision with the authored
+truth. Grounding additionally checks finite scoped support sets, quotations,
+versions and issued bindings. Arbitrary free-form explanation text is not fully
+evaluated by a general natural-language entailment system.
 
 Primary settings were frozen after the four-parent/24-trial pilot and actual
 template/tokenizer input-room checks. The balanced 16-parent profile fits
