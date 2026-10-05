@@ -115,6 +115,9 @@ coverage は分子/分母・scope・policy を示し、正答確率や知能ス�
 `--json` は機械可読結果を stdout に出します。不正な plan 入力は stdout を出さず
 stderr へエラーを出します。ファイル入力/callback 失敗は状態・費用を含む JSON を
 stdout に保持し、stderr にも理由を出します。
+CLI の JSON は非 ASCII 文字を Unicode escape にし、Windows の従来の文字コードでも
+リダイレクトできます。JSON を解析すれば元の日本語パス・内容が復元されます。
+snapshot ファイルの encoding は引き続き明示的な UTF-8 です。
 exit 0 は推薦または満足、2 は有効な入力に対する未解決/検査済み不合格、1 は入力/実行失敗。
 argparse の使用法エラーも stderr/exit 2 です。`outcome` と業務/runner の停止を見て、
 入力不正、実行失敗、検証済み FAIL、資料不足、予算不足を区別してください。

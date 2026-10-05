@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
 import socket
+import subprocess
+import sys
 from importlib.resources import files
 from pathlib import Path
 from typing import Any
@@ -352,3 +355,68 @@ def test_cli_cause_example(capsys: pytest.CaptureFixture[str]) -> None:
     output = capsys.readouterr()
     assert output.err == ""
     assert json.loads(output.out)["decision"]["stop_reason"] == "satisfied"
+
+
+def test_json_cli_unicode_files_work_with_cp1252_stdout(tmp_path: Path) -> None:
+    directory = tmp_path / "日本語 空白"
+    directory.mkdir()
+    data = directory / "注文 data.csv"
+    data.write_text("order_id,amount,currency\n注文-一,10,USD\n", encoding="utf-8")
+    dictionary = directory / "規則 rules.json"
+    value = json.loads(
+        files("evidence_gap_router").joinpath("data", "data_dictionary.json").read_bytes()
+    )
+    value["description"] = "日本語の最低金額"
+    dictionary.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
+    environment = {**os.environ, "PYTHONIOENCODING": "cp1252"}
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "evidence_gap_router.cli",
+            "check-data",
+            "--data",
+            str(data),
+            "--dictionary",
+            str(dictionary),
+            "--json",
+        ],
+        cwd=tmp_path,
+        env=environment,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 0
+    assert completed.stderr == b""
+    output = json.loads(completed.stdout.decode("ascii"))
+    assert output["outcome"] == "satisfied"
+    records = {item["id"]: item for item in output["state"]["evidence"]}
+    assert records["dataset"]["source"] == str(data)
+    assert json.loads(records["dataset"]["content"])["rows"][0]["order_id"] == "注文-一"
+    assert json.loads(records["dictionary"]["content"])["description"] == "日本語の最低金額"
+    # Offline planning emits declared Unicode scopes through the same ASCII
+    # JSON contract. Changing the contract leaves the old checks inapplicable.
+    for obligation in output["state"]["obligations"]:
+        if obligation["id"] == "data-quality":
+            obligation["scope"] = "注文の対象"
+    request = {
+        "schema_version": "2",
+        "state": output["state"],
+        "candidates": [],
+        "budget": {"limits": {"actions": 4, "verifications": 2}},
+        "policy": output["decision"]["coverage"]["policy"],
+    }
+    plan_file = directory / "計画 input.json"
+    plan_file.write_text(json.dumps(request, ensure_ascii=False), encoding="utf-8")
+    planned = subprocess.run(
+        [sys.executable, "-m", "evidence_gap_router.cli", "plan", str(plan_file), "--json"],
+        cwd=tmp_path,
+        env=environment,
+        capture_output=True,
+        check=False,
+    )
+    assert planned.returncode == 2
+    assert planned.stderr == b""
+    decision = json.loads(planned.stdout.decode("ascii"))
+    assert "注文の対象" in decision["coverage"]["scopes"]
+    assert decision["stop_reason"] == "blocked"

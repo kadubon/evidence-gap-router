@@ -190,6 +190,9 @@ validated round trips. Schema-1 requires [explicit migration](docs/migration.md)
 With `--json`, domain reports go to stdout. A malformed plan input has no JSON
 stdout and reports an error on stderr. File-input and callback failures retain
 their state/cost report on stdout and also explain the error on stderr.
+CLI JSON escapes non-ASCII characters losslessly, so redirected output also works
+with Windows legacy encodings. Parsing that JSON restores the original Unicode
+paths and content; snapshot files remain explicitly UTF-8.
 Exit 0 means an action or satisfied result; exit 2 means a valid unresolved domain
 stop or inspected nonacceptance; exit 1 means an input/execution failure. Argparse
 usage errors also use exit 2, on stderr. The report's `outcome`, domain stop and

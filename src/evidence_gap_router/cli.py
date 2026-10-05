@@ -49,7 +49,7 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 output = run_demo(args.case or "valid")
             if args.json:
-                print(json.dumps(output, ensure_ascii=False, sort_keys=True, allow_nan=False))
+                print(json.dumps(output, ensure_ascii=True, sort_keys=True, allow_nan=False))
             else:
                 decision = output["decision"]
                 print(f"Artificial data: {output['artificial_data']}; outcome: {output['outcome']}")
@@ -63,7 +63,14 @@ def main(argv: list[str] | None = None) -> int:
         request = read_json(args.input, PlanInput)
         decision_model = plan(request.state, request.candidates, request.budget, request.policy)
         if args.json:
-            print(decision_model.model_dump_json())
+            print(
+                json.dumps(
+                    decision_model.model_dump(mode="json"),
+                    ensure_ascii=True,
+                    sort_keys=True,
+                    allow_nan=False,
+                )
+            )
         else:
             if decision_model.action is not None:
                 print(f"Next action: {decision_model.action.id}")

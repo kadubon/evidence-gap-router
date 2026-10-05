@@ -20,23 +20,23 @@ passed, including rejection of missing/skipped/failed native jobs and another
 commit's successful manual run. Actionlint 1.7.12 accepted the workflow structure
 (shellcheck was unavailable). These are scoped development checks; they do not
 claim final native release success. The completed development suite passed all
-169 tests without skips on Windows x86_64 / Python 3.12.14, 3.13.15 and 3.14.7,
+170 tests without skips on Windows x86_64 / Python 3.12.14, 3.13.15 and 3.14.7,
 and WSL Linux x86_64 / Python 3.12.14. Ruff lint passed and mypy passed all fourteen
 source modules. These source-side runs do not substitute for native installed
 wheel gates; final artifact/profile checks are recorded by exact-commit CI.
 
 The final local wheel was also installed through cache-free, ordinary pip into
-new environments outside the repository. Both profiles below passed all 156
+new environments outside the repository. Both profiles below passed all 157
 installed core/runner/CLI/file/comparison regressions and the complete SDK, CLI,
 fixture, Unicode-path, snapshot and migration smoke. The thirteen source-side
-release-guard tests are part of the 169-test development suite, not these installed
+release-guard tests are part of the 170-test development suite, not these installed
 regressions. These two checks used the same privately built wheel; the release
 workflow builds and records its own single distribution artifact.
 
 | Executed local OS | Actual architecture | Python | Pydantic / native core | Installed result |
 | --- | --- | --- | --- | --- |
-| Windows 11 | x86_64 (`AMD64`) | 3.12.14 | 2.13.5 / 2.46.5 | 156 passed; smoke passed |
-| WSL2 Linux | x86_64 | 3.12.14 | 2.13.5 / 2.46.5 | 156 passed; smoke passed |
+| Windows 11 | x86_64 (`AMD64`) | 3.12.14 | 2.13.5 / 2.46.5 | 157 passed; smoke passed |
+| WSL2 Linux | x86_64 | 3.12.14 | 2.13.5 / 2.46.5 | 157 passed; smoke passed |
 
 ## Required same-wheel CI profiles
 
@@ -86,3 +86,11 @@ the runner's Windows 8.3 alias `RUNNER~1`. Both paths are now resolved before th
 containment check. The required Windows gate was retained, and full manual
 validation is repeated on the corrected commit; the failed run is not admission
 evidence for publication.
+
+The second manual run, `37255356564` at
+`72a85ce8267ddaf9aaddec6b97c0ad56c96659c4`, passed Windows native imports and
+all 156 installed regressions, then exposed a real CLI encoding failure in its
+Japanese-path file smoke under the runner's cp1252 stdout. CLI JSON now escapes
+non-ASCII characters losslessly, with a subprocess regression under cp1252;
+the runner locale is not overridden to mask the defect. Linux and both macOS
+profiles passed in that run. Neither failed manual run permits publication.
