@@ -28,6 +28,7 @@ SOURCE_ONLY_TESTS = {
     "test_ollama_environment.py",
     "test_ollama_024.py",
     "test_ollama_export_024.py",
+    "test_ollama_raw_extraction.py",
 }
 V022_INSTALLED_TESTS = {
     "test_v022_helpers.py",

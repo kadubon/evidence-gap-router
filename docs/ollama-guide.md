@@ -10,7 +10,6 @@ contract tests on other operating systems are separate observations.
 
 ```sh
 ollama --version
-ollama list
 ```
 
 Preflight requires the exact local tags `qwen3.6:35b-a3b` and `gemma4:e4b` and
@@ -53,6 +52,16 @@ Do this once. An existing owned campaign uses its `private/current-owner.json`;
 starting another server or resetting its directory is not resume. Shared services
 are outside this helper's ownership. The supplied native process-handle recovery
 controller is Windows-specific; it is not a portable process supervisor.
+
+After starting the owned server, inspect **its** catalogue in PowerShell:
+
+```powershell
+$env:OLLAMA_HOST = '127.0.0.1:11435'
+ollama list
+```
+
+The controller uses that same endpoint. Pointing `ollama list` at a different
+default/shared server does not verify this campaign's inventory.
 
 Ollama 0.35.0's `LOAD_TIMEOUT` is a load-stall detector, not a client deadline.
 An empty chat preload returns before model completion. See the pinned
