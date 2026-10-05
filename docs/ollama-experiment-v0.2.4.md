@@ -19,8 +19,8 @@ receipt. In earlier development, Qwen's first integration produced an incorrect
 unknown answer and its reviewer accepted it; syntax completion is not correctness.
 Earlier development outputs and expenses remain in the same ledger.
 
-The current frozen-development protocol is `egr-024-local-ollama-v1`; confirmation
-freeze follows calibration and pilot. This page will report actually executed
+The retained initial development protocol is `egr-024-local-ollama-v1`. Its
+freeze followed calibration and pilot. This page will report actually executed
 phase counts, denominators, paired outcomes and public artifact verification.
 It does not claim pending publication or primary measurements as complete.
 
@@ -190,9 +190,10 @@ prespecified parent-bootstrap resamples are used. Small-N intervals are descript
 | Gemma | C | 4 | 4 | 3 | 0 | 8 |
 
 All 95 pilot calls have known usage: 12,621 generated / 69,525 total tokens.
-One Qwen B trial retains a schema fault and its paid repair. C shows a usable
-Qwen path and a Gemma final-acceptance floor despite mostly grounded answers;
-Gemma routing results therefore remain diagnostic. No criterion was lowered.
+One Qwen B trial retains a schema fault and its paid repair. The initial Gemma
+verified-completion floor was later traced to the optional-default receipt
+defect above and is not a model-capability result. These pilot verification
+counts are retained historical outputs; no criterion was lowered or old record rewritten.
 These four development parents are excluded from primary denominators.
 
 The pinned debug-render branch returns before inference. Its rendered template

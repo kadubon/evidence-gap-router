@@ -14,6 +14,13 @@ The corrective source passed 695 tests in 26.92 s, lint and mypy. A further
 historical-license export regression and all 50 portable v0.2.4 contracts passed
 together (56 tests); the final full suite and native gates remain separate.
 
+The complete corrective source subsequently passed **696 tests in 26.48 s**,
+Ruff check/format (119 files) and mypy (14 SDK modules). Its same ordinary
+candidate wheel passed **296 installed SDK regressions**, **222 portable
+contracts in 12.22 s**, 44 benchmark-smoke trials and three complete document
+examples (182 local links). These checks use fake HTTP/offline fixtures and are
+separate from live inference and later exact-commit release CI.
+
 The audit found experiment transport and output-contract limitations. It did
 not establish a new defect in the SDK's acceptance, permission or helper rules.
 Those rules continue to use schema 2 and the public `plan/start/observe/step/run`
