@@ -176,6 +176,37 @@ it is not a new measurement. Use a new key only for a separate, explicitly paid
 invocation. SDK/model acceptance remains separate from independent correctness.
 The release report records the actual live invocation after it completes.
 
+## Reanalyze the retained export without inference
+
+Use the version-matched source scripts and the separately checksummed
+`ollama-raw-v0.2.4.zip` from the [release assets](https://github.com/kadubon/evidence-gap-router/releases/tag/v0.2.4).
+The current technical report records the archive's exact SHA256 and distinguishes
+local creation, upload and public download verification. Do not substitute an old
+campaign's archive, freeze or analysis.
+
+The extractor requires the published SHA256, a new destination, and bounded
+expansion. It rejects escaped paths, links, duplicate/case-colliding entries and
+Windows special names. Reanalysis verifies every retained member and the exact
+frozen harness/protocol, then compares four analysis files byte for byte. It uses
+saved costs and clock observations and sends zero model requests.
+
+These PowerShell paths are examples to edit; set `$archiveSha` to the full hash
+in the technical report before running them:
+
+```powershell
+$archive = 'C:/work/downloads/ollama-raw-v0.2.4.zip'
+$extracted = 'C:/work/egr-024-extracted'
+$reanalysis = 'C:/work/egr-024-reanalysis'
+& $runtime -I 'C:/work/evidence-gap-router/scripts/extract_ollama_raw.py' $archive $extracted --sha256 $archiveSha
+if ($LASTEXITCODE -ne 0) { throw 'raw extraction failed' }
+& $runtime -I 'C:/work/evidence-gap-router/scripts/reanalyze_ollama_024.py' $extracted $reanalysis
+if ($LASTEXITCODE -ne 0) { throw 'retained reanalysis failed' }
+```
+
+Python 3.12 or newer is required. The standalone retained-analysis path uses the
+standard library; it does not start Ollama or rerun an SDK callback. A fresh live
+run requires the owned-server setup, models and budgets described above.
+
 [Current technical report](ollama-experiment-v0.2.4.md) ·
 [Japanese summary](ollama-experiment-v0.2.4.ja.md) ·
 [Archived v0.2.3 report](ollama-experiment.md)

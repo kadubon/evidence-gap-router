@@ -28,7 +28,8 @@ Server logs show CPU inference, zero GPU offload and `size_vram=0`.
 Gemma's parent is `gemma4-validation-20260929:e4b-imatrix-attention-q6-q8-draft2`.
 Actual metadata, templates and model licenses are retained separately from the
 Apache-2.0 package license. No weights, template, quantization or server update
-was made. Model-within-arm differences are the comparison, not brand rankings.
+was made. Arms are compared within each model. Absolute timing across models
+does not establish a brand ranking.
 
 Nonstream transport uses 30-second connect and independent full-response hard
 deadlines: Qwen 1,800 seconds, Gemma 900, preload 1,800. Context is 8,192,
@@ -42,6 +43,26 @@ Three development cycles retained six empty preloads and 36 warm generation
 requests, all with known usage. Each model completed six final-cycle warm
 reader/integrator/reviewer requests, including 100 irrelevant memo lines and a
 changed Q fact. Earlier wrong unknown answers and false review acceptances remain.
+
+Final-cycle empty-preload client waits were Qwen **102.110 s** and Gemma
+**19.687 s**. Their zero-token receipts do not expose server duration counters,
+so these are client cold waits, not separately measured server load CPU time.
+Warm timings below list round 0 / the longer changed-fact round 1, in seconds:
+
+| Model | Stage | Client wall | Server prefill | Server generation |
+|---|---|---:|---:|---:|
+| Qwen | reader | 24.219 / 36.875 | 3.955 / 23.405 | 20.235 / 13.403 |
+| Qwen | integrator | 28.766 / 39.453 | 7.888 / 17.144 | 20.812 / 22.284 |
+| Qwen | reviewer | 16.578 / 32.141 | 8.676 / 28.872 | 7.852 / 3.180 |
+| Gemma | reader | 19.594 / 39.750 | 4.240 / 24.078 | 15.315 / 15.634 |
+| Gemma | integrator | 22.328 / 19.297 | 10.453 / 7.246 | 11.845 / 12.022 |
+| Gemma | reviewer | 11.813 / 32.765 | 10.333 / 30.469 | 1.432 / 2.271 |
+
+Warm generation receipts report approximately 0.002–0.003 s load duration.
+This cycle still used review cap 512; the selected 2,048 cap was subsequently
+checked in the final matrix and pilot. Both models' final integration changed
+from yes to no when Q changed from true to false. This demonstrates input-sensitive
+calls in these examples, not general semantic reliability.
 
 The campaign has 48 hours from first reservation, including development/waits,
 4,000 calls, 4 million generated / 40 million total tokens, and 4 GiB raw. Free
@@ -80,6 +101,13 @@ feedback change schema and instructions together: a compound intervention.
 Larger old caps and compact review improve formal completion; semantic false
 PASS remains substantial. Partial/length output never grants PASS.
 
+Valid-candidate acceptance was Qwen old 4/9 at either cap and compact 6/9;
+Gemma old 512 was 3/9, and its other cells were 6/9. The old 512 cells had
+one Qwen and seven Gemma invalid candidates with no schema-valid verdict.
+All larger-cap/compact cells had zero such missing verdicts. False PASS uses
+the 15 planned invalid candidates, so a truncated response is not a correct
+semantic rejection or evidence of a better reviewer.
+
 The prespecified choice requires at least 19/20 valid in both models, minimizes
 compact false PASS across models, then cap. It chooses 2,048 (24 false PASS
 versus 25 at 512), without A−B outcomes. The one-case difference is not evidence
@@ -114,6 +142,15 @@ supported completion are distinct. The last maps to the old
 `evidence_supported_completion` name. Grounded world-unknown, UNKNOWN reviewer,
 unknown usage and unexecuted trials remain distinct. A recorded check is not a
 semantic guarantee; a short fixed workflow may suffice when all records fit.
+
+`output_schema_valid` describes the final parsed integration answer; the separate
+all-call field retains earlier formatting failures. Trial `reviewer_false_pass`
+compares the last review with the final independently grounded answer. It is not
+an all-intermediate-review count. `false_acceptance` means the workflow claimed
+completion but the independent oracle did not support it; `router_satisfied` is
+recorded separately. Grounded abstention is a correct supported unknown-world
+answer, independent of review. `erroneous_stop` labels an assessed incomplete
+answerable trial; it is not, by itself, a causal diagnosis of the stop rule.
 
 Primary settings were frozen after the four-parent/24-trial pilot and actual
 template/tokenizer input-room checks. The balanced 16-parent profile fits
@@ -154,6 +191,12 @@ resource decision, not an A−B result decision. Predetermined parents 4/5 in ea
 family are excluded before confirmation; their XOR, waiver, explicit exception,
 destination and other variants are not live-confirmed here. Task families are
 shared with development; fresh instances are not held-out reasoning families.
+
+The observed-time forecast is a planning estimate, not a guarantee that all
+maximum waits fit. Eighty trials per model at maximum trial clocks alone sum
+to 240 hours, exceeding 48 hours; per-request deadlines cannot all be exhausted.
+Every dispatch checks the original remaining wall/call/token limits. Exhaustion
+would leave unstarted keys unexecuted, without extending the frozen budget.
 
 ## Measurement and publication boundary
 

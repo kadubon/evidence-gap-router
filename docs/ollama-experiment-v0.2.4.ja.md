@@ -35,6 +35,11 @@ schemaと指示を同時に変えた複合介入です。形式完了は改善�
 誤PASS合計最小、同数なら小cap）でreviewer 2,048を選択しました。誤PASS合計24対25の
 1件差は一般的な能力改善の証拠ではなく、A−B成績も選択に使っていません。
 
+正当答案9件の受理はQwen旧形式が両capで4/9、簡潔形式は両capで6/9です。
+Gemma旧512は3/9、その他は6/9。不当答案15件のうち形式上の判定欠落は旧512で
+Qwen 1件・Gemma 7件、他条件は0件でした。誤PASSの分母は予定された不当15件で、
+lengthによる判定欠落を意味上の正しい拒否やreviewerの品質改善とは数えません。
+
 固定順blockで実行したため、loadやprompt/KV cacheが時間比較に影響します。
 後の2,048条件が速かったことから、cap増加が推論を速くすると因果推論しません。
 方式間で生成答案を使い回していません。先行192件の異なる開発較正も原文・実装・
@@ -53,6 +58,15 @@ nonstreamなので初token時間は未測定です。context 8,192、temperature
 think/truncate/shiftはfalse、常駐60分。serverの30分LOAD_TIMEOUTはload停滞検出です。
 最終cycleでは両モデルのreader・統合・review各2回が確定し、長い資料とQの変更も含みます。
 
+最終cycleの空preload待ちはQwen 102.110秒、Gemma 19.687秒です。生成0の応答に
+server durationがなく、別計測したserver load CPU時間とはしません。暖機時のclient秒は
+通常／長い変更資料の順に、Qwen reader 24.219／36.875、統合28.766／39.453、
+review 16.578／32.141。Gemmaはreader 19.594／39.750、統合22.328／19.297、
+review 11.813／32.765です。prefillと生成の内訳は英語報告とrawに記録しています。
+この暖機cycleのreview capはまだ512で、最終2,048は後の較正とpilotで検査しました。
+両モデルの統合はQを真から偽に変えるとyesからnoへ変わりました。一般的な意味判断の
+信頼性を保証する例ではありません。
+
 reader 1,024／統合1,536／review 2,048／有料修復1,024、trialは10call・32action・
 16verification、Qwen 7,200／Gemma 3,600秒です。選択capから求めるSDK token枠は
 102,400、外側transport上限は122,880。protocolの97,280は初期capの値です。
@@ -67,6 +81,12 @@ A/Bは公開runner・pool・権限・view・callback・費用・停止を共有�
 goldは評価専用で、有限の最小根拠、scope、版、引用、origin、現在の発行receiptを独立確認します。
 答案正誤、reviewと独立な根拠付き正誤、現在受入付き完了を別に集計します。
 未記録の世界事実、reviewer UNKNOWN、消費不明、未実施を同じ失敗点にしません。
+
+形式完了は最終の統合答案と、修復前も含む全callで別々に記録します。試行単位の
+誤PASSは最終reviewと最終答案の独立した根拠判定の比較で、途中の全review数とは異なります。
+false acceptanceはworkflowの完了主張が独立oracleに支持されない状態で、routerの満足判定も
+別に残します。根拠付き棄権は本当に世界が情報不足の正しいunknown答案で、reviewと独立です。
+erroneous stopは採点済み解答可能trialの未完了ラベルであり、停止規則の因果診断ではありません。
 
 主確認前に実template/tokenizer、実装byte、資料、gold、全key・順序・seed・予算・解析を固定します。
 親課題数24または16は速度・資源と64件の停止感度枠で決めます。有意差まで延長しません。
@@ -99,6 +119,10 @@ routing比較には床効果が残ります。基準を下げず、診断的な�
 収まります。A−B成績は選択に使っていません。事前の各family親4/5は除外され、XOR、
 waiver、明示例外、目的地等のその変形は今回live主確認していません。family構造は開発と
 共有する人工資料であり、未知の推論familyへの汎化実験ではありません。
+
+実測時間からの予測は計画用で、全requestの最大待ちを保証しません。各モデル80 trialの
+最大trial時計だけでも合計240時間となり、48時間を超えます。各dispatchで元のwall・call・
+token残量を検査し、尽きた場合は予算を延長せず、未着手keyを未実施として保持します。
 
 [実行手順](ollama-guide.md) · [監査](audit-024.md) ·
 [v0.2.3の保存済み報告](ollama-experiment.ja.md)
