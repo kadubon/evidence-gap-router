@@ -8,12 +8,14 @@ import shutil
 import subprocess
 import tempfile
 import tomllib
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 SOURCE_ONLY_TESTS = {
     "test_docs.py",
     "test_release_guard.py",
     "test_package_audit.py",
+    "test_release_manifest_030.py",
     "test_publication_verification.py",
     "test_benchmarks.py",
     "test_benchmark_erratum.py",
@@ -124,7 +126,7 @@ def main() -> None:
         tests.mkdir()
         # These inspect repository orchestration/archives or experiment code.
         # Runtime regressions still run against the installed release wheel;
-        # the portable benchmark smoke is exercised separately below.
+        # No historical benchmark or model experiment is executed for v0.3.0.
         selected = [
             p for p in sorted((root / "tests").glob("test_*.py")) if p.name not in SOURCE_ONLY_TESTS
         ]
@@ -142,27 +144,32 @@ def main() -> None:
         conftest = root / "tests/conftest.py"
         if conftest.is_file():
             shutil.copyfile(conftest, tests / "conftest.py")
-        call([str(python), "-I", "-m", "pytest", str(tests), "-q"], cwd=clean)
-        call(
-            [str(python), "-I", str(root / "scripts/smoke.py"), "--expected-version", args.version],
-            cwd=clean,
-        )
-        benchmark_dir = clean / "benchmarks"
-        benchmark_dir.mkdir()
-        for source in sorted((root / "benchmarks").glob("*.py")):
-            shutil.copyfile(source, benchmark_dir / source.name)
-        shutil.copyfile(root / "benchmarks/protocol.json", benchmark_dir / "protocol.json")
-        outcome = subprocess.run(
-            [str(python), "-I", str(benchmark_dir / "smoke.py")],
+        junit = clean / "installed-tests.xml"
+        completed = subprocess.run(
+            [str(python), "-I", "-m", "pytest", str(tests), "-q", f"--junitxml={junit}"],
             cwd=clean,
             check=True,
             capture_output=True,
             text=True,
             encoding="utf-8",
         )
-        benchmark = json.loads(outcome.stdout)
-        if benchmark.get("benchmark_smoke") != "passed" or benchmark.get("trials", 0) < 1:
-            raise ValueError("Installed benchmark smoke did not pass")
+        print(completed.stdout)
+        suites = ET.parse(junit).getroot().findall("testsuite")
+        counts = {
+            k: sum(int(s.attrib[k]) for s in suites)
+            for k in ("tests", "failures", "errors", "skipped")
+        }
+        counts["passed"] = (
+            counts["tests"] - counts["failures"] - counts["errors"] - counts["skipped"]
+        )
+        skip_reasons = [
+            e.attrib.get("message", "") for e in ET.parse(junit).getroot().iter("skipped")
+        ]
+        call(
+            [str(python), "-I", str(root / "scripts/smoke.py"), "--expected-version", args.version],
+            cwd=clean,
+        )
+        benchmark = {"status": "not_run", "reason": "v0.3.0 prohibits new experiments"}
         experiment_contract = None
         if args.version in {"0.2.3", "0.2.4"}:
             experiment = clean / "experiments" / "ollama"
@@ -207,7 +214,7 @@ def main() -> None:
             }
         report = json.loads(report_path.read_text(encoding="utf-8"))
         documentation = None
-        if args.version == "0.2.4":
+        if args.version in {"0.2.4", "0.3.0"}:
             doc_report = clean / "docs-validation.json"
             call(
                 [
@@ -236,6 +243,10 @@ def main() -> None:
                     name for name in SOURCE_ONLY_TESTS if (root / "tests" / name).is_file()
                 ),
                 "pytest_exit_code": 0,
+                "pytest_counts": counts,
+                "pytest_skip_reasons": skip_reasons,
+                "new_llm_requests": 0,
+                "new_efficacy_or_performance_experiments": 0,
                 "installed_smoke": "passed",
                 "benchmark": benchmark,
                 "dependency_constraints": "uv.lock runtime dependencies; locked pytest",

@@ -11,6 +11,8 @@ from .models import (
     ActionCandidate,
     Budget,
     CheckerPermission,
+    CompletionContract,
+    DependencyRequirement,
     Evidence,
     HandlerRegistration,
     Invalidation,
@@ -56,29 +58,51 @@ def run_callback_example() -> RunReport:
         target_evidence_id="answer",
         target_digest=evidence.digest,
         checker_id="arithmetic-check",
-        resources=Resources(actions=1, verifications=1),
+        resources=Resources(actions=1, verifications=1, tokens=0),
     )
 
     def check(view: CallbackView) -> Result:
         accepted = legacy_checker(view.inputs[0].content or "")
         return view.result(
-            actual_resources=Resources(actions=1, verifications=1),
+            actual_resources=Resources(actions=1, verifications=1, tokens=0),
             checks=(
                 view.check(status="PASS" if accepted else "FAIL", reason="Compared with 2 + 2"),
             ),
         )
 
     return run(
-        State(obligations=(obligation,), evidence=(evidence,)),
+        State(
+            obligations=(obligation,),
+            evidence=(evidence,),
+            completion_contracts=(
+                CompletionContract(
+                    id="sum-contract",
+                    obligation_id=obligation.id,
+                    scope=obligation.scope,
+                    obligation_fingerprint=obligation.contract_fingerprint,
+                    target=DependencyRequirement(
+                        evidence_id=evidence.id, obligation_id=obligation.id, scope=obligation.scope
+                    ),
+                    declared_scope="not_applicable",
+                    scope_reason="Fixed supplied arithmetic, no retrieval.",
+                ),
+            ),
+        ),
         (action,),
-        Budget(limits=Resources(actions=1, verifications=1)),
+        Budget(limits=Resources(actions=1, verifications=1, tokens=0)),
         Policy(
             trusted_verifiers=("arithmetic-check",),
             handlers=(
                 HandlerRegistration(
                     handler_id="check",
                     roles=("verify",),
-                    checkers=(CheckerPermission(checker_id="arithmetic-check"),),
+                    checkers=(
+                        CheckerPermission(
+                            checker_id="arithmetic-check",
+                            completion_kinds=("content",),
+                            completion_scopes=(obligation.scope,),
+                        ),
+                    ),
                 ),
             ),
         ),
@@ -108,7 +132,13 @@ def run_continuation_example(snapshot_path: str | Path | None = None) -> RunRepo
             HandlerRegistration(
                 handler_id="check",
                 roles=("verify",),
-                checkers=(CheckerPermission(checker_id="arithmetic-check"),),
+                checkers=(
+                    CheckerPermission(
+                        checker_id="arithmetic-check",
+                        completion_kinds=("content",),
+                        completion_scopes=(obligation.scope,),
+                    ),
+                ),
             ),
         ),
     )
@@ -134,21 +164,36 @@ def run_continuation_example(snapshot_path: str | Path | None = None) -> RunRepo
             provenance_group="calculator",
         )
         return view.result(
-            actual_resources=Resources(actions=1, verifications=0),
+            actual_resources=Resources(actions=1, verifications=0, tokens=0),
             evidence=(evidence,),
         )
 
     def check(view: CallbackView) -> Result:
         accepted = legacy_checker(view.inputs[0].content or "")
         return view.result(
-            actual_resources=Resources(actions=1, verifications=1),
+            actual_resources=Resources(actions=1, verifications=1, tokens=0),
             checks=(
                 view.check(status="PASS" if accepted else "FAIL", reason="Compared with 2 + 2"),
             ),
         )
 
     acquired = step(
-        State(obligations=(obligation,)),
+        State(
+            obligations=(obligation,),
+            completion_contracts=(
+                CompletionContract(
+                    id="sum-contract",
+                    obligation_id=obligation.id,
+                    scope=obligation.scope,
+                    obligation_fingerprint=obligation.contract_fingerprint,
+                    target=DependencyRequirement(
+                        evidence_id="answer", obligation_id=obligation.id, scope=obligation.scope
+                    ),
+                    declared_scope="not_applicable",
+                    scope_reason="Fixed arithmetic, no retrieval.",
+                ),
+            ),
+        ),
         (acquisition,),
         budget,
         policy,
@@ -163,7 +208,7 @@ def run_continuation_example(snapshot_path: str | Path | None = None) -> RunRepo
         checker_id="arithmetic-check",
         target_evidence_id="answer",
         target_digest=acquired.state.evidence[0].digest,
-        resources=Resources(actions=1, verifications=1),
+        resources=Resources(actions=1, verifications=1, tokens=0),
     )
     completed = run(acquired.state, (verification,), budget, policy, {"check": check})
     invalidated = invalidate(

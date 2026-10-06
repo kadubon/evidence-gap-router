@@ -301,7 +301,7 @@ def test_cli_strict_schema_rejects_coercion_and_unknown_fields(
     elif mutation == "bool-count":
         value["budget"]["limits"]["actions"] = True
     else:
-        value["schema_version"] = "3"
+        value["schema_version"] = "4"
     path = tmp_path / "bad.json"
     path.write_text(json.dumps(value), encoding="utf-8")
     assert main(["plan", str(path), "--json"]) == 1
@@ -400,7 +400,7 @@ def test_json_cli_unicode_files_work_with_cp1252_stdout(tmp_path: Path) -> None:
         if obligation["id"] == "data-quality":
             obligation["scope"] = "注文の対象"
     request = {
-        "schema_version": "2",
+        "schema_version": "3",
         "state": output["state"],
         "candidates": [],
         "budget": {"limits": {"actions": 4, "verifications": 2}},

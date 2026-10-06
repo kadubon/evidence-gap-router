@@ -1316,6 +1316,16 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     PROTOCOL_PATH = args.protocol.resolve(strict=True)
     PROTOCOL = json.loads(PROTOCOL_PATH.read_text("utf-8"))
+    import evidence_gap_router as sdk
+
+    if sdk.__version__ != PROTOCOL["package_version"]:
+        raise ClientBlocked(
+            "Historical experiment requires SDK "
+            + PROTOCOL["package_version"]
+            + " and its original tag/wheel/harness. Current SDK "
+            + sdk.__version__
+            + " is incompatible; no network or server operation was performed."
+        )
     if edition() == "024" and (args.directory / "private/current-owner.json").exists():
         owner = json.loads((args.directory / "private/current-owner.json").read_text("utf-8"))
         if args.server_pid is None:

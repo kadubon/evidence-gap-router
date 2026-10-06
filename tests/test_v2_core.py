@@ -180,7 +180,7 @@ def satisfied():
 
 def test_A01_used_dependency_change_invalidates_only_relevant_pass():
     state = satisfied()
-    assert plan(state, (), BUDGET, POLICY).stop_reason == "satisfied"
+    assert plan(state, (), BUDGET, POLICY).observations_satisfied is True
     strict = update(D, id="rules-2", digest=digest("minimum=1000"), content="minimum=1000")
     updated = update(
         state,
@@ -204,7 +204,7 @@ def test_A01_used_dependency_change_invalidates_only_relevant_pass():
     decision = plan(updated, (next_check,), BUDGET, POLICY)
     assert decision.action == next_check
     assert decision.stop_reason is None
-    assert decision.coverage.satisfied == 1
+    assert decision.observation_coverage.satisfied == 1
     assert [g.target_evidence_id for g in decision.gaps if g.kind == "content_check"] == [E.id]
     assert len(updated.checks) == 3
     assert updated.checks[1].basis.dependencies[0].digest == D.digest
@@ -216,8 +216,8 @@ def test_A01_dependency_status_invalidates_related_pass(field):
     changed_dependency = update(D, **{field: True})
     updated = update(state, evidence=(E, changed_dependency))
     decision = plan(updated, (), BUDGET, POLICY)
-    assert decision.stop_reason != "satisfied"
-    assert decision.coverage.satisfied == 0
+    assert decision.observations_satisfied is False
+    assert decision.observation_coverage.satisfied == 0
 
 
 def test_A12_contract_change_invalidates_check_but_description_priority_do_not():
@@ -225,8 +225,8 @@ def test_A12_contract_change_invalidates_check_but_description_priority_do_not()
     display = update(DATA, description="display change", priority=99, required=False)
     assert display.contract_fingerprint == DATA.contract_fingerprint
     assert (
-        plan(update(state, obligations=(display, RULES)), (), BUDGET, POLICY).stop_reason
-        == "satisfied"
+        plan(update(state, obligations=(display, RULES)), (), BUDGET, POLICY).observations_satisfied
+        is True
     )
     for contract in (
         update(DATA, acceptance="different acceptance"),
@@ -235,7 +235,7 @@ def test_A12_contract_change_invalidates_check_but_description_priority_do_not()
         update(DATA, required_verifiers=("v1", "v2")),
     ):
         decision = plan(update(state, obligations=(contract, RULES)), (), BUDGET, POLICY)
-        assert decision.stop_reason != "satisfied"
+        assert decision.observations_satisfied is False
     assert (
         update(DATA, required_verifiers=("v2", "v1")).contract_fingerprint
         == update(DATA, required_verifiers=("v1", "v2")).contract_fingerprint
@@ -257,7 +257,7 @@ def test_unrelated_evidence_does_not_invalidate_finite_basis():
     updated = update(
         state, obligations=(*state.obligations, optional), evidence=(*state.evidence, unrelated)
     )
-    assert plan(updated, (), BUDGET, POLICY).stop_reason == "satisfied"
+    assert plan(updated, (), BUDGET, POLICY).observations_satisfied is True
 
 
 def test_A02_acquisition_cannot_reuse_old_pass_to_erase_failure():
@@ -271,7 +271,7 @@ def test_A02_acquisition_cannot_reuse_old_pass_to_erase_failure():
     )
     with pytest.raises(ValidationError, match="acquisition cannot supersede"):
         observe(issued, receipt(issued, supersessions=(event,)))
-    assert plan(state, (), BUDGET, POLICY).stop_reason == "escalation_required"
+    assert plan(state, (), BUDGET, POLICY).stop_reason == "blocked"
 
 
 def test_A02_dedicated_authorized_resolution_preserves_failure_and_reuses_basis():
@@ -290,7 +290,7 @@ def test_A02_dedicated_authorized_resolution_preserves_failure_and_reuses_basis(
         reason="checked resolution",
     )
     resolved = resolve(observed, event, POLICY)
-    assert plan(resolved, (), BUDGET, POLICY).stop_reason == "satisfied"
+    assert plan(resolved, (), BUDGET, POLICY).observations_satisfied is True
     assert resolved.checks[0] == fail
     assert resolved.results == observed.results
     assert resolve(resolved, event, POLICY) is resolved
@@ -315,10 +315,7 @@ def test_A03_generic_pass_cannot_close_specific_contradiction():
     )
     with pytest.raises(ValueError, match="dedicated"):
         resolve(state, event, POLICY)
-    assert (
-        plan(update(state, supersessions=(event,)), (), BUDGET, POLICY).stop_reason
-        == "escalation_required"
-    )
+    assert plan(update(state, supersessions=(event,)), (), BUDGET, POLICY).stop_reason == "blocked"
     candidate = action(E, purpose="contradiction_resolution", resolution_target_id=conflict.id)
     issued = start(state, candidate, "resolution", BUDGET, POLICY)
     resolved_check = check(issued, candidate, "specific")
@@ -330,7 +327,7 @@ def test_A03_generic_pass_cannot_close_specific_contradiction():
             supersessions=(update(event, check_id=resolved_check.id),),
         ),
     )
-    assert plan(observed, (), BUDGET, POLICY).stop_reason == "satisfied"
+    assert plan(observed, (), BUDGET, POLICY).observations_satisfied is True
     assert observed.contradictions == (conflict,)
 
 
@@ -364,7 +361,7 @@ def test_A04_already_passed_target_excluded_under_one_remaining_check_budget():
     assert "target_already_verified_or_no_matching_gap" in decision.exclusions[0].reasons
     issued = start(state, needed, "needed", limited, POLICY)
     observed = observe(issued, receipt(issued, checks=(check(issued, needed, "second-pass"),)))
-    assert plan(observed, (), limited, POLICY).stop_reason == "satisfied"
+    assert plan(observed, (), limited, POLICY).observations_satisfied is True
 
 
 def test_A05_declared_new_source_group_beats_known_origin_regardless_ids():
@@ -420,7 +417,7 @@ def test_A07_cross_obligation_verified_dependency_progresses():
         evidence_binding(state, D.id, "verified"),
     )
     observed = observe(issued, receipt(issued, checks=(check(issued, candidate, "data-pass"),)))
-    assert plan(observed, (), BUDGET, POLICY).stop_reason == "satisfied"
+    assert plan(observed, (), BUDGET, POLICY).observations_satisfied is True
 
 
 @pytest.mark.parametrize(
@@ -465,7 +462,7 @@ def test_issued_basis_is_fixed_and_late_receipt_cannot_close_changed_contract():
     changed_state = update(issued, obligations=(update(DATA, acceptance="amount>1000"),))
     old_check = check(issued, candidate)
     observed = observe(changed_state, receipt(changed_state, checks=(old_check,)))
-    assert plan(observed, (), BUDGET, POLICY).stop_reason != "satisfied"
+    assert plan(observed, (), BUDGET, POLICY).observations_satisfied is False
     fresh_check = check(changed_state, candidate, "different-basis")
     with pytest.raises(ValidationError, match="issued verification"):
         observe(changed_state, receipt(changed_state, checks=(fresh_check,)))
@@ -490,7 +487,7 @@ def test_checker_revision_role_and_purpose_are_host_authority():
     policy = update(
         POLICY, handlers=(POLICY.handlers[0], update(POLICY.handlers[1], checkers=(permissions,)))
     )
-    assert plan(valid, (), BUDGET, policy).stop_reason != "satisfied"
+    assert plan(valid, (), BUDGET, policy).observations_satisfied is False
     with pytest.raises(ValidationError, match="acquisition cannot declare"):
         acquired(checker_id="v1")
 
@@ -544,8 +541,10 @@ def test_new_reader_rejects_schema1_and_migration_retains_unassessed_history():
     assert migrated.checks[0].legacy and migrated.checks[0].basis is None
     assert migrated.attempts[0].legacy and migrated.attempts[0].id == "host-attempt-2"
     decision = plan(migrated, (), BUDGET, POLICY)
-    assert decision.stop_reason != "satisfied"
-    assert "check_failed" in {r.code for r in decision.residuals}
+    assert decision.observations_satisfied is False
+    assert "check_failed" in {
+        r.code for r in (*decision.residuals, *decision.observation_residuals)
+    }
     assert load_json(dump_json(migrated), State) == migrated
     with pytest.raises(ValueError, match="pending"):
         start(migrated, acquired(), "new", BUDGET, POLICY)
@@ -601,8 +600,10 @@ def test_migration_keeps_old_resolution_events_without_trusting_them():
     migrated = migrate_v1_json(old.model_dump_json())
     assert len(migrated.supersessions) == 2
     decision = plan(migrated, (), BUDGET, POLICY)
-    assert decision.stop_reason == "escalation_required"
-    assert {"check_unknown", "contradiction"}.issubset({r.code for r in decision.residuals})
+    assert decision.stop_reason == "blocked"
+    assert {"check_unknown", "contradiction"}.issubset(
+        {r.code for r in (*decision.residuals, *decision.observation_residuals)}
+    )
 
 
 def test_schema2_plan_roundtrip_and_unknown_migration_fields_rejected():
@@ -612,8 +613,8 @@ def test_schema2_plan_roundtrip_and_unknown_migration_fields_rejected():
     assert (
         load_json(
             dump_json(plan(state, (), BUDGET, POLICY)), type(plan(state, (), BUDGET, POLICY))
-        ).stop_reason
-        == "satisfied"
+        ).observations_satisfied
+        is True
     )
     with pytest.raises(ValidationError):
         migrate_v1_json(json.dumps({"schema_version": "1", "obligations": [], "policy": {}}))
@@ -678,7 +679,7 @@ def test_existing_historical_dependency_can_be_inspected_but_cannot_accept_targe
     candidate = action(E, dependencies=(dependency(requirement="exists"),))
     assert plan(state, (candidate,), BUDGET, POLICY).action == candidate
     record = check(state, candidate)
-    assert plan(update(state, checks=(record,)), (), BUDGET, POLICY).stop_reason != "satisfied"
+    assert plan(update(state, checks=(record,)), (), BUDGET, POLICY).observations_satisfied is False
 
 
 @pytest.mark.parametrize("status", ["FAIL", "UNKNOWN"])
@@ -689,8 +690,8 @@ def test_duplicate_alias_negative_check_blocks_and_resolves_exact_alias(status):
     negative = check(state, action(alias), "alias-negative", status)
     state = update(state, checks=(passed, negative))
     decision = plan(state, (), BUDGET, POLICY)
-    assert decision.stop_reason != "satisfied"
-    assert decision.coverage.satisfied == 0
+    assert decision.observations_satisfied is False
+    assert decision.observation_coverage.satisfied == 0
     gap = next(g for g in decision.gaps if negative.id in g.record_ids)
     assert gap.target_evidence_id == alias.id
     assert gap.kind == ("failed_check" if status == "FAIL" else "unknown_check")
@@ -708,19 +709,20 @@ def test_duplicate_alias_negative_check_blocks_and_resolves_exact_alias(status):
     )
     observed = observe(issued, receipt(issued, checks=(resolution,), supersessions=(event,)))
     final = plan(observed, (), BUDGET, POLICY)
-    assert final.stop_reason == "satisfied"
-    assert final.coverage.satisfied == final.coverage.required == 1
+    assert final.observations_satisfied is True
+    assert final.observation_coverage.satisfied == final.coverage.required == 1
     assert observed.checks[1] == negative
     higher = update(DATA, min_evidence=2)
     assert (
-        plan(update(observed, obligations=(higher,)), (), BUDGET, POLICY).stop_reason != "satisfied"
+        plan(update(observed, obligations=(higher,)), (), BUDGET, POLICY).observations_satisfied
+        is False
     )
 
 
 def test_execution_availability_does_not_revoke_current_checker_trust():
     state = satisfied()
     unavailable = update(POLICY, available_handlers=())
-    assert plan(state, (), BUDGET, unavailable).stop_reason == "satisfied"
+    assert plan(state, (), BUDGET, unavailable).observations_satisfied is True
     pending = initial(evidence=(E,), obligations=(DATA,))
     candidate = action(E)
     decision = plan(pending, (candidate,), BUDGET, unavailable)

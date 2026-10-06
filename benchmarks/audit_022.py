@@ -728,6 +728,9 @@ def proof_case():
 
 
 def run_audit() -> dict:
+    from benchmarks.compatibility import require_original_sdk
+
+    require_original_sdk()
     cases = (
         ("EGR021-02", "partial-external-basis", lambda: imported_case(partial=True)),
         ("EGR021-02", "same-digest-related-alias", lambda: imported_case(alias=True)),

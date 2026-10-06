@@ -14,10 +14,12 @@ from .models import (
     ActionCandidate,
     Budget,
     CheckerPermission,
+    CompletionContract,
     Contradiction,
     DependencyRequirement,
     Evidence,
     HandlerRegistration,
+    MaterialRequirement,
     Obligation,
     Policy,
     Record,
@@ -74,7 +76,28 @@ def run_cause_demo(case: str = "resolved") -> dict[str, Any]:
         min_provenance_groups=3,
         required_verifiers=("incident-checker",),
     )
-    state = State(obligations=(obligation,))
+    requirements = tuple(
+        DependencyRequirement(evidence_id=name, obligation_id=obligation.id, scope=obligation.scope)
+        for name in names
+    )
+    state = State(
+        obligations=(obligation,),
+        completion_contracts=(
+            CompletionContract(
+                id="incident-contract",
+                obligation_id=obligation.id,
+                scope=obligation.scope,
+                obligation_fingerprint=obligation.contract_fingerprint,
+                target=requirements[0],
+                declared_scope="finite_catalogue",
+                catalogue_id="incident-files",
+                catalogue_revision="1",
+                materials=tuple(
+                    MaterialRequirement(id=r.evidence_id, any_of=(r,)) for r in requirements
+                ),
+            ),
+        ),
+    )
     budget = Budget(limits=Resources(actions=6, verifications=1 if case == "budget" else 3))
     policy = Policy(
         trusted_verifiers=("incident-checker",),
@@ -87,7 +110,13 @@ def run_cause_demo(case: str = "resolved") -> dict[str, Any]:
             HandlerRegistration(
                 handler_id="inspect-incident",
                 roles=("verify",),
-                checkers=(CheckerPermission(checker_id="incident-checker"),),
+                checkers=(
+                    CheckerPermission(
+                        checker_id="incident-checker",
+                        completion_kinds=("content",),
+                        completion_scopes=(obligation.scope,),
+                    ),
+                ),
             ),
         ),
     )
@@ -123,7 +152,7 @@ def run_cause_demo(case: str = "resolved") -> dict[str, Any]:
             reference=f"bundled artificial data/cause/{names[target]}",
         )
         return view.result(
-            actual_resources=Resources(actions=1, verifications=0), evidence=(evidence,)
+            actual_resources=Resources(actions=1, verifications=0, tokens=0), evidence=(evidence,)
         )
 
     def inspect(view: CallbackView) -> Result:
@@ -188,7 +217,7 @@ def run_cause_demo(case: str = "resolved") -> dict[str, Any]:
                 f"declared exception={has_exception}"
             )
         return view.result(
-            actual_resources=Resources(actions=1, verifications=1),
+            actual_resources=Resources(actions=1, verifications=1, tokens=0),
             checks=(view.check(status=status, reason=reason),),
             contradictions=contradictions,
         )
@@ -241,7 +270,7 @@ def run_cause_demo(case: str = "resolved") -> dict[str, Any]:
                     checker_id="incident-checker",
                     target_evidence_id=name,
                     target_digest=records[name].digest,
-                    resources=Resources(actions=1, verifications=1),
+                    resources=Resources(actions=1, verifications=1, tokens=0),
                     dependencies=dependencies,
                 )
             )

@@ -1,3 +1,14 @@
+# 0.3.0
+
+- Add host-owned explicit finite completion contracts, exact material conditions,
+  scope/catalogue revisions and distinct current completion assessment.
+- Capture admitted check kinds/scopes at issuance and require current matching
+  permissions; preserve advisory and revoked/late observations with costs.
+- Route exact required-material preparation with required-goal priority.
+- Write schema 3 and explicitly import schema 1/2 without inventing authority.
+- Add three actual model-free local-file examples and shipping integrity gates.
+- New inference and efficacy/performance experiments: zero. Utility unmeasured.
+
 # Changelog
 
 ## 0.2.4

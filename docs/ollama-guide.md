@@ -1,3 +1,13 @@
+# Historical Ollama guide (use v0.2.4 only)
+
+v0.3.0 performs no new inference, model loading/download, server operation,
+benchmark, calibration or comparison. The command examples below belong to
+**tag v0.2.4 + evidence-gap-router==0.2.4 + that tag's source harness**. Do not
+attach the schema-3 SDK to an old experiment. Current experiment CLI refuses
+version mismatch before network or server operations. No new live example on
+v0.3.0 is validated. For model-free current examples use
+[getting started](getting-started.md) and [completion](completion.md).
+
 # Optional local Ollama use
 
 Core imports, `egr plan`, file checks and ordinary tests do not connect to Ollama.

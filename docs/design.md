@@ -1,3 +1,16 @@
+# Completion and current applicability in 0.3.0
+
+Read the [preimplementation design](design-v0.3.0.md) and [completion contract](completion.md).
+An observed PASS is retained independently of current applicability and finite
+goal completion. Host contracts bind scope/catalogue revisions and exact used
+material; captured/current checker permission defines admitted check kinds.
+No learned weights, parameter tuning, new inference or efficacy experiment was
+used. Historical v0.2.4 negative results are design input, not evidence of a fix.
+
+The execution/proof foundations below remain. References to schema-2 direct
+reading are historical; use explicit migration to schema 3. A current policy
+revocation makes a valid late receipt inapplicable, rather than discarding it.
+
 # Design and trust boundaries
 
 ## Small responsibility

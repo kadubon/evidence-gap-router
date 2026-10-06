@@ -1,3 +1,40 @@
+# Release procedure for v0.3.0
+
+Source, GitHub Release, PyPI and public-download verification are distinct gates.
+No new experiment, model/server operation or performance scoring is part of this
+release. Keep all old tags, freezes, protocols and public artifacts unchanged.
+
+Run locked sync, Ruff lint/format, mypy, the complete source pytest suite and
+documentation links/examples. Build wheel/sdist once from a clean exact commit;
+verify RECORD, metadata, full Apache LICENSE, identical package bytes and an
+outside-checkout sdist rebuild. `scripts/release_manifest.py` compares every
+package byte with `git archive` at the current clean commit and produces a
+shipping-identity manifest without a self/future hash. The old experiment freeze
+is historical and must reject a different schema-3 measured package.
+
+The only workflow is manual dispatch or v* tag push. All six required native
+profiles install the same wheel outside the source tree: Linux 3.12, Windows
+3.12 x64, macOS 3.12 arm64/native Intel, Linux 3.13/3.14. Record actual imports,
+architectures, hashes, tests and three document/local-file examples; no benchmark
+smoke runs. Inspect each report and required job, not only overall success.
+A tag is admitted only for an unchanged exact-SHA successful manual run and
+main ancestry/version match. Existing publisher is repository
+`kadubon/evidence-gap-router`, workflow `workflow.yml`, environment `pypi`.
+The OIDC publish job downloads fixed distributions; it has no checkout, build,
+test or project script. Never force tags or use skip-existing.
+
+After upload, verify official wheel/sdist downloaded bytes and a fresh cache-free
+ordinary official-index install with SDK, CLI, migration and three examples.
+Create the GitHub Release with distributions, SHA256SUMS, six native reports and
+release manifest; download its actual public assets and compare bytes. Record
+publication states only after actual verification. Required unavailable external
+authentication/configuration is reported explicitly after possible work.
+
+## Historical v0.2.4 procedure
+
+The old procedure below describes its measured release only; none of its
+experiment commands or freeze gates apply to v0.3.0.
+
 # Release procedure
 
 Source publication, GitHub Release, PyPI upload and public-download verification

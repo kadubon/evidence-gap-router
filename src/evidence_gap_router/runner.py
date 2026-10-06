@@ -6,6 +6,7 @@ import json
 from collections.abc import Callable, Mapping
 from typing import Literal
 
+from .completion import _progress_fingerprint
 from .models import (
     ActionCandidate,
     Budget,
@@ -296,8 +297,29 @@ def _binding_progress(
 ) -> bool:
     """A needed exact-ID binding can unlock work despite duplicate information."""
     new_ids = {item.id for item in after.evidence} - {item.id for item in before.evidence}
-    if not new_ids:
+    old_checks = {c.id for c in before.checks}
+    new_check_targets = {
+        c.basis.target.evidence_id
+        for c in after.checks
+        if c.id not in old_checks and c.basis is not None
+    }
+    if not new_ids and not new_check_targets:
         return False
+    if (
+        selected is not None
+        and selected.kind == "verify"
+        and selected.target_evidence_id in new_check_targets
+        and selected.id in _needed_helper_actions(before, candidates, budget, policy)
+    ):
+        from .router import _Evaluation
+
+        previous_evaluation, current = _Evaluation(before, policy), _Evaluation(after, policy)
+        identifier = selected.target_evidence_id
+        if identifier is not None:
+            old = previous_evaluation.target_checks(previous_evaluation.evidence[identifier])
+            new = current.target_checks(current.evidence[identifier])
+            if {(c.status, c.basis) for c in old} != {(c.status, c.basis) for c in new}:
+                return True
     # Verified dependencies may need a concrete verifier candidate derived only
     # after acquisition reveals its digest. Core's original finite helper path
     # approves that acquisition without granting every new alias progress.
@@ -331,7 +353,7 @@ def _binding_progress(
         bindings.update(action.requires_evidence_ids)
         if action.kind == "verify" and action.target_evidence_id is not None:
             bindings.add(action.target_evidence_id)
-        if bindings & new_ids:
+        if bindings & (new_ids | new_check_targets):
             return True
     return False
 
@@ -362,7 +384,11 @@ def run(
     effective = _policy(policy, handlers)
     for _ in range(max_steps):
         previous_state = state
-        before = _progress(state)
+        before = (
+            _progress_fingerprint(state, effective, budget)
+            if state.completion_contracts
+            else _progress(state)
+        )
         decision, error_stop, error, current = _recommend(
             state, candidates, budget, effective, selector
         )
@@ -392,7 +418,12 @@ def run(
                 stop_reason=report.stop_reason,
                 error=report.error,
             )
-        if _progress(state) == before and not _binding_progress(
+        after_progress = (
+            _progress_fingerprint(state, effective, budget)
+            if state.completion_contracts
+            else _progress(state)
+        )
+        if after_progress == before and not _binding_progress(
             previous_state, state, current, budget, effective, report.decision.action
         ):
             decision, stop, error, _ = _recommend(state, candidates, budget, effective, selector)

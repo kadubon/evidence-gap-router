@@ -2,6 +2,7 @@
 # v0.2.4 starts a new campaign with canonical LF bytes on every native checkout.
 # Historical tags, wheels and raw archives retain their original bytes.
 src/evidence_gap_router/** text eol=lf
+LICENSE text eol=lf
 benchmarks/results/freeze-v0.2.2.json -text
 benchmarks/results/v0.2.2/*.json -text
 benchmarks/results/v0.2.1-erratum/*.json -text

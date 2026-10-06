@@ -89,7 +89,7 @@ def test_A10_default_and_explicit_finite_limits_preserve_all_material_and_cost()
     limited = run(state, factory, budget, policy, {"read": material}, max_steps=3)
     assert limited.stop_reason == "max_steps_reached"
     assert len(limited.state.results) == len(limited.state.evidence) == 3
-    assert limited.decision.stop_reason != "satisfied"
+    assert limited.decision.observations_satisfied is False
     default = run(state, factory, budget, policy, {"read": material})
     assert default.stop_reason == "max_steps_reached"
     assert len(default.state.results) == 32
@@ -205,7 +205,7 @@ def test_public_step_snapshot_continue_and_pinned_verification_view() -> None:
         )
 
     final = run(restored, (verify,), budget, policy, {"verify": checker})
-    assert final.decision.stop_reason == "satisfied"
+    assert final.decision.observations_satisfied is True
     assert len(final.state.results) == 2
     assert views[0].inputs == (target,)
     assert views[0].basis == final.state.checks[0].basis
@@ -278,7 +278,7 @@ def test_step_limit_rejects_invalid_and_unbounded_values(value: Any) -> None:
 
 def test_installed_sdk_example_wraps_existing_plain_python_callback() -> None:
     report = run_callback_example()
-    assert report.decision.stop_reason == "satisfied"
+    assert report.decision.observations_satisfied is True
     assert report.state.checks[0].basis is not None
 
 
@@ -330,8 +330,8 @@ def test_absent_executable_mapping_does_not_revoke_existing_trusted_pass() -> No
     for report in (stepped, looped):
         assert report.state == previous.state
         assert report.stop_reason == "router_stopped"
-        assert report.decision.stop_reason == "satisfied"
-        assert report.decision.coverage.satisfied == 1
+        assert report.decision.observations_satisfied is True
+        assert report.decision.observation_coverage.satisfied == 1
     assert stepped.receipt is None
     assert looped.receipts == ()
 
@@ -386,7 +386,7 @@ def test_needed_acquisition_only_mapping_keeps_other_obligation_pass_applicable(
     budget = Budget(limits=Resources(actions=2, verifications=2))
     report = step(state, (action,), budget, policy, {"new-reader": reader})
     assert report.stop_reason == "step_completed"
-    assert report.decision.coverage.satisfied == 1
+    assert report.decision.observation_coverage.satisfied == 1
     assert report.decision.coverage.required == 2
     assert report.receipt is not None
     assert report.state.checks == previous.state.checks
@@ -484,7 +484,7 @@ def test_EGR020_08_duplicate_information_fulfills_needed_exact_binding_and_conti
     before = plan(state, (acquisition, verify), budget, policy)
     assert before.action == acquisition
     report = run(state, (acquisition, verify), budget, policy, {"read": reader, "verify": checker})
-    assert report.decision.stop_reason == "satisfied"
+    assert report.decision.observations_satisfied is True
     assert report.callback_calls == ("read", "verify")
     assert report.stop_reason == "router_stopped"
     assert len(report.state.attempts) == len(report.state.results) == 4
@@ -509,7 +509,7 @@ def test_binding_progress_retains_original_pool_without_extra_factory_evaluation
         )
 
     report = run(state, factory, budget, policy, {"read": reader, "verify": checker})
-    assert report.decision.stop_reason == "satisfied"
+    assert report.decision.observations_satisfied is True
     assert report.callback_calls == ("read", "verify")
     assert len(evaluated) == 3
     assert [len(item.results) for item in evaluated] == [2, 3, 4]
@@ -555,7 +555,7 @@ def test_packaged_continuation_example_retains_real_receipts_after_check_withdra
 ) -> None:
     snapshot = tmp_path / "日本語 保存.json"
     report = run_continuation_example(snapshot)
-    assert report.decision.stop_reason == "satisfied"
+    assert report.decision.observations_satisfied is True
     assert len(report.state.attempts) == len(report.state.results) == 3
     assert len(report.state.evidence) == 1 and len(report.state.checks) == 2
     assert sum(result.actual_resources.actions for result in report.state.results) == 3
@@ -599,7 +599,7 @@ def test_duplicate_needed_verified_binding_advances_through_dynamic_checker_fact
 
     state = step(state, (old_check,), budget, policy, {"verify": material_checker}).state
     assert len(state.results) == 3
-    assert plan(state, (), budget, policy).coverage.satisfied == 0
+    assert plan(state, (), budget, policy).observation_coverage.satisfied == 0
     verify = verify.model_copy(
         update={
             "dependencies": (
@@ -638,7 +638,7 @@ def test_duplicate_needed_verified_binding_advances_through_dynamic_checker_fact
         return material_checker(view) if view.obligation.id == "helper" else checker(view)
 
     report = run(state, factory, budget, policy, {"read": reader, "verify": selected_checker})
-    assert report.decision.stop_reason == "satisfied"
+    assert report.decision.observations_satisfied is True
     assert report.callback_calls == ("read", "verify", "verify")
     assert evaluations == [3, 4, 5, 6]
     assert len(report.state.attempts) == len(report.state.results) == 6

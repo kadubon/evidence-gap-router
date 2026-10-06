@@ -3,7 +3,7 @@
 Install an ordinary package with Python 3.12 or newer:
 
 ```sh
-python -m pip install evidence-gap-router==0.2.4
+python -m pip install evidence-gap-router==0.3.0
 egr --version
 egr demo --json
 ```
@@ -81,3 +81,33 @@ write_json(report.state, "completed.json")
 `egr plan INPUT.json --json` is read-only and never fetches references or
 imports handler strings. See [API](api.md) for full inputs, selectors,
 exact dependencies and the difference between `step`, `run` and domain stops.
+
+## Three local-file completion examples
+
+```python
+from tempfile import TemporaryDirectory
+from pathlib import Path
+from evidence_gap_router.completion_example import (
+    run_partial_example,
+    run_pooled_example,
+    run_material_continuation,
+)
+
+with TemporaryDirectory() as temporary:
+    directory = Path(temporary) / "日本語 path"
+    partial = run_partial_example(directory / "partial")
+    assert not partial["partial"]["completion"][0]["finite_complete"]
+    assert not partial["after_acquisition"]["completion"][0]["finite_complete"]
+    assert partial["decision"]["stop_reason"] == "satisfied"
+    pooled = run_pooled_example(directory / "pooled")
+    assert pooled.decision.stop_reason == "satisfied"
+    assert len(pooled.state.results) == 1
+    continued = run_material_continuation(directory / "continuation")
+    assert continued.decision.stop_reason == "satisfied"
+    assert len(continued.state.results) == 3
+    assert len(continued.state.checks) == 2  # Original PASS is retained.
+```
+
+Every callback uses finite actual file content and records known zero model
+usage. No model service or experiment is needed. See [completion](completion.md)
+and [migration](migration.md) before using an old state with schema 3.

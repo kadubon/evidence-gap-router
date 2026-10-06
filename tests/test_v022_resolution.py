@@ -167,7 +167,7 @@ def real_content_history(*, acquire=False):
             for e in (A, B)
         )
     report = run(state, actions, BUDGET, POLICY, HANDLERS)
-    assert report.decision.stop_reason == "satisfied"
+    assert report.decision.observations_satisfied is True
     assert len(report.state.results) == (4 if acquire else 2)
     conflict = Contradiction(
         id="disputed",
@@ -233,7 +233,7 @@ def test_partial_related_basis_import_and_old_resolution_history_remain_unaccept
     disclosed = {b.evidence_id for b in (checked.basis.target, *checked.basis.dependencies)}
     assert set(state.contradictions[0].evidence_ids) - disclosed == {B.id}
     assert len(state.results) == 2 and state.results == original.results
-    assert plan(state, (), BUDGET, POLICY).stop_reason == "escalation_required"
+    assert plan(state, (), BUDGET, POLICY).stop_reason == "blocked"
     with pytest.raises(ValueError, match="authorized current dedicated"):
         resolve(state, event(checked), POLICY)
 
@@ -245,7 +245,7 @@ def test_partial_related_basis_import_and_old_resolution_history_remain_unaccept
     assert loaded == history == load_json(dump_json(history), State)
     assert loaded.checks[-1] == checked and loaded.supersessions == (event(checked),)
     assert loaded.results == original.results and loaded.attempts == original.attempts
-    assert plan(loaded, (), BUDGET, POLICY).stop_reason == "escalation_required"
+    assert plan(loaded, (), BUDGET, POLICY).stop_reason == "blocked"
     assert sum(r.actual_resources.actions for r in loaded.results) == 2
 
 
@@ -299,7 +299,7 @@ def test_equal_digest_alias_cannot_replace_an_exact_related_input(target_alias):
     state = replace(state, evidence=(*state.evidence, alias))
     target, dependencies = (alias, (A, B)) if target_alias else (A, (alias,))
     imported, checked = imported_resolution(state, target=target, dependencies=dependencies)
-    assert plan(imported, (), BUDGET, POLICY).stop_reason == "escalation_required"
+    assert plan(imported, (), BUDGET, POLICY).stop_reason == "blocked"
     with pytest.raises(ValueError, match="authorized current dedicated"):
         resolve(imported, event(checked), POLICY)
     with pytest.raises(ValueError, match="resolution_related_evidence_missing"):
@@ -343,12 +343,12 @@ def test_valid_imported_all_related_resolution_remains_supported_and_reusable():
     state = real_content_history()
     state, checked = imported_resolution(state)
     resolved = resolve(state, event(checked), POLICY)
-    assert plan(resolved, (), BUDGET, POLICY).stop_reason == "satisfied"
+    assert plan(resolved, (), BUDGET, POLICY).observations_satisfied is True
     assert resolved.results == state.results and len(resolved.results) == 2
     assert resolve(resolved, event(checked), POLICY) == resolved
     unrelated = material("unrelated", "4", source=A.source, provenance_group=A.provenance_group)
     unchanged = replace(resolved, evidence=(*resolved.evidence, unrelated))
-    assert plan(unchanged, (), BUDGET, POLICY).stop_reason == "satisfied"
+    assert plan(unchanged, (), BUDGET, POLICY).observations_satisfied is True
 
 
 def test_valid_seed_content_checks_and_full_related_resolution_remain_supported():
@@ -368,7 +368,7 @@ def test_valid_seed_content_checks_and_full_related_resolution_remain_supported(
     )
     state = replace(state, checks=checks)
     assert not state.attempts and not state.results
-    assert plan(state, (), BUDGET, POLICY).stop_reason == "satisfied"
+    assert plan(state, (), BUDGET, POLICY).observations_satisfied is True
     conflict = Contradiction(
         id="disputed",
         obligation_id=OBLIGATION.id,
@@ -378,7 +378,7 @@ def test_valid_seed_content_checks_and_full_related_resolution_remain_supported(
     )
     state, checked = imported_resolution(replace(state, contradictions=(conflict,)))
     resolved = resolve(state, event(checked), POLICY)
-    assert plan(resolved, (), BUDGET, POLICY).stop_reason == "satisfied"
+    assert plan(resolved, (), BUDGET, POLICY).observations_satisfied is True
     assert resolved.checks[:2] == checks and not resolved.results
 
 
@@ -388,10 +388,7 @@ def test_content_purpose_cannot_reuse_a_full_basis_to_resolve_a_contradiction():
         state, purpose="content", resolution_target_id=None, resolution_fingerprint=None
     )
     history = replace(state, supersessions=(event(checked),))
-    assert (
-        plan(load_json(dump_json(history), State), (), BUDGET, POLICY).stop_reason
-        == "escalation_required"
-    )
+    assert plan(load_json(dump_json(history), State), (), BUDGET, POLICY).stop_reason == "blocked"
     with pytest.raises(ValueError, match="authorized current dedicated"):
         resolve(state, event(checked), POLICY)
 
@@ -401,7 +398,7 @@ def test_current_policy_must_still_allow_the_resolution_checker_purpose():
     resolved = resolve(state, event(checked), POLICY)
     registration = replace(POLICY.handlers[1], checkers=(CheckerPermission(checker_id="checker"),))
     policy = replace(POLICY, handlers=(POLICY.handlers[0], registration))
-    assert plan(resolved, (), BUDGET, policy).stop_reason == "escalation_required"
+    assert plan(resolved, (), BUDGET, policy).stop_reason == "blocked"
     assert resolved.results == state.results and resolved.checks[-1] == checked
 
 
@@ -417,17 +414,14 @@ def test_resolution_event_cannot_reuse_a_check_bound_to_another_conflict():
     with pytest.raises(ValueError, match="authorized current dedicated"):
         resolve(state, event(checked), POLICY)
     history = replace(state, supersessions=(event(checked),))
-    assert (
-        plan(load_json(dump_json(history), State), (), BUDGET, POLICY).stop_reason
-        == "escalation_required"
-    )
+    assert plan(load_json(dump_json(history), State), (), BUDGET, POLICY).stop_reason == "blocked"
 
 
 def test_real_acquisition_resolution_invalidation_save_load_and_re_resolution(tmp_path):
     state = real_content_history(acquire=True)
     original_results = state.results
     first = run(state, (resolution_action(),), BUDGET, POLICY, HANDLERS)
-    assert first.decision.stop_reason == "satisfied" and len(first.callback_calls) == 1
+    assert first.decision.observations_satisfied is True and len(first.callback_calls) == 1
     resolution_check = first.state.checks[-1]
     assert {
         b.evidence_id for b in (resolution_check.basis.target, *resolution_check.basis.dependencies)
@@ -445,9 +439,9 @@ def test_real_acquisition_resolution_invalidation_save_load_and_re_resolution(tm
     )
     write_json(stale, tmp_path / "日本語 checkpoint.json")
     resumed = read_json(tmp_path / "日本語 checkpoint.json", State)
-    assert plan(resumed, (), BUDGET, POLICY).stop_reason == "escalation_required"
+    assert plan(resumed, (), BUDGET, POLICY).stop_reason == "blocked"
     second = run(resumed, (resolution_action("resolve-again"),), BUDGET, POLICY, HANDLERS)
-    assert second.decision.stop_reason == "satisfied" and len(second.callback_calls) == 1
+    assert second.decision.observations_satisfied is True and len(second.callback_calls) == 1
     assert second.state.results[:4] == original_results
     assert len(second.state.attempts) == len(second.state.results) == 6
     assert len(second.state.supersessions) == 2
@@ -459,14 +453,14 @@ def test_contract_change_requires_new_content_checks_and_actual_new_resolution()
     state = real_content_history(acquire=True)
     first = run(state, (resolution_action(),), BUDGET, POLICY, HANDLERS)
     updated = replace(first.state, obligations=(replace(OBLIGATION, contract_revision="2"),))
-    assert plan(updated, (), BUDGET, POLICY).stop_reason == "escalation_required"
+    assert plan(updated, (), BUDGET, POLICY).stop_reason == "blocked"
     pool = (
         verifier(A, "new-content-a"),
         verifier(B, "new-content-b"),
         resolution_action("new-resolution"),
     )
     second = run(updated, pool, BUDGET, POLICY, HANDLERS)
-    assert second.decision.stop_reason == "satisfied" and len(second.callback_calls) == 3
+    assert second.decision.observations_satisfied is True and len(second.callback_calls) == 3
     assert second.state.results[:5] == first.state.results
     assert len(second.state.supersessions) == 2
     assert load_json(dump_json(second.state), State) == second.state
@@ -487,10 +481,7 @@ def test_related_evidence_invalidation_reopens_resolution_and_retains_charged_hi
         ),
     )
     assert stale.results == first.state.results and stale.supersessions == first.state.supersessions
-    assert (
-        plan(load_json(dump_json(stale), State), (), BUDGET, POLICY).stop_reason
-        == "escalation_required"
-    )
+    assert plan(load_json(dump_json(stale), State), (), BUDGET, POLICY).stop_reason == "blocked"
     with pytest.raises(ValueError, match="authorized current dedicated"):
         resolve(stale, replace(first.state.supersessions[0], id="new-event"), POLICY)
 
@@ -507,7 +498,7 @@ def test_supplemental_dependency_update_requires_actual_new_resolution(tmp_path)
         state, obligations=(*state.obligations, helper), evidence=(*state.evidence, old)
     )
     first = run(state, (resolution_action(dependencies=(B, old)),), BUDGET, POLICY, HANDLERS)
-    assert first.decision.stop_reason == "satisfied"
+    assert first.decision.observations_satisfied is True
     stale = invalidate(
         first.state,
         Invalidation(
@@ -519,7 +510,7 @@ def test_supplemental_dependency_update_requires_actual_new_resolution(tmp_path)
             reason="Host replaced its rule",
         ),
     )
-    assert plan(stale, (), BUDGET, POLICY).stop_reason == "escalation_required"
+    assert plan(stale, (), BUDGET, POLICY).stop_reason == "blocked"
     new = material(
         "new-rule", "2", obligation_id=helper.id, scope=helper.scope, producer="host-seed"
     )
@@ -532,7 +523,7 @@ def test_supplemental_dependency_update_requires_actual_new_resolution(tmp_path)
         POLICY,
         HANDLERS,
     )
-    assert second.decision.stop_reason == "satisfied" and len(second.callback_calls) == 1
+    assert second.decision.observations_satisfied is True and len(second.callback_calls) == 1
     assert second.state.results[:3] == first.state.results
     assert len(second.state.supersessions) == 2
     assert sum(r.actual_resources.actions for r in second.state.results) == 4
@@ -553,4 +544,4 @@ def test_delayed_complete_resolution_receipt_is_retained_but_stale_contract_cann
     updated = replace(issued, obligations=(replace(OBLIGATION, contract_revision="2"),))
     observed = observe(updated, receipt, POLICY)
     assert observed.results[-1] == receipt and observed.results[-1].actual_resources.actions == 1
-    assert plan(observed, (), BUDGET, POLICY).stop_reason == "escalation_required"
+    assert plan(observed, (), BUDGET, POLICY).stop_reason == "blocked"

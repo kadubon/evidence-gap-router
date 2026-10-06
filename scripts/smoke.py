@@ -50,7 +50,7 @@ def main() -> None:
         assert not completed.stderr, completed.stderr
         payload = json.loads(completed.stdout)
         assert payload["decision"]["stop_reason"] == stop
-        assert state.schema_version == "2"
+        assert state.schema_version == "3"
 
     sdk = run_callback_example()
     assert sdk.decision.stop_reason == "satisfied", sdk
@@ -185,13 +185,39 @@ def main() -> None:
         ],
     }
     migrated = egr.migrate_v1_json(json.dumps(legacy))
-    assert migrated.schema_version == "2" and migrated.checks[0].legacy
+    assert migrated.schema_version == "3" and migrated.checks[0].legacy
     assert migrated.checks[0].basis is None and migrated.legacy_schema1 is not None
     assert egr.load_json(egr.dump_json(migrated), State) == migrated
     assert (
         egr.plan(migrated, (), egr.Budget(limits=egr.Resources()), egr.Policy()).stop_reason
         != "satisfied"
     )
+    old_path = (
+        Path(__file__).resolve().parents[1] / "tests/fixtures/v020-wrong-alias-resolution.json"
+    )
+    original_bytes = old_path.read_bytes()
+    imported = egr.migrate_v2_json(original_bytes)
+    assert imported.legacy_schema2.encode("utf-8") == original_bytes
+    assert imported.schema_version == "3" and not imported.completion_contracts
+    assert egr.load_json(egr.dump_json(imported), State) == imported
+    assert old_path.read_bytes() == original_bytes
+    from evidence_gap_router.completion_example import (
+        run_material_continuation,
+        run_partial_example,
+        run_pooled_example,
+    )
+
+    with tempfile.TemporaryDirectory(prefix="egr-completion-installed-") as temporary:
+        root = Path(temporary) / "日本語 path"
+        partial = run_partial_example(root / "partial")
+        assert partial["partial"]["completion"][0]["finite_complete"] is False
+        assert partial["after_acquisition"]["completion"][0]["finite_complete"] is False
+        assert partial["decision"]["stop_reason"] == "satisfied"
+        pooled = run_pooled_example(root / "pooled")
+        assert pooled.decision.stop_reason == "satisfied" and len(pooled.state.results) == 1
+        continued = run_material_continuation(root / "continuation")
+        assert continued.decision.stop_reason == "satisfied" and len(continued.state.results) == 3
+        assert len(continued.state.checks) == 2 and len(continued.state.invalidations) == 1
     print(json.dumps({"version": egr.__version__, "package": str(package_path), "smoke": "passed"}))
 
 

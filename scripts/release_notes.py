@@ -47,8 +47,6 @@ def main() -> None:
             or report["installed_smoke"] != "passed"
             or report["pytest_exit_code"] != 0
             or report["rosetta_translated"]
-            or report.get("benchmark", {}).get("benchmark_smoke") != "passed"
-            or report.get("benchmark", {}).get("trials", 0) < 1
         ):
             raise ValueError(f"Profile is not a passing native test of this artifact: {name}")
         if (
@@ -57,16 +55,25 @@ def main() -> None:
         ):
             raise ValueError(f"Portable experiment contract did not pass: {name}")
         if (
-            args.version == "0.2.4"
+            args.version in {"0.2.4", "0.3.0"}
             and report.get("documentation_examples", {}).get("status") != "passed"
         ):
             raise ValueError(f"Installed documentation examples did not pass: {name}")
-        benchmark_hashes.add(report["benchmark"]["outcome_sha256"])
+        if args.version != "0.3.0":
+            if report.get("benchmark", {}).get("benchmark_smoke") != "passed":
+                raise ValueError(f"Benchmark is not a passing native check: {name}")
+            benchmark_hashes.add(report["benchmark"]["outcome_sha256"])
+        else:
+            if (
+                report.get("new_llm_requests") != 0
+                or report.get("new_efficacy_or_performance_experiments") != 0
+            ):
+                raise ValueError("v0.3.0 native validation must contain no experiments")
         rows.append(
             f"| {system} | {architecture} | {report['python']} | "
             f"{report['pydantic_version']} / {report['pydantic_core_version']} | passed |"
         )
-    if len(benchmark_hashes) != 1:
+    if args.version != "0.3.0" and len(benchmark_hashes) != 1:
         raise ValueError("Native benchmark outcomes differ across required profiles")
     tree = f"https://github.com/kadubon/evidence-gap-router/blob/{args.commit}"
     source_tree = f"https://github.com/kadubon/evidence-gap-router/tree/{args.commit}"
@@ -100,7 +107,7 @@ def main() -> None:
         "The same universal project wheel passed native installed core/runner/CLI "
         "regressions, fixtures, migration, Unicode-file, continuation and benchmark smoke below. "
         "Native Pydantic core wheels were installed and imported; reports are attached.\n\n"
-        f"Portable benchmark outcome SHA256: {next(iter(benchmark_hashes))}\n\n"
+        f"Portable benchmark outcome SHA256: {next(iter(benchmark_hashes), 'not_run')}\n\n"
         "| OS | Actual architecture | Python | Pydantic / core | Installed checks |\n"
         "| --- | --- | --- | --- | --- |\n" + "\n".join(rows) + "\n\n"
         f"Commit: {args.commit}\n\n"
@@ -147,7 +154,7 @@ def main() -> None:
             "Live Ollama inference is never run by CI.\n\n"
             "| OS | Actual architecture | Python | Pydantic / core | Installed checks |\n"
             "| --- | --- | --- | --- | --- |\n" + "\n".join(rows) + "\n\n"
-            f"New model-free smoke outcome SHA256: {next(iter(benchmark_hashes))}\n\n"
+            f"New model-free smoke outcome SHA256: {next(iter(benchmark_hashes), 'not_run')}\n\n"
             f"Commit: {args.commit}\n\n"
             f"Manual validation: https://github.com/kadubon/evidence-gap-router/actions/runs/{args.manual_run}\n\n"
             f"Release validation: https://github.com/kadubon/evidence-gap-router/actions/runs/{args.release_run}\n\n"
@@ -206,7 +213,7 @@ def main() -> None:
             "Live model inference was local and separate from CI.\n\n"
             "| OS | Actual architecture | Python | Pydantic / core | Installed checks |\n"
             "| --- | --- | --- | --- | --- |\n" + "\n".join(rows) + "\n\n"
-            f"Portable benchmark outcome SHA256: {next(iter(benchmark_hashes))}\n\n"
+            f"Portable benchmark outcome SHA256: {next(iter(benchmark_hashes), 'not_run')}\n\n"
             f"Commit: {args.commit}\n\n"
             f"Manual validation: https://github.com/kadubon/evidence-gap-router/actions/runs/{args.manual_run}\n\n"
             f"Release validation: https://github.com/kadubon/evidence-gap-router/actions/runs/{args.release_run}\n\n"
@@ -217,6 +224,34 @@ def main() -> None:
             "Host input/checker trust, effects and process ownership remain host responsibilities; "
             "the SDK does not supply exactly-once external execution "
             "or semantic truth guarantees.\n"
+        )
+    if args.version == "0.3.0":
+        notes = (
+            "Evidence-gap router 0.3.0: explicit finite completion contracts.\n\n"
+            "Individual PASS, current checker authority, material coverage and goal completion "
+            "are separate. Host-declared contracts bind target, scope/catalogue revision, "
+            "required inputs and qualified check kinds. Issued profiles and current permissions "
+            "must agree; advisory checks cannot silently become completion authority. "
+            "Exact required-material helpers inherit goal priority.\n\n"
+            "Schema 3; explicit schema-1/2 imports preserve original history, bases, expenses "
+            "and uncertainty without inventing completion authority. Three executable local-file "
+            "examples cover partial PASS, one-callback pooling and invalidation/save/reload.\n\n"
+            "New LLM requests: 0. New efficacy/performance experiments: 0. "
+            "v0.3.0 empirical efficacy is unmeasured. The release manifest proves shipping "
+            "identity, not efficacy. Historical experiments belong to their original tags.\n\n"
+            "The same wheel passed installed SDK/CLI/migration/examples and native dependency "
+            "imports on every required profile.\n\n"
+            "| OS | Architecture | Python | Pydantic / core | Installed checks |\n"
+            "| --- | --- | --- | --- | --- |\n" + "\n".join(rows) + "\n\n"
+            f"Commit: {args.commit}\n\n"
+            "[Manual CI](https://github.com/kadubon/evidence-gap-router/actions/runs/"
+            f"{args.manual_run}) · "
+            "[Release CI](https://github.com/kadubon/evidence-gap-router/actions/runs/"
+            f"{args.release_run})\n\n"
+            "Official PyPI wheel/sdist bytes matched the fixed build artifacts and a cache-free "
+            "official-index installation passed smoke checks. Source/Release/PyPI/public "
+            "download verification are separately recorded. Limited callback views are not "
+            "a Python sandbox; host trust and execution measurement remain host duties.\n"
         )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding="utf-8")

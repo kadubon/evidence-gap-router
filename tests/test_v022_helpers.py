@@ -12,6 +12,7 @@ from evidence_gap_router import (
     ActionCandidate,
     Budget,
     CheckerPermission,
+    CompletionContract,
     DependencyRequirement,
     Evidence,
     HandlerRegistration,
@@ -21,6 +22,7 @@ from evidence_gap_router import (
     Resources,
     Result,
     State,
+    declare_completion,
     feasible_actions,
     invalidate,
     observe,
@@ -100,7 +102,7 @@ def verify(evidence, identifier=None, **fields):
             "target_evidence_id": evidence.id,
             "target_digest": evidence.digest,
             "checker_id": "v1",
-            "resources": Resources(actions=1, verifications=1),
+            "resources": Resources(actions=1, verifications=1, tokens=0),
             **fields,
         }
     )
@@ -130,7 +132,7 @@ def initial_state():
             action_id=action.id,
             obligation_id=action.obligation_id,
             scope=action.scope,
-            actual_resources=Resources(actions=1, verifications=0),
+            actual_resources=Resources(actions=1, verifications=0, tokens=0),
             evidence=(root,),
         ),
     )
@@ -172,12 +174,12 @@ def execute(state, action, *, evidence=None, pool=(), policy=POLICY):
             for e in view.inputs
         )
         receipt = view.result(
-            actual_resources=Resources(actions=1, verifications=1),
+            actual_resources=Resources(actions=1, verifications=1, tokens=0),
             checks=(view.check(status="PASS" if valid else "FAIL", reason="Raw text digest"),),
         )
     else:
         receipt = view.result(
-            actual_resources=Resources(actions=1, verifications=0),
+            actual_resources=Resources(actions=1, verifications=0, tokens=0),
             evidence=() if evidence is None else (evidence,),
         )
     return observe(issued, receipt)
@@ -427,7 +429,7 @@ def test_required_checker_groups_are_and_alternatives_and_partial_pass_is_reused
     state = execute(state, c2, pool=pool)
     assert _needed_helper_actions(state, pool, BUDGET, POLICY) == frozenset()
     state = execute(state, consumer, pool=pool)
-    assert plan(state, pool, BUDGET, POLICY).stop_reason == "satisfied"
+    assert plan(state, pool, BUDGET, POLICY).observations_satisfied is True
     assert len(state.results) == 7
 
 
@@ -502,12 +504,38 @@ def test_global_resource_and_completion_stops_keep_residuals_without_helper_expa
         ),
     )
     root = state.evidence[0]
-    complete = execute(state, verify(root, "complete-root"))
+    subject = state.obligations[0]
+    contract_state = declare_completion(
+        state,
+        CompletionContract(
+            id="fixed-root",
+            obligation_id=subject.id,
+            scope=subject.scope,
+            obligation_fingerprint=subject.contract_fingerprint,
+            target=dependency(root),
+            declared_scope="not_applicable",
+            scope_reason="Fixed supplied root validation.",
+        ),
+    )
+    policy = changed(
+        POLICY,
+        handlers=tuple(
+            changed(
+                h,
+                checkers=tuple(
+                    changed(p, completion_kinds=("content",), completion_scopes=(subject.scope,))
+                    for p in h.checkers
+                ),
+            )
+            for h in POLICY.handlers
+        ),
+    )
+    complete = execute(contract_state, verify(root, "complete-root"), policy=policy)
     with patch(
         "evidence_gap_router.router._helper_actions", side_effect=AssertionError("expanded")
     ):
         assert plan(unsafe, pool, BUDGET, POLICY).stop_reason == "escalation_required"
         assert feasible_actions(unsafe, pool, BUDGET, POLICY) == ()
-        assert plan(complete, pool, BUDGET, POLICY).stop_reason == "satisfied"
-        assert feasible_actions(complete, pool, BUDGET, POLICY) == ()
+        assert plan(complete, pool, BUDGET, policy).stop_reason == "satisfied"
+        assert feasible_actions(complete, pool, BUDGET, policy) == ()
     assert any(r.code == "unknown_resource" for r in plan(unsafe, pool, BUDGET, POLICY).residuals)

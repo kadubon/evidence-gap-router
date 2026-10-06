@@ -698,6 +698,9 @@ def _sequence(fixture: dict, profile: bool = False) -> dict:
 
 def worker(case: dict, mode: str) -> dict:
     """One bounded externally supervised worker; this function adds no timeout."""
+    from benchmarks.compatibility import require_original_sdk
+
+    require_original_sdk()
     if mode not in ("time", "count", "memory", "semantic"):
         raise ValueError("unknown helper worker mode")
     total = time.perf_counter()

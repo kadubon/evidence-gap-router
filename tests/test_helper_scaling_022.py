@@ -10,7 +10,7 @@ from unittest.mock import patch
 import pytest
 
 from benchmarks.helper_scaling_022 import (
-    _sequence,
+    _transition,
     build,
     cases,
     generated_confirmation,
@@ -19,6 +19,33 @@ from benchmarks.helper_scaling_022 import (
 )
 from evidence_gap_router import Policy, Resources
 from evidence_gap_router.router import _needed_helper_actions
+
+
+@pytest.fixture(autouse=True)
+def fixed_fixture_clock(monkeypatch):
+    from types import SimpleNamespace
+
+    import benchmarks.helper_scaling_022 as helpers
+
+    monkeypatch.setattr(
+        helpers, "time", SimpleNamespace(perf_counter=lambda: 0, process_time=lambda: 0)
+    )
+
+
+def _sequence(fixture):
+    import evidence_gap_router as sdk
+    from evidence_gap_router.runner import _binding_progress
+
+    state, pool, budget, policy = (fixture[k] for k in ("state", "pool", "budget", "policy"))
+    decision = sdk.plan(state, pool, budget, policy)
+    after, receipt = state, None
+    if decision.action is not None:
+        after, receipt = _transition(
+            state, decision.action, pool, budget, policy, fixture["world"], "test-step"
+        )
+        _binding_progress(state, after, pool, budget, policy, decision.action)
+    return {"decision": decision, "after": after, "receipt": receipt}
+
 
 SMALL = tuple(case for case in cases() if case["depth"] <= 8)
 
@@ -111,51 +138,19 @@ def test_unused_seed_generator_changes_conditions_and_topology_not_only_ids():
         ), case
 
 
-def test_count_records_actual_new_graph_calls_in_each_runtime_phase():
-    row = worker(cases()[0], "count")
-    assert row["reference_agrees"]
-    assert row["repeats"] == 1 and row["warmup"] == 0
-    assert row["peak_traced_python_allocation_bytes"] is None
-    assert row["binding_progress"] is True
-    for phase in ("plan", "start_observe", "binding_progress"):
-        visits = row["visits_by_phase"][phase]
-        assert visits["_HelperGraph.solve"] == 1
-        assert visits["_helper_actions.<locals>.expand_action"] == row["candidate_count"]
-        assert visits["_HelperGraph._consume_edge"] <= 4 * (
-            row["candidate_count"] + row["dependency_incidence"]
-        )
-        assert visits["_Evaluation.__init__"] == 1
+@pytest.mark.parametrize("mode", ("time", "memory", "count", "semantic"))
+def test_historical_worker_rejects_new_sdk_before_measurement(mode):
+    with patch("tracemalloc.start", side_effect=AssertionError("new allocation measurement")):
+        with pytest.raises(ValueError, match="original tag"):
+            worker(cases()[0], mode)
 
 
-def test_time_and_memory_are_separate_from_count_instrumentation():
-    with (
-        patch("sys.setprofile", side_effect=AssertionError("profiled normal time")),
-        patch("tracemalloc.start", side_effect=AssertionError("traced normal time")),
-    ):
-        timed = worker(cases()[0], "time")
-    assert timed["warmup"] == 1 and timed["repeats"] == 10
-    assert timed["visits_by_phase"] == {}
-    assert all(len(samples) == 10 for samples in timed["phase_samples_seconds"].values())
-    with patch("sys.setprofile", side_effect=AssertionError("profiled memory")):
-        memory = worker(cases()[0], "memory")
-    assert memory["peak_traced_python_allocation_bytes"] > 0
-    assert memory["repeats"] == 1
-    assert "not RSS" in memory["memory_scope"]
-
-
-def test_large_semantic_reference_is_explicitly_unassessed_and_inputs_are_bounded():
-    case = next(c for c in cases() if c["depth"] == 12 and c["alternatives"] == 1)
-    row = worker(case, "semantic")
-    assert row["status"] == "completed"
-    assert row["reference_assessed"] is False
-    assert row["reference_agrees"] is None and row["reference_helper_ids"] is None
+def test_large_fixture_remains_bounded_without_worker_measurements():
     with pytest.raises(ValueError, match="bound exceeded"):
-        build({**case, "depth": 65})
-    with pytest.raises(ValueError, match="unknown helper worker mode"):
-        worker(case, "invalid")
+        build({**cases()[0], "depth": 65})
 
 
-def test_worker_cli_emits_one_reproducible_json_record():
+def test_worker_cli_refuses_current_sdk_and_emits_no_measurement_record():
     result = subprocess.run(
         [
             sys.executable,
@@ -166,12 +161,9 @@ def test_worker_cli_emits_one_reproducible_json_record():
             "--mode",
             "semantic",
         ],
-        check=True,
         capture_output=True,
         text=True,
         timeout=10,
     )
-    row = json.loads(result.stdout)
-    assert row["case"] == cases()[0]
-    assert row["reference_agrees"] and row["callback_calls"] == 1
-    assert row["initial_callbacks"] == 1
+    assert result.returncode != 0 and not result.stdout
+    assert "original tag" in result.stderr

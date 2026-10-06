@@ -1199,6 +1199,9 @@ def select(world: World, state, pool: tuple, eligible: tuple, method: str, rng: 
 
 
 def trial(task: Task, variant: str, method: str, random_seed: int, frozen: dict) -> dict:
+    from benchmarks.compatibility import require_original_sdk
+
+    require_original_sdk()
     started = time.perf_counter()
     cpu_start = time.process_time()
     row = {

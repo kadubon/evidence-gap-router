@@ -9,6 +9,7 @@ import json
 import platform
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 
 
@@ -61,6 +62,22 @@ def main() -> None:
     project_wheel = importlib.metadata.distribution("evidence-gap-router").read_text("WHEEL")
     if project_wheel is None:
         raise RuntimeError("Installed project wheel metadata is missing")
+    distribution = importlib.metadata.distribution("evidence-gap-router")
+    with zipfile.ZipFile(args.wheel) as wheel:
+        packaged = [
+            n
+            for n in wheel.namelist()
+            if n.startswith("evidence_gap_router/") and not n.endswith("/")
+        ]
+        for name in packaged:
+            if Path(distribution.locate_file(name)).read_bytes() != wheel.read(name):
+                raise RuntimeError(f"Installed package differs from wheel: {name}")
+        licenses = [n for n in wheel.namelist() if n.endswith("/LICENSE")]
+        if len(licenses) != 1:
+            raise RuntimeError("Expected one full packaged license")
+        license_bytes = Path(distribution.locate_file(licenses[0])).read_bytes()
+        if license_bytes != wheel.read(licenses[0]):
+            raise RuntimeError("Installed full LICENSE differs from wheel")
     report = {
         "os": platform.system(),
         "os_release": platform.release(),
@@ -77,6 +94,9 @@ def main() -> None:
         "pydantic_core_wheel_tags": core_tags,
         "wheel_filename": args.wheel.name,
         "wheel_sha256": hashlib.sha256(args.wheel.read_bytes()).hexdigest(),
+        "installed_package_bytes": "matched_wheel",
+        "installed_license_sha256": hashlib.sha256(license_bytes).hexdigest(),
+        "installed_package_file_count": len(packaged),
         "package_wheel_tags": [
             line[5:] for line in project_wheel.splitlines() if line.startswith("Tag: ")
         ],

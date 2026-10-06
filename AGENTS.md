@@ -29,7 +29,7 @@
 - Keep plan/start/observe explicit and the public step/run separate from demos.
   Callback views disclose only pinned inputs and are not a Python sandbox.
   run has a finite step limit; factory/receipt/callback errors retain state and
-  invocation costs. Preserve strict schema-2 IO and explicit schema-1 migration:
+  invocation costs. Preserve strict schema-3 IO and explicit schema-1/2 migration:
   old PASS without a basis is unassessed, never retroactively authenticated.
 - Helper candidate reachability and existing proof evaluation are separate
   graphs. Reuse subproblems only within the current evaluation; preserve AND
@@ -49,8 +49,10 @@
   cannot be missing or skipped. Match tag/version/main history, confirm the existing
   PyPI publisher and environment `pypi`, and use OIDC only. The publish job runs
   no checkout, build, test or project script. Build the release distributions once.
-- The v0.2.2 measured-package gate uses
-  `benchmarks/results/freeze-v0.2.2.json`; the prior `freeze.json` stays unchanged.
+- v0.3.0 has no new model generation, benchmark, calibration or efficacy experiment.
+  Historical freezes bind only original tags/wheels/harnesses. Shipping integrity
+  uses the clean exact-commit release manifest, RECORD, source/package/LICENSE
+  bytes, sdist rebuild and actual installed imports, never an old measured freeze.
   Compare all six exact-commit manual native reports before tagging; matching
   configured runners or overall workflow success alone is insufficient evidence.
 - Preserve existing data, tags, protection rules and public files; no force push,

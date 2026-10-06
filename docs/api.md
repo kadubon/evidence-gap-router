@@ -1,3 +1,18 @@
+# SDK operations in 0.3.0
+
+[Completion contracts](completion.md) defines the current public types:
+`CompletionContract`, `CompletionAssessment`, `MaterialRequirement`,
+`CheckRequirement`, `assess_completion`, `current_contract`, `declare_completion`.
+`CheckerPermission.completion_kinds/completion_scopes` default to empty advisory
+authority. `ActionCandidate.check_kind` is captured by issuance. Explicit
+`advisory=True` permits a host-requested advisory observation; it cannot close a
+goal. Current admitted FAIL/UNKNOWN need dedicated resolution.
+`observe` accepts a structurally valid issued late receipt after permission or
+contract changes, preserving its actual cost; current assessment rejects stale
+grounds. `migrate_v2_json/file` read strict original schema-2 State snapshots;
+normal State/PlanInput reads accept schema 3 only. Existing execution operations
+below retain their signatures, with these completion semantics.
+
 # SDK operations in 0.2.2
 
 The existing `plan`, `start`, `observe`, `resolve`, `step` and `run` signatures

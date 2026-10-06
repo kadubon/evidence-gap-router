@@ -5,7 +5,7 @@
 A small Python SDK that chooses the next acquisition or verification from
 missing evidence and unfinished checks in a finite, host-declared action set.
 
-Python **3.12+** · Apache-2.0 · [日本語](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/README.ja.md) · [Documentation](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/index.md)
+Python **3.12+** · Apache-2.0 · [日本語](https://github.com/kadubon/evidence-gap-router/blob/v0.3.0/README.ja.md) · [Documentation](https://github.com/kadubon/evidence-gap-router/blob/v0.3.0/docs/index.md)
 
 ## When to use it
 
@@ -21,13 +21,13 @@ to the same model do not establish statistically independent judgments.
 ## Install and check
 
 ```sh
-python -m pip install evidence-gap-router==0.2.4
+python -m pip install evidence-gap-router==0.3.0
 egr --version
 egr demo --json
 ```
 
 These commands need no model or network after installation. The demo uses
-artificial data. [Getting started](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/getting-started.md) creates actual UTF-8
+artificial data. [Getting started](https://github.com/kadubon/evidence-gap-router/blob/v0.3.0/docs/getting-started.md) creates actual UTF-8
 CSV/JSON files, including quoted paths with spaces and Japanese characters,
 then checks them with `egr check-data`.
 
@@ -43,6 +43,9 @@ from evidence_gap_router import (
     Budget,
     CallbackView,
     CheckerPermission,
+    CompletionContract,
+    DependencyRequirement,
+    declare_completion,
     Evidence,
     HandlerRegistration,
     Obligation,
@@ -75,6 +78,21 @@ state = State(
     ),
     evidence=(evidence,),
 )
+obligation = state.obligations[0]
+state = declare_completion(
+    state,
+    CompletionContract(
+        id="fixed-arithmetic-1",
+        obligation_id=obligation.id,
+        scope=obligation.scope,
+        obligation_fingerprint=obligation.contract_fingerprint,
+        target=DependencyRequirement(
+            evidence_id="answer", obligation_id=obligation.id, scope=obligation.scope
+        ),
+        declared_scope="not_applicable",
+        scope_reason="Fixed supplied arithmetic; no retrieval.",
+    ),
+)
 action = ActionCandidate(
     id="check-answer",
     obligation_id="sum",
@@ -84,7 +102,7 @@ action = ActionCandidate(
     target_evidence_id="answer",
     target_digest=evidence.digest,
     checker_id="arithmetic-check",
-    resources=Resources(actions=1, verifications=1),
+    resources=Resources(actions=1, verifications=1, tokens=0),
 )
 policy = Policy(
     trusted_verifiers=("arithmetic-check",),
@@ -92,7 +110,13 @@ policy = Policy(
         HandlerRegistration(
             handler_id="check",
             roles=("verify",),
-            checkers=(CheckerPermission(checker_id="arithmetic-check"),),
+            checkers=(
+                CheckerPermission(
+                    checker_id="arithmetic-check",
+                    completion_kinds=("content",),
+                    completion_scopes=("example",),
+                ),
+            ),
         ),
     ),
 )
@@ -101,14 +125,15 @@ policy = Policy(
 def check(view: CallbackView):
     passed = int(view.inputs[0].content or "") == 2 + 2
     return view.result(
-        actual_resources=Resources(actions=1, verifications=1),
+        actual_resources=Resources(actions=1, verifications=1, tokens=0),
         checks=(view.check(status="PASS" if passed else "FAIL", reason="Compared with 2 + 2"),),
     )
 
 
-budget = Budget(limits=Resources(actions=1, verifications=1))
+budget = Budget(limits=Resources(actions=1, verifications=1, tokens=0))
 next_step = plan(state, (action,), budget, policy)
 assert next_step.action is not None
+assert any(r.code == "completion_check_missing" for r in next_step.completion[0].residuals)
 print(next_step.action.id)  # check-answer
 
 report = run(
@@ -124,52 +149,55 @@ print(report.decision.stop_reason)  # satisfied
 print([r.code for r in report.decision.residuals if r.blocking])  # []
 ```
 
+Before the callback, `completion_check_missing` names the unfinished condition.
 The host registers checker permission; `view.check` binds the issued target,
 contract and inputs. An ID supplied by an output grants no authority.
 `step` invokes at most one callback; `run` has a finite step limit. Runner stops
 and unresolved domain requirements are separate. Pending attempts and unknown
 budgeted consumption block automatic continuation.
 
-See [Concepts](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/design.md), [API](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/api.md) and
-[snapshot/migration](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/migration.md) for acquisition, invalidation, rechecking,
+See [Concepts](https://github.com/kadubon/evidence-gap-router/blob/v0.3.0/docs/design.md), [API](https://github.com/kadubon/evidence-gap-router/blob/v0.3.0/docs/api.md) and
+[snapshot/migration](https://github.com/kadubon/evidence-gap-router/blob/v0.3.0/docs/migration.md) for acquisition, invalidation, rechecking,
 selectors and retained costs. Limited callback views are application disclosures,
 not a Python sandbox. The host owns input trust, effects, costs and single-writer use.
 
-## Local Ollama experiment
+## Completion and local-file examples
 
-The optional [Ollama guide](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-guide.md) uses source-level examples with
-an ordinary installed SDK and explicit local inference. Ollama is not required
-by core imports or the offline CLI. Model weights and user credentials are absent
-from the package; normal tests and release CI do not run model inference.
+An observation PASS, current applicability, and finite goal completion are
+separate. The host explicitly declares required materials, scope/catalogue
+revision and permitted check kinds. Empty/unspecified scope remains incomplete;
+fixed arithmetic uses a reasoned `not_applicable`. Checker permissions default to
+advisory. Names, JSON syntax and repeated aliases do not establish authority or
+independence. A new permission cannot upgrade an old advisory receipt.
 
-A uses EGR ordering; B uses strong verify-first ordering with the same public
-runner, pool, permissions, callbacks and budgets. C is a pooled-information
-reference. The comparison concerns extra selection value within the shared
-feasibility mechanism, not independent agent frameworks or a model ranking.
+```sh
+python -m evidence_gap_router.completion_example partial
+python -m evidence_gap_router.completion_example pooled
+python -m evidence_gap_router.completion_example continuation
+```
 
-Current local tags `qwen3.6:35b-a3b` and `gemma4:e4b` completed 96 main trials
-on one Windows CPU host. Each arm has 16 artificial parents: 12 answerable and
-four insufficient. Verified completion requires independently supported evidence
-and the current review/acceptance conditions.
+These create/read actual UTF-8 integer files, record issued receipts and preserve
+costs. Partial M-only PASS leaves N missing; acquiring N does not upgrade that
+old basis. A full-input qualified check completes the finite contract. Pooling
+can legitimately use one fixed callback. Continuation invalidates used N, saves
+and reloads, reads replacement N and rechecks while retaining the original PASS
+and reusing M. A user directory may contain spaces and Unicode; existing files
+are not overwritten. See [completion contracts](docs/completion.md).
 
-| Model | Arm | Answerable verified /12 | All verified /16 | False acceptance /16 |
-|---|---|---:|---:|---:|
-| Qwen | A | 0 | 0 | 15 |
-| Qwen | B | 8 | 10 | 4 |
-| Qwen | C | 12 | 15 | 1 |
-| Gemma | A | 3 | 4 | 2 |
-| Gemma | B | 8 | 9 | 1 |
-| Gemma | C | 10 | 14 | 2 |
+Schema 3 requires explicit [schema-1/2 migration](docs/migration.md). Original
+history and bases remain; imported states lack invented completion authority.
+`Decision.completion` reports exact missing conditions and external completeness
+as unknown. Observation coverage is diagnostic and never substitutes for it.
 
-A underperformed B in this frozen profile. All main trials have known usage;
-there were zero unexecuted trials or transport/format faults. Small artificial
-tasks share development families; these results do not establish general
-performance. All 64 stop-sensitivity trials completed; recovery triggered zero
-times, so its benefit remains unmeasured.
-Initial invalid measurements and all expenses remain retained separately.
-See the [technical report](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-experiment-v0.2.4.md),
-[Japanese summary](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-experiment-v0.2.4.ja.md) and
-[archived v0.2.3 report](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-experiment.md).
+## Historical results and current limits
 
-[Audit](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/audit-024.md) · [Validation](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/validation.md) ·
-[Releasing](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/releasing.md) · [Security](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/SECURITY.md)
+The v0.2.4 frozen local experiment found A below B: answerable completion was
+Qwen A/B/C **0/8/12 of 12**, Gemma **3/8/10 of 12**. Qwen A false acceptance
+was **15/16**. These negative results motivate contracts and role separation;
+they do not show that v0.3.0 fixes empirical performance. [Original report](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-experiment-v0.2.4.md).
+
+**v0.3.0: new LLM requests 0, new efficacy/performance experiments 0; empirical
+utility unmeasured.** This is a contract/control implementation, with no learned
+weights or routing-weight tuning. Historical experiments require their original
+tag, wheel and harness; the current experiment CLI rejects SDK mismatch before
+network or server operations. [Archived Ollama guide](docs/ollama-guide.md).

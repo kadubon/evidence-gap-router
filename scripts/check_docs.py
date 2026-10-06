@@ -14,7 +14,7 @@ from urllib.parse import unquote, urlsplit
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--version", default="0.2.4")
+    parser.add_argument("--version", default="0.3.0")
     parser.add_argument("--python", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()

@@ -29,6 +29,8 @@ REQUIRED_MODULES = (
     "data_quality.py",
     "sdk_example.py",
     "comparison.py",
+    "completion.py",
+    "completion_example.py",
 )
 
 REQUIRED_DATA = (

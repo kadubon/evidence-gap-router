@@ -204,7 +204,7 @@ def migrate_v1_json(text: str | bytes) -> State:
 
     old = load_json(text, LegacyState)
     values = old.model_dump(mode="json")
-    values["schema_version"] = "2"
+    values["schema_version"] = "3"
     values["legacy_schema1"] = text.decode("utf-8") if isinstance(text, bytes) else text
     for name in ("checks", "supersessions", "attempts"):
         for record in values[name]:
@@ -223,3 +223,47 @@ def migrate_v1_file(path: str | Path) -> State:
     """Read-only migration; the original input file is never overwritten."""
     with Path(path).open("rb") as stream:
         return migrate_v1_json(stream.read(MAX_SNAPSHOT_BYTES + 1))
+
+
+def migrate_v2_json(text: str | bytes) -> State:
+    """Strict schema-2 import; retain original bytes and unchanged mechanical bases."""
+    decoded, parsed = _parse_json(text, MAX_SNAPSHOT_BYTES)
+    if not isinstance(parsed, dict) or parsed.get("schema_version") != "2":
+        raise ValueError("expected an explicit schema-2 snapshot")
+    forbidden = {
+        "completion_contracts",
+        "legacy_schema2",
+        "check_kind",
+        "advisory",
+        "completion_fingerprint",
+        "completion_kinds",
+        "completion_scopes",
+        "correlation_group",
+        "method",
+    }
+
+    def original_fields(value: object) -> None:
+        if isinstance(value, dict):
+            if forbidden.intersection(value):
+                raise ValueError("schema-2 input contains schema-3 fields")
+            for child in value.values():
+                original_fields(child)
+        elif isinstance(value, list):
+            for child in value:
+                original_fields(child)
+
+    original_fields(parsed)
+    parsed["schema_version"] = "3"
+    parsed["legacy_schema2"] = decoded
+    try:
+        migrated = State.model_validate_json(json.dumps(parsed, ensure_ascii=False))
+    except TypeError as exc:
+        raise ValueError("schema-2 snapshot contains an invalid numeric field") from exc
+    dump_json(migrated)
+    return migrated
+
+
+def migrate_v2_file(path: str | Path) -> State:
+    """Read-only explicit migration; use write_json with a separate destination."""
+    with Path(path).open("rb") as stream:
+        return migrate_v2_json(stream.read(MAX_SNAPSHOT_BYTES + 1))

@@ -36,7 +36,7 @@ def test_documentation_examples_keep_venv_interpreter_symlink(tmp_path: Path) ->
     )
     for name in ("README.md", "README.ja.md", "docs/getting-started.md"):
         (root / name).write_text(
-            f"pip install evidence-gap-router==0.2.4\n```python\n{code}\n```\n",
+            f"pip install evidence-gap-router==0.3.0\n```python\n{code}\n```\n",
             encoding="utf-8",
         )
     for name in ("SECURITY.md", "experiments/ollama/README.md"):

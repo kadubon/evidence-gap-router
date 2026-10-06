@@ -298,6 +298,13 @@ def _execute(
 
 def compare() -> dict[str, Any]:
     """Return every predeclared case, including no advantage and reversed orders."""
+    from ._version import __version__
+
+    if __version__ == "0.3.0":
+        raise ValueError(
+            "Historical comparison requires its original tag/wheel; "
+            "v0.3.0 empirical utility is unmeasured."
+        )
     results = []
     for name in ("A04_recheck", "A05_provenance", "dependency_recheck"):
         state, actions, budget, materials = _scenario(name)

@@ -21,9 +21,11 @@ from .models import (
     ActionCandidate,
     Budget,
     CheckerPermission,
+    CompletionContract,
     DependencyRequirement,
     Evidence,
     HandlerRegistration,
+    MaterialRequirement,
     Obligation,
     Policy,
     Resources,
@@ -49,7 +51,7 @@ def report_json(report: RunReport, *, artificial_data: bool, case: str) -> dict[
     else:
         outcome = "missing_material"
     return {
-        "schema_version": "2",
+        "schema_version": "3",
         "artificial_data": artificial_data,
         "case": case,
         "outcome": outcome,
@@ -90,7 +92,44 @@ def _data_host(
         acceptance="Nonempty orders have unique IDs, amounts above minimum and allowed currencies",
         required_verifiers=("orders-checker",),
     )
-    state = State(obligations=(dictionary_obligation, data_obligation))
+    dictionary_requirement = DependencyRequirement(
+        evidence_id="dictionary", obligation_id=dictionary_obligation.id, scope=rules_scope
+    )
+    dataset_requirement = DependencyRequirement(
+        evidence_id="dataset", obligation_id=data_obligation.id, scope=scope
+    )
+    state = State(
+        obligations=(dictionary_obligation, data_obligation),
+        completion_contracts=(
+            CompletionContract(
+                id="dictionary-contract",
+                obligation_id=dictionary_obligation.id,
+                scope=rules_scope,
+                obligation_fingerprint=dictionary_obligation.contract_fingerprint,
+                target=dictionary_requirement,
+                declared_scope="finite_catalogue",
+                catalogue_id="selected-files",
+                catalogue_revision="1",
+                materials=(
+                    MaterialRequirement(id="dictionary-bytes", any_of=(dictionary_requirement,)),
+                ),
+            ),
+            CompletionContract(
+                id="orders-contract",
+                obligation_id=data_obligation.id,
+                scope=scope,
+                obligation_fingerprint=data_obligation.contract_fingerprint,
+                target=dataset_requirement,
+                declared_scope="finite_catalogue",
+                catalogue_id="selected-files",
+                catalogue_revision="1",
+                materials=(
+                    MaterialRequirement(id="dataset-bytes", any_of=(dataset_requirement,)),
+                    MaterialRequirement(id="dictionary-bytes", any_of=(dictionary_requirement,)),
+                ),
+            ),
+        ),
+    )
     budget = Budget(limits=Resources(actions=action_limit, verifications=verification_limit))
     policy = Policy(
         trusted_verifiers=("dictionary-checker", "orders-checker"),
@@ -101,8 +140,16 @@ def _data_host(
                 handler_id="verify-quality",
                 roles=("verify",),
                 checkers=(
-                    CheckerPermission(checker_id="dictionary-checker"),
-                    CheckerPermission(checker_id="orders-checker"),
+                    CheckerPermission(
+                        checker_id="dictionary-checker",
+                        completion_kinds=("content",),
+                        completion_scopes=(rules_scope,),
+                    ),
+                    CheckerPermission(
+                        checker_id="orders-checker",
+                        completion_kinds=("content",),
+                        completion_scopes=(scope,),
+                    ),
                 ),
             ),
         ),
@@ -122,7 +169,7 @@ def _data_host(
             return view.result(
                 status="failed",
                 reason=f"input_error: {exc}",
-                actual_resources=Resources(actions=1, verifications=0),
+                actual_resources=Resources(actions=1, verifications=0, tokens=0),
             )
         evidence = Evidence(
             id="dictionary" if is_dictionary else "dataset",
@@ -138,7 +185,7 @@ def _data_host(
             else "declared-dataset-source",
         )
         return view.result(
-            actual_resources=Resources(actions=1, verifications=0), evidence=(evidence,)
+            actual_resources=Resources(actions=1, verifications=0, tokens=0), evidence=(evidence,)
         )
 
     def verify(view: CallbackView) -> Result:
@@ -159,7 +206,9 @@ def _data_host(
             if errors
             else "Parsed material meets the declared fixed rules",
         )
-        return view.result(actual_resources=Resources(actions=1, verifications=1), checks=(check,))
+        return view.result(
+            actual_resources=Resources(actions=1, verifications=1, tokens=0), checks=(check,)
+        )
 
     def candidates(current: State) -> tuple[ActionCandidate, ...]:
         declared = [
@@ -214,7 +263,7 @@ def _data_host(
                     target_evidence_id=target,
                     target_digest=records[target].digest,
                     checker_id=checker,
-                    resources=Resources(actions=1, verifications=1),
+                    resources=Resources(actions=1, verifications=1, tokens=0),
                     dependencies=dependencies,
                 )
             )

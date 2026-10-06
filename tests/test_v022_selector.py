@@ -100,7 +100,9 @@ def test_selector_keeps_future_helper_pool_and_matches_default_execution():
 
     normal = s.run(*args)
     selected = s.run(*args, selector=selector)
-    assert normal.decision.stop_reason == selected.decision.stop_reason == "satisfied"
+    assert (
+        normal.decision.observations_satisfied == selected.decision.observations_satisfied is True
+    )
     assert normal.state == selected.state and normal.receipts == selected.receipts
     assert normal.callback_calls == selected.callback_calls == ("read", "check")
     assert seen == [("rules-read",), ("data-check",)]

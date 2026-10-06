@@ -170,10 +170,13 @@ def test_live_stages_cause_actual_receipts_and_feedback_revision() -> None:
         "review",
     ]
     assert all(r["stage_provenance"] == "host_action_id" for r in trial["calls"])
-    assert trial["domain_stop"] == "satisfied" and trial["cost"]["llm_calls"] == 6
+    assert trial["domain_stop"] == "blocked" and trial["cost"]["llm_calls"] == 6
+    assert not trial["router_satisfied"]  # Old harness declares no v0.3 contract.
+    assert trial["system_claimed_complete"]  # Historical harness records the model claim.
     assert trial["cost"]["tokens"] == 6 * 137
     assert len(trial["state"]["supersessions"]) == 1
     assert any(c["status"] == "FAIL" for c in trial["state"]["checks"])
+    assert evaluate(task, gold, trial)["answer_correct"]
     assert evaluate(task, gold, trial)["evidence_supported_completion"]
     # The revised integration really receives the prior model feedback and old answer.
     integration = json.loads(client.messages[4][1]["content"])
@@ -184,7 +187,8 @@ def test_live_stages_cause_actual_receipts_and_feedback_revision() -> None:
 def test_ab_share_pool_only_selection_changes_and_b_checks_then_unread_catalogue() -> None:
     a, _ = trial_for()
     b, _ = trial_for("B")
-    assert a["cost"]["llm_calls"] == 3 and b["cost"]["llm_calls"] == 4
+    assert a["cost"]["llm_calls"] == 4 and b["cost"]["llm_calls"] == 4
+    assert not a["router_satisfied"] and not b["router_satisfied"]
     b_ids = [attempt["action"]["id"] for attempt in b["state"]["attempts"]]
     assert b_ids[:4] == [
         "read:document-1",
@@ -237,7 +241,8 @@ def test_oracle_rejects_wrong_or_unbound_completion(mutation: str) -> None:
 def test_model_false_pass_does_not_make_wrong_answer_correct() -> None:
     trial, _ = trial_for("B", decision="no")
     task, gold = development_tasks()[0]
-    assert trial["router_satisfied"] and trial["system_claimed_complete"]
+    assert not trial["router_satisfied"] and trial["system_claimed_complete"]
+    assert any(c["status"] == "PASS" for c in trial["state"]["checks"])
     assert not evaluate(task, gold, trial)["answer_correct"]
     assert not evaluate(task, gold, trial)["evidence_supported_completion"]
 
@@ -344,7 +349,7 @@ def test_pending_completed_model_call_is_settled_once_without_generation(tmp_pat
         checkpoint=checkpoint,
         resume=True,
     )
-    assert result["domain_stop"] == "satisfied" and len(client.records) == 2
+    assert result["domain_stop"] == "blocked" and len(client.records) == 2
     assert len(client.messages) == 1  # Only the subsequent review was generated.
 
 

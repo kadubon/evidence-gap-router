@@ -1,3 +1,37 @@
+# v0.3.0 validation scope
+
+New LLM requests **0**. New efficacy/performance experiments **0**. v0.3.0
+empirical utility **unmeasured**. Baseline ordinary SDK regression: **296 passed**
+on Windows/Python 3.12.14 before edits, without benchmark or generation calls.
+
+Specification tests use public issued receipts and finite local files/fake HTTP
+only. Old tests distinguish current observation adequacy from finite completion;
+old implicit-success assertions no longer define schema-3 completion. Expense,
+receipt identity, negative resolution, JSON safety and structural graph checks
+remain. Generation-connection guards are scoped to standard test processes and
+owned ephemeral endpoints, not every command or all terminal network use.
+
+Final local counts, skips, exact commit, all six actual native import profiles,
+wheel/sdist/package/license hashes and separate publication/download states are
+recorded in the 0.3.0 Release verification assets after those checks execute.
+A shipping manifest replaces historical measured-byte gates for this release.
+It binds exact clean committed source and distribution/runtime bytes; it does
+not prove efficacy, contain a self hash, or invent future commit identity.
+
+The final local Windows source suite passed **742 tests**, with one POSIX-only
+interpreter-symlink skip (Python 3.12.14). Locked sync, Ruff lint/format (129 files),
+mypy (16 modules), bounded public completion tests and all 192 local documentation
+links passed. Precommit ordinary wheel installs on Windows and WSL Linux each
+passed 342 runtime tests and three full executable document examples; the final
+exact-commit six-profile reports separately identify the shipping wheel.
+The [design requirement map](design-v0.3.0.md) identifies
+R01–R30 and explains the intentionally changed old completion assertions.
+macOS labels were checked against the [official runner reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners):
+`macos-15` arm64 and `macos-15-intel` x86_64; actual import reports still determine
+native status, including rejection of Rosetta.
+
+## Historical validation records
+
 # Validation evidence and native profiles
 
 ## v0.2.4 completed local measurement checks

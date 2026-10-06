@@ -1,3 +1,12 @@
+# Current 0.3.0 documentation
+
+[Getting started](getting-started.md) · [Completion contracts](completion.md) ·
+[API](api.md) · [Design](design.md) · [Migration](migration.md) ·
+[Validation](validation.md) · [Release](releasing.md) · [Design note](design-v0.3.0.md).
+
+Current SDK is schema 3. Historical experiments below belong to their original
+tags/wheels/harnesses; v0.3.0 empirical efficacy remains unmeasured.
+
 # Documentation
 
 Start with [the SDK and offline CLI guide](getting-started.md).

@@ -92,6 +92,58 @@ class EvidenceBinding(Record):
     requirement: Literal["exists", "active", "verified"] = "active"
 
 
+class MaterialRequirement(IdentifiedRecord):
+    """One necessary condition, satisfied by one explicitly declared alternative."""
+
+    any_of: tuple[DependencyRequirement, ...]
+
+    @model_validator(mode="after")
+    def alternatives(self) -> Self:
+        if not self.any_of or len(set(self.any_of)) != len(self.any_of):
+            raise ValueError("material requirement needs unique finite alternatives")
+        return self
+
+
+class CheckRequirement(IdentifiedRecord):
+    kind: Text = "content"
+    checker_ids: tuple[Text, ...] = ()
+    min_checks: PositiveCount = 1
+    min_declared_groups: Count = 0
+
+
+class CompletionContract(IdentifiedRecord):
+    """Host-owned finite completion scope; append revisions rather than rewrite history."""
+
+    obligation_id: Text
+    scope: Text
+    revision: Text = "1"
+    obligation_fingerprint: Digest
+    target: DependencyRequirement
+    declared_scope: Literal["unspecified", "finite_catalogue", "not_applicable"] = "unspecified"
+    catalogue_id: Text | None = None
+    catalogue_revision: Text | None = None
+    scope_reason: Text | None = None
+    materials: tuple[MaterialRequirement, ...] = ()
+    checks: tuple[CheckRequirement, ...] = (CheckRequirement(id="content"),)
+    advisory_negatives_block: bool = False
+    change_reason: Text = "Initial host declaration"
+    external_completeness: Literal["unknown"] = "unknown"
+
+    @property
+    def fingerprint(self) -> str:
+        return _fingerprint(self.model_dump(mode="json"))
+
+    @model_validator(mode="after")
+    def subject(self) -> Self:
+        if (self.target.obligation_id, self.target.scope) != (self.obligation_id, self.scope):
+            raise ValueError("completion target must match obligation and scope")
+        if not self.checks:
+            raise ValueError("completion needs at least one explicit check requirement")
+        _unique(self.materials, "material condition")
+        _unique(self.checks, "check condition")
+        return self
+
+
 class VerificationBasis(Record):
     obligation_id: Text
     scope: Text
@@ -103,6 +155,8 @@ class VerificationBasis(Record):
     purpose: Literal["content", "check_resolution", "contradiction_resolution"] = "content"
     resolution_target_id: Text | None = None
     resolution_fingerprint: Digest | None = None
+    check_kind: Text = "content"
+    completion_fingerprint: Digest | None = None
 
     @model_validator(mode="after")
     def targets(self) -> Self:
@@ -257,6 +311,19 @@ class CheckerPermission(Record):
     purposes: tuple[Literal["content", "check_resolution", "contradiction_resolution"], ...] = (
         "content",
     )
+    completion_kinds: tuple[Text, ...] = ()
+    completion_scopes: tuple[Text, ...] = ()
+    correlation_group: Text | None = None
+    method: Text | None = None
+
+    def admits_completion(self, basis: VerificationBasis) -> bool:
+        return (
+            self.checker_id == basis.checker_id
+            and self.revision == basis.checker_revision
+            and basis.purpose in self.purposes
+            and basis.check_kind in self.completion_kinds
+            and basis.scope in self.completion_scopes
+        )
 
 
 class HandlerRegistration(Record):
@@ -307,6 +374,8 @@ class ActionCandidate(IdentifiedRecord):
     dependencies: tuple[DependencyRequirement, ...] = ()
     resolution_target_id: Text | None = None
     produces_evidence_id: Text | None = None
+    check_kind: Text = "content"
+    advisory: bool = False
 
     @model_validator(mode="after")
     def resource_shape(self) -> Self:
@@ -381,7 +450,7 @@ def _unique(records: tuple[IdentifiedRecord, ...], label: str) -> None:
 
 
 class State(Record):
-    schema_version: Literal["2"] = "2"
+    schema_version: Literal["3"] = "3"
     obligations: tuple[Obligation, ...]
     evidence: tuple[Evidence, ...] = ()
     checks: tuple[CheckResult, ...] = ()
@@ -391,6 +460,8 @@ class State(Record):
     attempts: tuple[Attempt, ...] = ()
     results: tuple[Result, ...] = ()
     legacy_schema1: str | None = None
+    legacy_schema2: str | None = None
+    completion_contracts: tuple[CompletionContract, ...] = ()
 
     @model_validator(mode="after")
     def references(self) -> Self:
@@ -408,6 +479,15 @@ class State(Record):
         ):
             _unique(getattr(self, name), name)
         obligations = {o.id: o for o in self.obligations}
+        _unique(self.completion_contracts, "completion contract event")
+        revisions: set[tuple[str, str]] = set()
+        for contract in self.completion_contracts:
+            if contract.obligation_id not in obligations:
+                raise ValueError("completion contract obligation missing")
+            key = (contract.obligation_id, contract.revision)
+            if key in revisions:
+                raise ValueError("completion contract revision already recorded")
+            revisions.add(key)
         evidence = {e.id: e for e in self.evidence}
         checks = {c.id: c for c in self.checks}
         contradictions = {c.id: c for c in self.contradictions}
@@ -566,6 +646,7 @@ class State(Record):
                         attempt.basis.checker_revision,
                         attempt.basis.purpose,
                         attempt.basis.resolution_target_id,
+                        attempt.basis.check_kind,
                     ) != (
                         attempt.action.obligation_id,
                         attempt.action.scope,
@@ -575,8 +656,18 @@ class State(Record):
                         attempt.action.checker_revision,
                         attempt.action.purpose,
                         attempt.action.resolution_target_id,
+                        attempt.action.check_kind,
                     ):
                         raise ValueError("issued action and verification basis mismatch")
+                    if attempt.basis.completion_fingerprint is not None and not any(
+                        c.fingerprint == attempt.basis.completion_fingerprint
+                        and (c.obligation_id, c.scope)
+                        == (attempt.basis.obligation_id, attempt.basis.scope)
+                        for c in self.completion_contracts
+                    ):
+                        raise ValueError(
+                            "issued completion fingerprint has no retained host declaration"
+                        )
                     if attempt.inputs != (attempt.basis.target, *attempt.basis.dependencies):
                         raise ValueError("issued verification inputs must equal its fixed basis")
                 elif attempt.basis is not None:
@@ -730,6 +821,22 @@ class Residual(Record):
     blocking: bool = True
 
 
+class CompletionAssessment(Record):
+    obligation_id: Text
+    scope: Text
+    contract_id: Text | None = None
+    contract_revision: Text | None = None
+    contract_fingerprint: Digest | None = None
+    provisional_answer: bool = False
+    coverage_complete: bool = False
+    finite_complete: bool = False
+    external_completeness: Literal["unknown"] = "unknown"
+    closing_check_ids: tuple[Text, ...] = ()
+    advisory_check_ids: tuple[Text, ...] = ()
+    residuals: tuple[Residual, ...] = ()
+    missing_materials: tuple[MaterialRequirement, ...] = ()
+
+
 class Gap(Record):
     id: Text
     obligation_id: Text
@@ -750,6 +857,7 @@ class Gap(Record):
     purpose: Literal["content", "check_resolution", "contradiction_resolution"] = "content"
     record_ids: tuple[Text, ...] = ()
     reason: Text
+    check_kind: Text | None = None
 
 
 class Exclusion(Record):
@@ -766,7 +874,7 @@ class Coverage(Record):
 
 
 class Decision(Record):
-    schema_version: Literal["2"] = "2"
+    schema_version: Literal["3"] = "3"
     action: ActionCandidate | None
     reason: Text
     exclusions: tuple[Exclusion, ...]
@@ -777,10 +885,14 @@ class Decision(Record):
     gaps: tuple[Gap, ...] = ()
     selected_gap: Gap | None = None
     pending_verifications: Count = 0
+    completion: tuple[CompletionAssessment, ...] = ()
+    observations_satisfied: bool = False
+    observation_coverage: Coverage | None = None
+    observation_residuals: tuple[Residual, ...] = ()
 
 
 class PlanInput(Record):
-    schema_version: Literal["2"] = "2"
+    schema_version: Literal["3"] = "3"
     state: State
     candidates: tuple[ActionCandidate, ...]
     budget: Budget

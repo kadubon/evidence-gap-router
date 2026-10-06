@@ -14,6 +14,7 @@ from evidence_gap_router import (
     Resources,
     State,
     Supersession,
+    declare_completion,
     load_json,
     plan,
     run,
@@ -59,6 +60,17 @@ def test_changed_real_dictionary_gets_pass_but_rechecked_dataset_fails(tmp_path:
             ),
         }
     )
+    # A host changes the declared exact catalogue identity; history remains immutable.
+    for contract in tuple(current.completion_contracts):
+        values = contract.model_dump()
+        values.update(id=contract.id + "-strict", revision="2", change_reason="Stricter rules")
+        if values["target"]["evidence_id"] == "dictionary":
+            values["target"]["evidence_id"] = replacement.id
+        for material in values["materials"]:
+            for requirement in material["any_of"]:
+                if requirement["evidence_id"] == "dictionary":
+                    requirement["evidence_id"] = replacement.id
+        current = declare_completion(current, type(contract)(**values))
     obligation = next(o for o in current.obligations if o.id == "dictionary-quality")
     dataset = next(e for e in current.evidence if e.id == "dataset")
     dictionary_check = ActionCandidate(
@@ -70,7 +82,7 @@ def test_changed_real_dictionary_gets_pass_but_rechecked_dataset_fails(tmp_path:
         target_evidence_id=replacement.id,
         target_digest=replacement.digest,
         checker_id="dictionary-checker",
-        resources=Resources(actions=1, verifications=1),
+        resources=Resources(actions=1, verifications=1, tokens=0),
     )
     dataset_check = ActionCandidate(
         id="check-dataset-under-new-rules",
@@ -90,7 +102,7 @@ def test_changed_real_dictionary_gets_pass_but_rechecked_dataset_fails(tmp_path:
                 contract_fingerprint=obligation.contract_fingerprint,
             ),
         ),
-        resources=Resources(actions=1, verifications=1),
+        resources=Resources(actions=1, verifications=1, tokens=0),
     )
     budget = Budget(limits=Resources(actions=6, verifications=4))
     decision = plan(current, (dataset_check, dictionary_check), budget, policy)
@@ -106,7 +118,7 @@ def test_changed_real_dictionary_gets_pass_but_rechecked_dataset_fails(tmp_path:
             rules = Rules.model_validate_json(records[replacement.id].content)
             errors = validate_dataset(json.loads(records[dataset.id].content), rules)
         return view.result(
-            actual_resources=Resources(actions=1, verifications=1),
+            actual_resources=Resources(actions=1, verifications=1, tokens=0),
             checks=(
                 view.check(
                     status="FAIL" if errors else "PASS",

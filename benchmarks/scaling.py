@@ -121,6 +121,9 @@ def reference(edges: list[tuple[int, int]], size: int) -> bool:
 
 
 def worker(size: int, checkers: int, graph: str, mode: str) -> dict:
+    from benchmarks.compatibility import require_original_sdk
+
+    require_original_sdk()
     import evidence_gap_router as s
     import evidence_gap_router.router as router
 

@@ -1,6 +1,7 @@
 """Route work by missing evidence, not by agent count."""
 
 from ._version import __version__
+from .completion import assess_completion, current_contract, declare_completion
 from .jsonio import (
     MAX_JSON_BYTES,
     MAX_SNAPSHOT_BYTES,
@@ -8,6 +9,8 @@ from .jsonio import (
     load_json,
     migrate_v1_file,
     migrate_v1_json,
+    migrate_v2_file,
+    migrate_v2_json,
     read_json,
     write_json,
 )
@@ -16,7 +19,10 @@ from .models import (
     Attempt,
     Budget,
     CheckerPermission,
+    CheckRequirement,
     CheckResult,
+    CompletionAssessment,
+    CompletionContract,
     Contradiction,
     Coverage,
     Decision,
@@ -27,6 +33,7 @@ from .models import (
     Gap,
     HandlerRegistration,
     Invalidation,
+    MaterialRequirement,
     Obligation,
     PlanInput,
     Policy,
@@ -52,6 +59,15 @@ from .router import (
 from .runner import ActionSelector, CallbackView, RunReport, StepReport, run, step
 
 __all__ = [
+    "CompletionContract",
+    "CompletionAssessment",
+    "CheckRequirement",
+    "MaterialRequirement",
+    "assess_completion",
+    "declare_completion",
+    "current_contract",
+    "migrate_v2_json",
+    "migrate_v2_file",
     "MAX_JSON_BYTES",
     "MAX_SNAPSHOT_BYTES",
     "ActionCandidate",

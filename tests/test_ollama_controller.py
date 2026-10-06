@@ -652,6 +652,15 @@ def test_amend_wall_cannot_invent_missing_human_authorization(tmp_path, monkeypa
     )
     with pytest.raises(ValueError, match="explicit user authorization"):
         cli.amend_wall(options)
-    with pytest.raises(SystemExit) as error:
+    with pytest.raises(cli.ClientBlocked, match="original"):
         cli.main(["amend-wall", "--directory", str(tmp_path)])
-    assert error.value.code == 2
+
+
+def test_R29_current_sdk_cli_mismatch_blocks_before_owner_client_or_preflight(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(cli, "OllamaClient", lambda *a, **k: pytest.fail("no client constructor"))
+    monkeypatch.setattr(cli, "preflight", lambda *a, **k: pytest.fail("no model/server preflight"))
+    with pytest.raises(cli.ClientBlocked, match="original tag/wheel/harness"):
+        cli.main(["preflight", "--directory", str(tmp_path)])
+    assert not tuple(tmp_path.iterdir())

@@ -7,11 +7,13 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import Literal
 
+from .completion import assess_completion, current_contract
 from .models import (
     ActionCandidate,
     Attempt,
     Budget,
     CheckResult,
+    CompletionAssessment,
     Coverage,
     Decision,
     DependencyRequirement,
@@ -150,6 +152,7 @@ def make_basis(state: State, action: ActionCandidate) -> VerificationBasis:
             "check" if action.purpose == "check_resolution" else "contradiction"
         )
         fingerprint = resolution_fingerprint(state, kind, action.resolution_target_id or "")
+    completion_contract = current_contract(state, action.obligation_id)
     basis = VerificationBasis(
         obligation_id=action.obligation_id,
         scope=action.scope,
@@ -161,6 +164,10 @@ def make_basis(state: State, action: ActionCandidate) -> VerificationBasis:
         purpose=action.purpose,
         resolution_target_id=action.resolution_target_id,
         resolution_fingerprint=fingerprint,
+        check_kind=action.check_kind,
+        completion_fingerprint=(
+            completion_contract.fingerprint if completion_contract is not None else None
+        ),
     )
     if action.purpose != "content":
         subjects = state.checks if action.purpose == "check_resolution" else state.contradictions
@@ -194,6 +201,21 @@ class _Evaluation:
 
     def __init__(self, state: State, policy: Policy):
         self.state, self.policy = state, policy
+        self.completion_cache: dict[Budget | None, tuple[CompletionAssessment, ...]] = {}
+        attempts = {a.id: a for a in state.attempts}
+        self.check_attempts: dict[str, Attempt] = {}
+        self.producer_inputs: dict[str, tuple[EvidenceBinding, ...]] = {}
+        for receipt in state.results:
+            if (
+                receipt.status == "completed"
+                and receipt.side_effects == "known"
+                and not receipt.legacy
+            ):
+                attempt = attempts[receipt.attempt_id]
+                for check in receipt.checks:
+                    self.check_attempts.setdefault(check.id, attempt)
+                for evidence in receipt.evidence:
+                    self.producer_inputs[evidence.id] = attempt.inputs
         self.evidence = {e.id: e for e in state.evidence}
         self.obligations = {o.id: o for o in state.obligations}
         self.checks = {c.id: c for c in state.checks}
@@ -351,6 +373,15 @@ class _Evaluation:
             or check.basis.resolution_target_id != event.target_id
         ):
             return False
+        contract = current_contract(self.state, check.obligation_id)
+        if contract is not None:
+            from .completion import _current_profile
+
+            if (
+                check.basis.completion_fingerprint != contract.fingerprint
+                or _current_profile(self.state, check, self.policy, self) is None
+            ):
+                return False
         return self._check_truth[check.id]
 
     def _effective_truth(self, check: CheckResult) -> bool | None:
@@ -493,9 +524,12 @@ class _Assessment:
     satisfied: frozenset[str]
     gaps: tuple[Gap, ...]
     pending: int
+    observations: _Assessment | None = None
 
 
-def _analyze(state: State, policy: Policy, evaluation: _Evaluation | None = None) -> _Assessment:
+def _analyze_observations(
+    state: State, policy: Policy, evaluation: _Evaluation | None = None
+) -> _Assessment:
     evaluation = evaluation or _Evaluation(state, policy)
     residuals: list[Residual] = []
     gaps: list[Gap] = []
@@ -772,6 +806,92 @@ def _analyze(state: State, policy: Policy, evaluation: _Evaluation | None = None
     return _Assessment(tuple(residuals), frozenset(satisfied), tuple(gaps), pending)
 
 
+def _analyze(state: State, policy: Policy, evaluation: _Evaluation | None = None) -> _Assessment:
+    evaluation = evaluation or _Evaluation(state, policy)
+    completion = assess_completion(state, policy, _evaluation=evaluation)
+    residuals = tuple(r for c in completion for r in c.residuals)
+    satisfied = frozenset(c.obligation_id for c in completion if c.finite_complete)
+    observations = _analyze_observations(state, policy, evaluation)
+    # Observation gaps also prepare explicitly verified material dependencies.
+    # Their status never supplies finite goal completion by itself.
+    residuals += tuple(r.model_copy(update={"blocking": False}) for r in observations.residuals)
+    gaps: list[Gap] = list(observations.gaps)
+    for assessment in completion:
+        contract = current_contract(state, assessment.obligation_id)
+        if contract is None:
+            continue
+        if not assessment.provisional_answer:
+            gaps.append(
+                Gap(
+                    id=f"target:{contract.id}",
+                    obligation_id=contract.obligation_id,
+                    scope=contract.scope,
+                    kind="missing_evidence",
+                    dependency_id=contract.target.evidence_id,
+                    reason="Exact completion target is missing.",
+                )
+            )
+        if not assessment.finite_complete and assessment.provisional_answer:
+            target = evaluation.evidence[contract.target.evidence_id]
+            for requirement in contract.checks:
+                if any(
+                    r.code == "completion_check_missing" and requirement.id in r.record_ids
+                    for r in assessment.residuals
+                ):
+                    for checker in requirement.checker_ids or (None,):
+                        gaps.append(
+                            Gap(
+                                id=f"check:{contract.id}:{requirement.id}:{checker}",
+                                obligation_id=contract.obligation_id,
+                                scope=contract.scope,
+                                kind="content_check",
+                                target_evidence_id=target.id,
+                                target_digest=target.digest,
+                                checker_id=checker,
+                                check_kind=requirement.kind,
+                                reason="Current completion check/basis is missing.",
+                            )
+                        )
+            for residual in assessment.residuals:
+                if residual.code in ("check_failed", "check_unknown"):
+                    for identifier in residual.record_ids:
+                        check = evaluation.checks[identifier]
+                        gaps.append(
+                            Gap(
+                                id=f"negative:{identifier}",
+                                obligation_id=contract.obligation_id,
+                                scope=contract.scope,
+                                kind="failed_check" if check.status == "FAIL" else "unknown_check",
+                                target_evidence_id=target.id,
+                                target_digest=target.digest,
+                                checker_id=check.verifier_id,
+                                purpose="check_resolution",
+                                record_ids=(identifier,),
+                                check_kind=check.basis.check_kind if check.basis else None,
+                                reason="Dedicated resolution of the retained negative is needed.",
+                            )
+                        )
+                elif residual.code == "contradiction":
+                    gaps.append(
+                        Gap(
+                            id=f"conflict:{residual.record_ids[0]}",
+                            obligation_id=contract.obligation_id,
+                            scope=contract.scope,
+                            kind="contradiction",
+                            purpose="contradiction_resolution",
+                            record_ids=residual.record_ids,
+                            reason=residual.reason,
+                        )
+                    )
+    return _Assessment(
+        residuals,
+        satisfied,
+        tuple(gaps),
+        sum(g.kind in ("content_check", "failed_check", "unknown_check") for g in gaps),
+        observations,
+    )
+
+
 def _resource_status(state: State, budget: Budget) -> tuple[Resources, tuple[Residual, ...]]:
     used = {name: 0 for name in DIMENSIONS}
     issues: list[Residual] = []
@@ -846,6 +966,13 @@ def _candidate_reasons(
         return ("unknown_obligation",)
     if action.scope != obligation.scope:
         reasons.append("scope_mismatch")
+    if any(
+        r.blocking
+        and r.code
+        in ("unknown_resource", "unknown_execution", "budget_overrun", "resource_overrun")
+        for r in assessment.residuals
+    ):
+        reasons.append("resource_accounting_unsafe")
     if action.obligation_id in assessment.satisfied and not needed_acquisition:
         reasons.append("obligation_satisfied")
     registration = _registration(policy, action)
@@ -886,6 +1013,16 @@ def _candidate_reasons(
                 reasons.append("checker_permission_forbidden")
         if action.checker_id not in policy.trusted_verifiers:
             reasons.append("verifier_unavailable")
+        contract = current_contract(state, action.obligation_id)
+        if (
+            contract is not None
+            and action.target_evidence_id == contract.target.evidence_id
+            and basis is not None
+            and not action.advisory
+            and registration is not None
+            and not any(p.admits_completion(basis) for p in registration.checkers)
+        ):
+            reasons.append("completion_checker_unqualified")
         if _gap_for_action(action, assessment.gaps) is None and not needed_acquisition:
             reasons.append("target_already_verified_or_no_matching_gap")
         elif (
@@ -921,6 +1058,7 @@ def _gap_for_action(action: ActionCandidate, gaps: tuple[Gap, ...]) -> Gap | Non
                 gap.kind == "content_check"
                 and gap.target_evidence_id == action.target_evidence_id
                 and (gap.checker_id is None or gap.checker_id == action.checker_id)
+                and (gap.check_kind is None or gap.check_kind == action.check_kind)
             ):
                 return gap
         elif action.purpose == "check_resolution":
@@ -1009,6 +1147,7 @@ def _helper_actions(
     assessment: _Assessment,
     remaining: Resources,
     evaluation: _Evaluation,
+    priorities: dict[str, int] | None = None,
 ) -> frozenset[str]:
     """Grounded finite helper closure, shared rules and linear work per consuming root."""
     roots = tuple(
@@ -1020,8 +1159,6 @@ def _helper_actions(
         and (obligation := evaluation.obligations.get(action.obligation_id)) is not None
         and (obligation.required or gap.kind == "contradiction")
     )
-    if not roots:
-        return frozenset()
     by_produced: dict[str, list[ActionCandidate]] = {}
     by_target: dict[str, list[ActionCandidate]] = {}
     attempted = {attempt.action.id for attempt in state.attempts}
@@ -1226,6 +1363,35 @@ def _helper_actions(
         expand_material(pending_requirements.popleft())
     helpers: set[str] = set()
     by_node = {node: identifier for identifier, node in action_nodes.items()}
+    # Host contracts are consuming roots even before a target/check candidate
+    # can be constructed. Catalogue entries are descriptors, not received input.
+    for contract in state.completion_contracts:
+        if current_contract(state, contract.obligation_id) != contract:
+            continue
+        owner = evaluation.obligations[contract.obligation_id]
+        if not owner.required or owner.id in assessment.satisfied:
+            continue
+        contract_requirements = [contract.target]
+        for condition in contract.materials:
+            from .completion import requirement_matches
+
+            present = any(
+                r.evidence_id in evaluation.evidence
+                and requirement_matches(r, evidence_binding(state, r.evidence_id), evaluation)
+                for r in condition.any_of
+            )
+            if not present:
+                contract_requirements.extend(condition.any_of)
+        for requirement in contract_requirements:
+            node = material_node(requirement)
+            while pending_requirements:
+                expand_material(pending_requirements.popleft())
+            truth = graph.solve(-1)
+            related = {by_node[n] for n in graph.needed((node,), truth) if n in by_node}
+            helpers.update(related)
+            if priorities is not None:
+                for identifier in related:
+                    priorities[identifier] = max(priorities.get(identifier, 0), owner.priority)
     for action in roots:
         root = action_nodes[action.id]
         rules = graph.by_head[root]
@@ -1234,7 +1400,14 @@ def _helper_actions(
         inputs = graph.rules[rules[0]][1]
         truth = graph.solve(root)
         if all(truth[node] for node in inputs):
-            helpers.update(by_node[node] for node in graph.needed(inputs, truth) if node in by_node)
+            related = {by_node[node] for node in graph.needed(inputs, truth) if node in by_node}
+            helpers.update(related)
+            if priorities is not None:
+                for identifier in related:
+                    priorities[identifier] = max(
+                        priorities.get(identifier, 0),
+                        evaluation.obligations[action.obligation_id].priority,
+                    )
     return frozenset(helpers)
 
 
@@ -1308,7 +1481,12 @@ def _plan(
     in_flight = [a.id for a in state.attempts if a.id not in observed]
     global_reason: str | None = None
     stop: str | None = None
-    if resource_issues:
+    if resource_issues or any(
+        r.blocking
+        and r.code
+        in ("unknown_resource", "unknown_execution", "budget_overrun", "resource_overrun")
+        for r in residuals
+    ):
         global_reason, stop = "resource_accounting_unsafe", "escalation_required"
     elif in_flight:
         global_reason, stop = "attempt_pending", "blocked"
@@ -1324,10 +1502,13 @@ def _plan(
         r.code == "contradiction" and r.blocking for r in residuals
     ):
         global_reason, stop = "required_obligations_satisfied", "satisfied"
+    helper_priorities: dict[str, int] = {}
     helpers = (
         frozenset()
         if global_reason
-        else _helper_actions(state, candidates, budget, policy, assessment, remaining, evaluation)
+        else _helper_actions(
+            state, candidates, budget, policy, assessment, remaining, evaluation, helper_priorities
+        )
     )
     exclusions: list[Exclusion] = []
     eligible: list[ActionCandidate] = []
@@ -1394,7 +1575,8 @@ def _plan(
                 relevance = 2
             else:
                 relevance = 6
-            return not o.required, -o.priority, relevance, action.id
+            priority = max(o.priority, helper_priorities.get(action.id, 0))
+            return not (o.required or action.id in helpers), -priority, relevance, action.id
 
         if selector is None:
             selected = min(eligible, key=rank)
@@ -1445,6 +1627,29 @@ def _plan(
         gaps=tuple(sorted(gaps, key=lambda g: g.id)),
         selected_gap=None if selected is None else _gap_for_action(selected, tuple(gaps)),
         pending_verifications=assessment.pending,
+        completion=assess_completion(state, policy, budget, _evaluation=evaluation),
+        observations_satisfied=(
+            assessment.observations is not None
+            and all(
+                not o.required or o.id in assessment.observations.satisfied
+                for o in state.obligations
+            )
+            and not any(
+                r.code == "contradiction" and r.blocking for r in assessment.observations.residuals
+            )
+        ),
+        observation_residuals=()
+        if assessment.observations is None
+        else assessment.observations.residuals,
+        observation_coverage=Coverage(
+            satisfied=sum(o.id in assessment.observations.satisfied for o in required),
+            required=len(required),
+            ratio=sum(o.id in assessment.observations.satisfied for o in required) / len(required),
+            scopes=coverage.scopes,
+            policy=policy,
+        )
+        if assessment.observations is not None
+        else None,
     )
 
 
@@ -1554,12 +1759,8 @@ def observe(state: State, result: Result, policy: Policy | None = None) -> State
         error = _resolution_basis_subject_error(issued.basis, subject)
         if error is not None:
             raise ValueError(error)
-    if policy is not None:
-        registration = _registration(policy, issued.action)
-        if registration is None or issued.action.kind not in registration.roles:
-            raise ValueError("current host policy does not authorize this receipt")
-        if issued.basis is not None and not registration.allows(issued.basis):
-            raise ValueError("current host policy does not authorize this checker receipt")
+    # Issued authority validates receipt identity. Current revocation affects
+    # applicability, never discards a valid late observation or its actual cost.
     values = {name: getattr(state, name) for name in State.model_fields}
     for name in ("evidence", "checks", "contradictions", "supersessions"):
         values[name] = _merge(getattr(state, name), getattr(result, name))

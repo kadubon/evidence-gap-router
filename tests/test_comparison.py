@@ -1,46 +1,25 @@
-"""Matched synthetic comparison keeps neutral outcomes and semantic permutations."""
+"""Current SDK cannot turn a historical comparison into a new performance claim."""
 
-from evidence_gap_router.comparison import compare
+from unittest.mock import patch
 
+import pytest
 
-def test_comparison_records_all_cases_and_permutations():
-    report = compare()
-    assert report["artificial_data"] is True
-    assert len(report["results"]) == 9
-    for row in report["results"]:
-        for strategy in ("baseline", "router"):
-            result = row[strategy]
-            assert result["callback_calls"] <= row["budget"]["limits"]["actions"]
-            assert result["verifications"] <= row["budget"]["limits"]["verifications"]
-            assert result["satisfied"] + result["unresolved"] == result["required"]
-        assert row["router"]["stop"] == "satisfied", row
+from evidence_gap_router import Policy, plan
+from evidence_gap_router.comparison import _scenario, compare
 
 
-def test_semantic_targets_survive_candidate_order_and_id_changes():
-    report = compare()
-    for scenario in ("A04_recheck", "A05_provenance", "dependency_recheck"):
-        rows = [r for r in report["results"] if r["scenario"] == scenario]
-        semantic_traces = [
-            [(c["handler"], c["target"], c["produces"]) for c in r["router"]["calls"]] for r in rows
-        ]
-        assert semantic_traces[0] == semantic_traces[1] == semantic_traces[2]
+def test_historical_comparison_stops_before_scenario_or_callback():
+    with patch(
+        "evidence_gap_router.comparison._scenario", side_effect=AssertionError("new comparison")
+    ):
+        with pytest.raises(ValueError, match="original tag"):
+            compare()
 
 
-def test_comparison_retains_no_advantage_cases_and_actual_rechecks():
-    rows = compare()["results"]
-    recheck = next(r for r in rows if r["scenario"] == "A04_recheck" and r["variant"] == "declared")
-    assert recheck["baseline"]["calls"][0]["target"] == "first"
-    assert recheck["router"]["calls"][0]["target"] == "second"
-    assert recheck["baseline"]["stop"] == "budget_exhausted"
-    reversed_order = next(
-        r for r in rows if r["scenario"] == "A04_recheck" and r["variant"] == "reversed"
-    )
-    assert reversed_order["baseline"]["stop"] == reversed_order["router"]["stop"] == "satisfied"
-    assert (
-        reversed_order["baseline"]["callback_calls"] == reversed_order["router"]["callback_calls"]
-    )
-    for row in (r for r in rows if r["scenario"] == "dependency_recheck"):
-        for strategy in ("baseline", "router"):
-            assert row[strategy]["stop"] == "satisfied"
-            assert row[strategy]["callback_calls"] == 3
-            assert row[strategy]["verifications"] == 2
+@pytest.mark.parametrize("name", ("A04_recheck", "A05_provenance", "dependency_recheck"))
+def test_retained_static_seed_fixture_does_not_gain_completion_authority(name):
+    state, _, budget, _ = _scenario(name)
+    decision = plan(state, (), budget, Policy())
+    assert decision.stop_reason != "satisfied"
+    assert all(not result.finite_complete for result in decision.completion)
+    assert state.checks and all(c.status == "PASS" for c in state.checks)

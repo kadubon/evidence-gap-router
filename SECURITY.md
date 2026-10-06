@@ -1,11 +1,21 @@
 # Security policy
 
-The supported current line is 0.2.x. Use the repository's
+The supported current line is 0.3.x. Use the repository's
 [private security advisory form](https://github.com/kadubon/evidence-gap-router/security/advisories/new)
 when available. Otherwise request a private contact in an issue without including
 secrets or exploit details. No response-time service level is promised.
 
 Schema validation, issued-receipt consistency and authentic evidence are distinct.
+Schema 3 additionally separates observed PASS, current checker applicability and
+explicit finite completion. Permissions default to advisory; issued and current
+completion kinds/scopes must match. Scope and catalogue declarations belong to
+the host and cannot be removed by callback receipts. A valid late receipt under
+revocation is retained with costs, but supplies no current completion authority.
+Explicit schema-1/2 imports preserve original history and create no contracts.
+Finite catalogue completion leaves external completeness unknown. See
+[completion](docs/completion.md). Standard test connection guards cover their
+process and test-owned ephemeral HTTP endpoints; they do not audit all terminal
+network use or sandbox arbitrary host Python.
 The host owns policy, checker registration, callbacks, state, resource measurement
 and credentials. A checker ID in a result is not authentication. Host registration
 binds actual Python checker identity to permitted role/revision/purpose; evidence

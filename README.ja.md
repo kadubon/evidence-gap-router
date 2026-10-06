@@ -5,7 +5,7 @@
 未取得の根拠や未実施の検証を見て、次に行う処理を選ぶ小さなPython SDKです。
 実行できる処理と権限、費用の上限は利用者が有限の候補として登録します。
 
-Python **3.12以上** · Apache-2.0 · [English](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/README.md) · [文書一覧](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/index.md)
+Python **3.12以上** · Apache-2.0 · [English](https://github.com/kadubon/evidence-gap-router/blob/v0.3.0/README.md) · [文書一覧](https://github.com/kadubon/evidence-gap-router/blob/v0.3.0/docs/index.md)
 
 ## 向く用途
 
@@ -19,13 +19,13 @@ Python **3.12以上** · Apache-2.0 · [English](https://github.com/kadubon/evid
 ## インストールと動作確認
 
 ```sh
-python -m pip install evidence-gap-router==0.2.4
+python -m pip install evidence-gap-router==0.3.0
 egr --version
 egr demo --json
 ```
 
 インストール後のこの確認にはモデルや通信が不要です。demoは人工データを使います。
-[使い始める手順](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/getting-started.md)には、実際のUTF-8 CSV/JSONを生成し、
+[使い始める手順](https://github.com/kadubon/evidence-gap-router/blob/v0.3.0/docs/getting-started.md)には、実際のUTF-8 CSV/JSONを生成し、
 空白・日本語を含むパスを引用して `egr check-data` へ渡す完全な例があります。
 
 ## 自分の処理を接続する
@@ -40,6 +40,9 @@ from evidence_gap_router import (
     Budget,
     CallbackView,
     CheckerPermission,
+    CompletionContract,
+    DependencyRequirement,
+    declare_completion,
     Evidence,
     HandlerRegistration,
     Obligation,
@@ -72,6 +75,21 @@ state = State(
     ),
     evidence=(evidence,),
 )
+obligation = state.obligations[0]
+state = declare_completion(
+    state,
+    CompletionContract(
+        id="fixed-arithmetic-1",
+        obligation_id=obligation.id,
+        scope=obligation.scope,
+        obligation_fingerprint=obligation.contract_fingerprint,
+        target=DependencyRequirement(
+            evidence_id="answer", obligation_id=obligation.id, scope=obligation.scope
+        ),
+        declared_scope="not_applicable",
+        scope_reason="Fixed supplied arithmetic; no retrieval.",
+    ),
+)
 action = ActionCandidate(
     id="check-answer",
     obligation_id="sum",
@@ -81,7 +99,7 @@ action = ActionCandidate(
     target_evidence_id="answer",
     target_digest=evidence.digest,
     checker_id="arithmetic-check",
-    resources=Resources(actions=1, verifications=1),
+    resources=Resources(actions=1, verifications=1, tokens=0),
 )
 policy = Policy(
     trusted_verifiers=("arithmetic-check",),
@@ -89,7 +107,13 @@ policy = Policy(
         HandlerRegistration(
             handler_id="check",
             roles=("verify",),
-            checkers=(CheckerPermission(checker_id="arithmetic-check"),),
+            checkers=(
+                CheckerPermission(
+                    checker_id="arithmetic-check",
+                    completion_kinds=("content",),
+                    completion_scopes=("example",),
+                ),
+            ),
         ),
     ),
 )
@@ -98,14 +122,15 @@ policy = Policy(
 def check(view: CallbackView):
     passed = int(view.inputs[0].content or "") == 2 + 2
     return view.result(
-        actual_resources=Resources(actions=1, verifications=1),
+        actual_resources=Resources(actions=1, verifications=1, tokens=0),
         checks=(view.check(status="PASS" if passed else "FAIL", reason="Compared with 2 + 2"),),
     )
 
 
-budget = Budget(limits=Resources(actions=1, verifications=1))
+budget = Budget(limits=Resources(actions=1, verifications=1, tokens=0))
 next_step = plan(state, (action,), budget, policy)
 assert next_step.action is not None
+assert any(r.code == "completion_check_missing" for r in next_step.completion[0].residuals)
 print(next_step.action.id)  # check-answer
 
 report = run(
@@ -122,45 +147,48 @@ print([r.code for r in report.decision.residuals if r.blocking])  # []
 ```
 
 出力は `check-answer`、`PASS`、`satisfied`、`[]` です。
+callback前には `completion_check_missing` が未充足条件を示します。
 利用者が検証者の権限を登録し、`view.check` が発行済みの対象・契約・入力を結びます。
 出力に検証者IDを書くだけでは権限が生まれません。
 
 `step` は最大1処理、`run` は有限回の処理を実行します。実行側の停止と、未解決の
 要求は別に確認します。未確定の試行や予算対象の消費不明は自動継続を止めます。
-[概念](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/design.md)、[API](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/api.md)、[保存・移行](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/migration.md)に、
+[概念](https://github.com/kadubon/evidence-gap-router/blob/v0.3.0/docs/design.md)、[API](https://github.com/kadubon/evidence-gap-router/blob/v0.3.0/docs/api.md)、[保存・移行](https://github.com/kadubon/evidence-gap-router/blob/v0.3.0/docs/migration.md)に、
 取得、失効、再検証、選択規則、費用を保持した再開をまとめています。
 入力を限定したcallbackはPythonのsandboxではありません。入力の信頼性、外部効果、
 実費用、単一writerの管理は利用者が担います。
 
-## ローカルOllama実験
+## 完了契約と実ファイルの例
 
-[Ollama手順](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-guide.md)は、通常インストールしたSDKとsource側の実験例を
-組み合わせ、明示的にローカル推論を行います。coreのimportやoffline CLIにOllamaは
-不要です。モデル重みと認証情報は同梱せず、通常のtestsと公開CIで推論しません。
+個別のPASS、現在の適用性、有限な目標の完了は別の状態です。利用者が必須資料、
+範囲・カタログの版、完了に使えるチェック種別を明示します。未指定・空の調査範囲は
+未完了です。固定計算は理由付きの `not_applicable` を使えます。検証権限の既定値は
+advisoryであり、後の権限追加によって古い観測が完了権限へ昇格することはありません。
 
-AはEGRの選択順、Bは共通runner・候補・権限・callback・予算で検証を優先する選択順、
-Cは全文資料を先に渡す参照方式です。共通の実行可能性判定の中で選択順の追加価値を
-測ります。別frameworkの比較やモデルの順位付けではありません。
+```sh
+python -m evidence_gap_router.completion_example partial
+python -m evidence_gap_router.completion_example pooled
+python -m evidence_gap_router.completion_example continuation
+```
 
-現行tag `qwen3.6:35b-a3b` と `gemma4:e4b` で、Windows CPU上の主確認96試行が終了しました。
-各方式は人工資料16親課題（解答可能12・情報不足4）です。最終完了には独立した根拠判定と、
-現在のreview・受入条件の両方を求めます。
+実際のUTF-8整数ファイルを使い、発行済みreceiptと費用を記録します。MのみのPASSは
+Nの不足を解消せず、N取得後も古いbasisは変わりません。全文入力を使う適格な検証は
+完了できます。pooledは固定callback一つで完了します。continuationは使用済みNを
+失効、保存・再読込し、Mを再取得せず必要なN取得と検証だけを行います。元のPASSと
+費用は残ります。空白・日本語のディレクトリを指定でき、既存ファイルは上書きしません。
+[完了契約](docs/completion.md)にAPIをまとめています。
 
-| モデル | 方式 | 解答可能の支持付き完了/12 | 全体の支持付き完了/16 | 誤受入/16 |
-|---|---|---:|---:|---:|
-| Qwen | A | 0 | 0 | 15 |
-| Qwen | B | 8 | 10 | 4 |
-| Qwen | C | 12 | 15 | 1 |
-| Gemma | A | 3 | 4 | 2 |
-| Gemma | B | 8 | 9 | 1 |
-| Gemma | C | 10 | 14 | 2 |
+schemaは3です。[schema 1/2の明示移行](docs/migration.md)は元の履歴・basisを保持し、
+不足している完了権限や契約を捏造しません。`Decision.completion` に不足条件を返し、
+宣言範囲外の完全性はunknownと表示します。観測coverageは診断値です。
 
-この固定条件ではAがBを下回りました。全主確認の使用量は確定し、未実施・通信/形式障害は
-0件です。少数の人工課題で開発とfamily構造を共有するため、一般的な性能を保証しません。
-停止感度64試行も終了しましたが、回復条件の成立は0件で効果は未測定です。初回の無効計測と費用も別に
-保持しています。[技術報告](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-experiment-v0.2.4.md)、
-[日本語要約](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-experiment-v0.2.4.ja.md)、
-[v0.2.3の保存済み報告](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-experiment.md)に詳細があります。
+## 既知の負の結果と今回の限界
 
-[監査](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/audit-024.md) · [検証](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/validation.md) ·
-[公開手順](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/releasing.md) · [責任境界](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/SECURITY.md)
+v0.2.4の固定実験ではAがBを下回りました。解答可能12件の完了はQwen A/B/Cが
+**0/8/12**、Gemmaが**3/8/10**、Qwen Aの誤受入は**15/16**でした。
+[元の報告](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-experiment-v0.2.4.ja.md)を保持します。
+
+**v0.3.0の新規LLM推論0、新規効用・性能実験0、経験的効用は未評価です。**
+契約と制御構造を一般化する実装で、学習や重み調整は行いません。歴史的実験は元の
+tag・wheel・harnessに束縛されます。現行実験CLIはSDKの版が違えば通信やサーバー操作の
+前に拒否します。[保存版Ollama手順](docs/ollama-guide.md)を参照してください。

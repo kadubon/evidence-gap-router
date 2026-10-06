@@ -1,3 +1,42 @@
+# Migration to 0.3.0 / schema 3
+
+Keep original files. `migrate_v2_file("old-state.json")` (or `migrate_v2_json`)
+explicitly validates schema 2 and returns schema 3 with original JSON in
+`legacy_schema2`. Schema 1 uses the existing `migrate_v1_file/json` and retains
+`legacy_schema1`. Unknown fields, duplicate keys, nonfinite numbers, oversized
+input and invalid UTF-8 are rejected. The original file is read-only.
+
+```python
+from evidence_gap_router import migrate_v2_file, write_json
+
+state = migrate_v2_file("old-state.json")
+write_json(state, "migrated-state-v3.json")  # Select a different destination.
+```
+
+Evidence digests, old bases/fingerprints, PASS/FAIL/UNKNOWN, invalidations, attempts,
+receipts, expenses and pending uncertainty remain. No old basis is rehashed or
+resigned, no requirement or completion permission is inferred. The migrated
+state has no completion contract and cannot report whole-goal satisfaction.
+The host must declare the target, justified finite scope/material conditions and
+qualified checker kinds/scopes with `declare_completion` and explicit profiles.
+Reuse eligible old material; issue only actually missing current checks. Do not
+replace an old receipt or assume unknown execution was unperformed.
+Any unknown actual resource dimension or effect remains a blocker; migration
+does not turn an unmeasured old cost into zero or provide a general uncertainty
+override. New ordinary examples explicitly record known zero model-token use.
+
+Python operations remain available but the completion meaning is stricter.
+`Decision.observation_coverage` exposes old check adequacy separately from
+`Decision.coverage`/`completion`. [Completion](completion.md) and the three
+[executable examples](getting-started.md) describe the change. Historical
+experiments need their original tags/wheels/harnesses; current experiment CLI
+rejects SDK mismatch before network or server manipulation.
+
+## Historical 0.2 migration notes
+
+The sections below document their original release semantics, accessible from
+the corresponding historical tags. They are not a schema-3 compatibility mode.
+
 # Migrating from 0.1 to 0.2
 
 ## 0.2.1 to 0.2.2
