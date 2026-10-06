@@ -1,0 +1,156 @@
+{
+  "actual_execution": {
+    "actual_generated_tokens": 272592,
+    "actual_total_tokens": 1446319,
+    "callback_example_dispatches": 6,
+    "campaign_elapsed_seconds_at_normal_cleanup": 43933.078731536865,
+    "empty_load_responses": 14,
+    "global_request_reservations_including_empty_loads": 1835,
+    "known_usage_responses": 1835,
+    "main_known_terminated_trials": 96,
+    "main_scheduled_trials": 96,
+    "main_unexecuted_trials": 0,
+    "optional_mixed_model_experiment": "not performed",
+    "pending_request_ids": [],
+    "phase_request_counts": {
+      "calibration": 384,
+      "confirmation": 805,
+      "context-validation": 4,
+      "example": 6,
+      "pilot": 207,
+      "preload": 10,
+      "sensitivity-bounded": 167,
+      "sensitivity-strict": 192,
+      "warmup": 60
+    },
+    "pilot_terminal_trials": 24,
+    "reserved_unknown_generated_tokens": 0,
+    "reserved_unknown_total_tokens": 0,
+    "sensitivity_known_terminated_trials": 64,
+    "sensitivity_scheduled_trials": 64,
+    "sensitivity_unexecuted_trials": 0,
+    "terminated_unmetered_request_ids": [],
+    "unknown_usage_responses": 0,
+    "zero_generation_context_checks": 1335
+  },
+  "budget": {
+    "clock_and_prior_expenses_not_reset": true,
+    "effective_sdk_trial_tokens": 102400,
+    "limits": {
+      "calls": 4000,
+      "disk_bytes": 4294967296,
+      "generated_tokens": 4000000,
+      "total_tokens": 40000000,
+      "wall_seconds": 172800
+    },
+    "original_first_reservation_epoch": 1791212209.9767654,
+    "outer_transport_trial_tokens": 122880
+  },
+  "measurement": {
+    "candidate_wheel_sha256": "715b2785d3dab1f8b2b7076f8307efdc7fa6105547e5fbf5f0093b4701dec80c",
+    "exact_runtime_and_harness_bytes_preserved": true,
+    "freeze_sha256": "3860d9d89f3ca0eeb1e5db6a24612a1d11075b44dde6d9b300244cc90c5a579c",
+    "harness_sha256": "2b708340bfb20f258c00396b7911a4b29b35849edb66dc80edc75c6d105075bd",
+    "implementation_commit": "23dff942cfbbc76d73799893acaa3a394d70621f",
+    "installed_package_sha256": "cd0ac5397f5636fb797e9ec5e64ae740bbc3d4130b120d5c4ed73fd8ade4fbc9",
+    "protocol_sha256": "7fb320dc8436ba8d8a41da358ad5c4189ecdf297c2dab7ae763fcc3e5d348ad8",
+    "result_commit_identity": "The annotated release tag and later immutable publication-verification record identify the results commit; this file does not self-reference its future commit hash."
+  },
+  "old_campaign": "v0.2.3's one unknown-cost request remains unknown in its original ledger; no new policy is retroactively applied.",
+  "package_version": "0.2.4",
+  "postrun_server_state": {
+    "campaign_calls": 1835,
+    "campaign_elapsed_seconds": 43933.078731536865,
+    "cleanup": "completed",
+    "model_requests_during_cleanup": 0,
+    "pending": [],
+    "proof": {
+      "identities": [
+        {
+          "creation_filetime": 134357276181961902,
+          "executable_name": "llama-server.exe",
+          "executable_sha256": "4a895ca3d55d5193962269e7a9158a8db999ead0a22f1b6f47af1d06e7958536",
+          "pid": 2736
+        },
+        {
+          "creation_filetime": 134357075094767314,
+          "executable_name": "conhost.exe",
+          "executable_sha256": "e449bce01f275cd08f3d4e64bb73b3b43ae845a0dbdb3e6131426e66537705e5",
+          "pid": 18372
+        },
+        {
+          "creation_filetime": 134357276182529364,
+          "executable_name": "conhost.exe",
+          "executable_sha256": "e449bce01f275cd08f3d4e64bb73b3b43ae845a0dbdb3e6131426e66537705e5",
+          "pid": 19660
+        },
+        {
+          "creation_filetime": 134357075094546647,
+          "executable_name": "ollama.exe",
+          "executable_sha256": "ecdb9fe1c52a08a0629d8ca658f9577b24f83a1600857fe31646f41b5dec52fc",
+          "pid": 28260
+        }
+      ],
+      "proof_method": "held-native-process-handles",
+      "server_epoch": "fe924f245005050e9909907d19ab606397e2d263fdfce9fbb69258b88b97fd0e",
+      "tree_stopped": true,
+      "verified_exit_epoch": 1791256142.478867
+    },
+    "scope": "Normal completion of all frozen trials and the paid artificial callback",
+    "shared_servers_touched": false,
+    "terminated_unmetered": [],
+    "unknown_consumption": false
+  },
+  "protocol_id": "egr-024-local-ollama-v2",
+  "publication_states_at_source_snapshot": {
+    "github_release_upload": "pending",
+    "later_evidence": "Release publication-verification-v0.2.4.json records actual immutable public verification",
+    "public_download_reanalysis": "pending",
+    "pypi": "pending",
+    "raw_creation": "created and locally checked"
+  },
+  "raw_export": {
+    "bytes": 25666393,
+    "filename": "ollama-raw-v0.2.4.zip",
+    "identity": "Privacy-checked export with exact retained event/output bytes; private operational files excluded explicitly",
+    "package_version": "0.2.4",
+    "protocol_id": "egr-024-local-ollama-v2",
+    "sha256": "274de4b2a99119829fded7a30e7b9bf6bb47179f1ad69b1e5289aa680f6e726f",
+    "verified_entries": 5785
+  },
+  "resources": {
+    "available_memory_known_samples": 3666,
+    "before_after_samples": 3666,
+    "maximum_observed_swap_used_bytes": 133169152,
+    "minimum_observed_available_memory_bytes": 9189036032,
+    "minimum_observed_pre_dispatch_disk_free_bytes": 639348342784,
+    "scope": "Sampled host observations; transient peaks, energy, physical speculative work and prices are not measured.",
+    "swap_known_samples": 3226
+  },
+  "retained_cost_segments": {
+    "corrective-pre-freeze-scope-defect": {
+      "all_usage_known": true,
+      "empty_loads": 2,
+      "generated_tokens": 7268,
+      "reservations": 34,
+      "responses": 34,
+      "total_tokens": 37450
+    },
+    "initial-protocol-v1": {
+      "all_usage_known": true,
+      "empty_loads": 8,
+      "generated_tokens": 133726,
+      "reservations": 957,
+      "responses": 957,
+      "total_tokens": 742263
+    },
+    "scope-consistent-corrective-protocol-v2": {
+      "all_usage_known": true,
+      "empty_loads": 4,
+      "generated_tokens": 131598,
+      "reservations": 844,
+      "responses": 844,
+      "total_tokens": 666606
+    }
+  }
+}

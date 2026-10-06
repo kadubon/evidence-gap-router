@@ -6,6 +6,9 @@
   The optional Ollama controller now uses finite long-response deadlines,
   durable campaign clocks and receipts, retained unknown reservations and
   native owned-process exit proof for bounded recovery.
+- Preserve actual response JSON without inserting optional defaults; correct
+  artificial rule scope and include corrective warm namespaces in resource
+  forecasts. Earlier invalid measurements and their costs remain separate.
 - Clarify artificial task contracts and independent minimal-witness scoring;
   separate answer correctness, grounding, review and current accepted completion.
   Common bounded paid format repair and fresh stop-policy comparisons preserve

@@ -98,6 +98,10 @@ it does not make older artifact fingerprints interchangeable.
 | The export path was pinned to the previous protocol and omitted the measured wheel | Version-bound freeze, candidate wheel hash and retained development implementations | Export rejects mismatched bytes and private paths without rewriting model output; no-overwrite tests |
 | Catalogue ordering forced an explicitly identical same-origin reprint | Common A/B retrieval catalogue omits only declared copies with identical full content, topic, origin and version | Reproduced forced-copy candidate; both selectors retain different information/versions/origins and any specifically requested copy |
 | A single spelling/source of a witness rejected equivalent minimal support | Evaluation-only alternatives allow the same signed fact without its redundant scoped target label and an explicitly equivalent copy | Actual bound fake receipts reproduce the rejection; altered copy origin/version/content remains rejected |
+| Optional validated defaults changed saved JSON and broke exact live-receipt identity | Preserve original parsed JSON after strict schema validation | The omitted-feedback receipt regression retains independent grounding and accepted completion without inserting fields |
+| A mechanical post-freeze correction needed a fresh protocol while retaining all earlier costs | One verified append-only protocol revision changes only run/freeze/owned epoch identity | Exact prefix and clock retained; unknown use, changed limits, tampered budget/exit proof and stale clients remain blocked |
+| A fresh rule header named an internal ID different from its question's entity | A neutral public-rule header and new unused development IDs | `test_corrective_rules_do_not_override_question_scope_with_internal_ids` checks question facts and exact witness spans |
+| The resource forecast ignored corrective warm request prefixes | Include paid original/corrective development timing without primary outcomes | `test_corrective_development_timings_enter_forecast_without_primary_outcomes` covers new warm/pilot IDs and excludes confirmation/sensitivity/calibration |
 
 Old FAIL/UNKNOWN, pending invocation, withdrawal, contract changes, exact-ID
 resolution, helper/proof AND/OR and grounded-cycle behavior remain covered by
@@ -118,8 +122,10 @@ establish live-model correctness or speed. Process-handle evidence is supplied
 by the trusted local host, not cryptographic authentication. Resource samples
 are observations, not a hard whole-server/GPU memory guarantee.
 
-Live-model results, calibrations, failure chains and publication evidence are
-reported separately after their actual execution. The old v0.2.3 unknown
+The [completed experiment](ollama-experiment-v0.2.4.md) separates calibration,
+96 main trials, 64 sensitivity trials and the six-request paid custom example.
+All 100 incomplete pilot/main/sensitivity chains are retained in the raw export;
+publication evidence is recorded separately after its actual execution. The old v0.2.3 unknown
 Qwen request remains unknown in its original campaign.
 
 Development cycles and their original prompts, answer banks, outputs and costs

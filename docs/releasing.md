@@ -24,13 +24,17 @@ resources and stops. C is a pooled-information reference. Gold never enters
 model prompts. Development revisions and every expense remain separately
 identified; old results are not relabeled under a new task definition.
 
-The finite `egr-024-local-ollama-v1` campaign has 48 hours from its first dispatch,
+The finite v0.2.4 campaign has 48 hours from its first dispatch,
 4,000 requests, 4 million generated/40 million total tokens and 4 GiB raw bytes.
 Durable receipts can be recovered without inference. Only positively verified
 owned-process exit plus an independently supported cap permits a new server
 epoch after an uncertain call. Actual usage stays null and its full reservation
 remains charged. Failed primary keys are not retried; at most two such recoveries
 are allowed. No legacy 4h→8h amendment resets this campaign.
+Corrective protocol `egr-024-local-ollama-v2` retains the v1 ledger prefix,
+original clock and limits. Its new measured source is
+`23dff942cfbbc76d73799893acaa3a394d70621f`; the corrective freeze selects
+16 balanced parents, 96 main trials and 64 fresh stop-sensitivity trials.
 
 Primary-measured runtime/harness changes require retained old results and a new
 protocol with unused confirmation tasks. A later docs/results commit may change

@@ -5,7 +5,7 @@
 未取得の根拠や未実施の検証を見て、次に行う処理を選ぶ小さなPython SDKです。
 実行できる処理と権限、費用の上限は利用者が有限の候補として登録します。
 
-Python **3.12以上** · Apache-2.0 · [English](README.md) · [文書一覧](docs/index.md)
+Python **3.12以上** · Apache-2.0 · [English](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/README.md) · [文書一覧](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/index.md)
 
 ## 向く用途
 
@@ -25,7 +25,7 @@ egr demo --json
 ```
 
 インストール後のこの確認にはモデルや通信が不要です。demoは人工データを使います。
-[使い始める手順](docs/getting-started.md)には、実際のUTF-8 CSV/JSONを生成し、
+[使い始める手順](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/getting-started.md)には、実際のUTF-8 CSV/JSONを生成し、
 空白・日本語を含むパスを引用して `egr check-data` へ渡す完全な例があります。
 
 ## 自分の処理を接続する
@@ -127,26 +127,40 @@ print([r.code for r in report.decision.residuals if r.blocking])  # []
 
 `step` は最大1処理、`run` は有限回の処理を実行します。実行側の停止と、未解決の
 要求は別に確認します。未確定の試行や予算対象の消費不明は自動継続を止めます。
-[概念](docs/design.md)、[API](docs/api.md)、[保存・移行](docs/migration.md)に、
+[概念](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/design.md)、[API](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/api.md)、[保存・移行](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/migration.md)に、
 取得、失効、再検証、選択規則、費用を保持した再開をまとめています。
 入力を限定したcallbackはPythonのsandboxではありません。入力の信頼性、外部効果、
 実費用、単一writerの管理は利用者が担います。
 
 ## ローカルOllama実験
 
-[Ollama手順](docs/ollama-guide.md)は、通常インストールしたSDKとsource側の実験例を
+[Ollama手順](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-guide.md)は、通常インストールしたSDKとsource側の実験例を
 組み合わせ、明示的にローカル推論を行います。coreのimportやoffline CLIにOllamaは
 不要です。モデル重みと認証情報は同梱せず、通常のtestsと公開CIで推論しません。
-
-初回v0.2.4確認で省略可能な項目の証拠保存に不整合が見つかりました。
-原結果と費用を残し、新protocol・未使用資料・元の累積上限で再確認します。
-意味的な受入基準は変えていません。[現在の技術報告](docs/ollama-experiment-v0.2.4.md)、
-[日本語要約](docs/ollama-experiment-v0.2.4.ja.md)、
-[v0.2.3の保存済み報告](docs/ollama-experiment.md)を分けて参照できます。
 
 AはEGRの選択順、Bは共通runner・候補・権限・callback・予算で検証を優先する選択順、
 Cは全文資料を先に渡す参照方式です。共通の実行可能性判定の中で選択順の追加価値を
 測ります。別frameworkの比較やモデルの順位付けではありません。
 
-[監査](docs/audit-024.md) · [検証](docs/validation.md) ·
-[公開手順](docs/releasing.md) · [責任境界](SECURITY.md)
+現行tag `qwen3.6:35b-a3b` と `gemma4:e4b` で、Windows CPU上の主確認96試行が終了しました。
+各方式は人工資料16親課題（解答可能12・情報不足4）です。最終完了には独立した根拠判定と、
+現在のreview・受入条件の両方を求めます。
+
+| モデル | 方式 | 解答可能の支持付き完了/12 | 全体の支持付き完了/16 | 誤受入/16 |
+|---|---|---:|---:|---:|
+| Qwen | A | 0 | 0 | 15 |
+| Qwen | B | 8 | 10 | 4 |
+| Qwen | C | 12 | 15 | 1 |
+| Gemma | A | 3 | 4 | 2 |
+| Gemma | B | 8 | 9 | 1 |
+| Gemma | C | 10 | 14 | 2 |
+
+この固定条件ではAがBを下回りました。全主確認の使用量は確定し、未実施・通信/形式障害は
+0件です。少数の人工課題で開発とfamily構造を共有するため、一般的な性能を保証しません。
+停止感度64試行も終了しましたが、回復条件の成立は0件で効果は未測定です。初回の無効計測と費用も別に
+保持しています。[技術報告](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-experiment-v0.2.4.md)、
+[日本語要約](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-experiment-v0.2.4.ja.md)、
+[v0.2.3の保存済み報告](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-experiment.md)に詳細があります。
+
+[監査](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/audit-024.md) · [検証](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/validation.md) ·
+[公開手順](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/releasing.md) · [責任境界](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/SECURITY.md)

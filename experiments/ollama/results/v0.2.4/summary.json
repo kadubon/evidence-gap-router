@@ -1,0 +1,2640 @@
+{
+  "all_attempt_costs": {
+    "gemma4:e4b/confirmation": {
+      "attempted_calls": 232,
+      "client_wall_seconds": 3508.9570000000385,
+      "generated_tokens": 31751,
+      "generation_seconds": 1583.2815889940007,
+      "known_duration_calls": {
+        "client_wall_seconds": 232,
+        "generation_seconds": 232,
+        "load_seconds": 232,
+        "prefill_seconds": 232
+      },
+      "known_usage_calls": 232,
+      "load_seconds": 20.37109039999997,
+      "observed_client_wall_seconds": 3508.9570000000385,
+      "observed_generated_tokens": 31751,
+      "observed_generation_seconds": 1583.2815889940007,
+      "observed_load_seconds": 20.37109039999997,
+      "observed_prefill_seconds": 1896.1480939920018,
+      "observed_total_tokens": 184586,
+      "prefill_seconds": 1896.1480939920018,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 232
+      },
+      "total_tokens": 184586,
+      "unknown_usage_calls": 0
+    },
+    "gemma4:e4b/context-validation": {
+      "attempted_calls": 1,
+      "client_wall_seconds": 17.28200000000652,
+      "generated_tokens": 0,
+      "generation_seconds": null,
+      "known_duration_calls": {
+        "client_wall_seconds": 1,
+        "generation_seconds": 0,
+        "load_seconds": 0,
+        "prefill_seconds": 0
+      },
+      "known_usage_calls": 1,
+      "load_seconds": null,
+      "observed_client_wall_seconds": 17.28200000000652,
+      "observed_generated_tokens": 0,
+      "observed_generation_seconds": 0.0,
+      "observed_load_seconds": 0.0,
+      "observed_prefill_seconds": 0.0,
+      "observed_total_tokens": 0,
+      "prefill_seconds": null,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "loaded": 1
+      },
+      "total_tokens": 0,
+      "unknown_usage_calls": 0
+    },
+    "gemma4:e4b/example": {
+      "attempted_calls": 6,
+      "client_wall_seconds": 71.45299999999406,
+      "generated_tokens": 449,
+      "generation_seconds": 28.723983998999998,
+      "known_duration_calls": {
+        "client_wall_seconds": 6,
+        "generation_seconds": 6,
+        "load_seconds": 6,
+        "prefill_seconds": 6
+      },
+      "known_usage_calls": 6,
+      "load_seconds": 0.0182358,
+      "observed_client_wall_seconds": 71.45299999999406,
+      "observed_generated_tokens": 449,
+      "observed_generation_seconds": 28.723983998999998,
+      "observed_load_seconds": 0.0182358,
+      "observed_prefill_seconds": 42.520867,
+      "observed_total_tokens": 3271,
+      "prefill_seconds": 42.520867,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 6
+      },
+      "total_tokens": 3271,
+      "unknown_usage_calls": 0
+    },
+    "gemma4:e4b/initial-protocol-v1/calibration": {
+      "attempted_calls": 192,
+      "client_wall_seconds": 2909.7550000000847,
+      "generated_tokens": 35009,
+      "generation_seconds": 1975.9238029980002,
+      "known_duration_calls": {
+        "client_wall_seconds": 192,
+        "generation_seconds": 192,
+        "load_seconds": 192,
+        "prefill_seconds": 192
+      },
+      "known_usage_calls": 192,
+      "load_seconds": 38.14461550000003,
+      "observed_client_wall_seconds": 2909.7550000000847,
+      "observed_generated_tokens": 35009,
+      "observed_generation_seconds": 1975.9238029980002,
+      "observed_load_seconds": 38.14461550000003,
+      "observed_prefill_seconds": 887.6695529760002,
+      "observed_total_tokens": 156913,
+      "prefill_seconds": 887.6695529760002,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "length": 20,
+        "ok": 172
+      },
+      "total_tokens": 156913,
+      "unknown_usage_calls": 0
+    },
+    "gemma4:e4b/initial-protocol-v1/confirmation": {
+      "attempted_calls": 245,
+      "client_wall_seconds": 3337.3360000001558,
+      "generated_tokens": 26365,
+      "generation_seconds": 1375.5338629909998,
+      "known_duration_calls": {
+        "client_wall_seconds": 245,
+        "generation_seconds": 245,
+        "load_seconds": 245,
+        "prefill_seconds": 245
+      },
+      "known_usage_calls": 245,
+      "load_seconds": 19.883365600000026,
+      "observed_client_wall_seconds": 3337.3360000001558,
+      "observed_generated_tokens": 26365,
+      "observed_generation_seconds": 1375.5338629909998,
+      "observed_load_seconds": 19.883365600000026,
+      "observed_prefill_seconds": 1932.4781469960012,
+      "observed_total_tokens": 184316,
+      "prefill_seconds": 1932.4781469960012,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 245
+      },
+      "total_tokens": 184316,
+      "unknown_usage_calls": 0
+    },
+    "gemma4:e4b/initial-protocol-v1/context-validation": {
+      "attempted_calls": 1,
+      "client_wall_seconds": 16.764999999999418,
+      "generated_tokens": 0,
+      "generation_seconds": null,
+      "known_duration_calls": {
+        "client_wall_seconds": 1,
+        "generation_seconds": 0,
+        "load_seconds": 0,
+        "prefill_seconds": 0
+      },
+      "known_usage_calls": 1,
+      "load_seconds": null,
+      "observed_client_wall_seconds": 16.764999999999418,
+      "observed_generated_tokens": 0,
+      "observed_generation_seconds": 0.0,
+      "observed_load_seconds": 0.0,
+      "observed_prefill_seconds": 0.0,
+      "observed_total_tokens": 0,
+      "prefill_seconds": null,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "loaded": 1
+      },
+      "total_tokens": 0,
+      "unknown_usage_calls": 0
+    },
+    "gemma4:e4b/initial-protocol-v1/pilot": {
+      "attempted_calls": 56,
+      "client_wall_seconds": 744.6259999999456,
+      "generated_tokens": 5714,
+      "generation_seconds": 295.36395999999996,
+      "known_duration_calls": {
+        "client_wall_seconds": 56,
+        "generation_seconds": 56,
+        "load_seconds": 56,
+        "prefill_seconds": 56
+      },
+      "known_usage_calls": 56,
+      "load_seconds": 21.949221299999984,
+      "observed_client_wall_seconds": 744.6259999999456,
+      "observed_generated_tokens": 5714,
+      "observed_generation_seconds": 295.36395999999996,
+      "observed_load_seconds": 21.949221299999984,
+      "observed_prefill_seconds": 425.166545,
+      "observed_total_tokens": 38815,
+      "prefill_seconds": 425.166545,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 56
+      },
+      "total_tokens": 38815,
+      "unknown_usage_calls": 0
+    },
+    "gemma4:e4b/initial-protocol-v1/preload": {
+      "attempted_calls": 3,
+      "client_wall_seconds": 53.671000000002095,
+      "generated_tokens": 0,
+      "generation_seconds": null,
+      "known_duration_calls": {
+        "client_wall_seconds": 3,
+        "generation_seconds": 0,
+        "load_seconds": 0,
+        "prefill_seconds": 0
+      },
+      "known_usage_calls": 3,
+      "load_seconds": null,
+      "observed_client_wall_seconds": 53.671000000002095,
+      "observed_generated_tokens": 0,
+      "observed_generation_seconds": 0.0,
+      "observed_load_seconds": 0.0,
+      "observed_prefill_seconds": 0.0,
+      "observed_total_tokens": 0,
+      "prefill_seconds": null,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "loaded": 3
+      },
+      "total_tokens": 0,
+      "unknown_usage_calls": 0
+    },
+    "gemma4:e4b/initial-protocol-v1/warmup": {
+      "attempted_calls": 18,
+      "client_wall_seconds": 386.5789999999761,
+      "generated_tokens": 3378,
+      "generation_seconds": 145.051485,
+      "known_duration_calls": {
+        "client_wall_seconds": 18,
+        "generation_seconds": 18,
+        "load_seconds": 18,
+        "prefill_seconds": 18
+      },
+      "known_usage_calls": 18,
+      "load_seconds": 0.05205240000000001,
+      "observed_client_wall_seconds": 386.5789999999761,
+      "observed_generated_tokens": 3378,
+      "observed_generation_seconds": 145.051485,
+      "observed_load_seconds": 0.05205240000000001,
+      "observed_prefill_seconds": 240.862585,
+      "observed_total_tokens": 25888,
+      "prefill_seconds": 240.862585,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 18
+      },
+      "total_tokens": 25888,
+      "unknown_usage_calls": 0
+    },
+    "gemma4:e4b/pilot": {
+      "attempted_calls": 52,
+      "client_wall_seconds": 795.7710000000516,
+      "generated_tokens": 7443,
+      "generation_seconds": 372.170233,
+      "known_duration_calls": {
+        "client_wall_seconds": 52,
+        "generation_seconds": 52,
+        "load_seconds": 52,
+        "prefill_seconds": 52
+      },
+      "known_usage_calls": 52,
+      "load_seconds": 18.675089899999993,
+      "observed_client_wall_seconds": 795.7710000000516,
+      "observed_generated_tokens": 7443,
+      "observed_generation_seconds": 372.170233,
+      "observed_load_seconds": 18.675089899999993,
+      "observed_prefill_seconds": 402.8626099999999,
+      "observed_total_tokens": 38644,
+      "prefill_seconds": 402.8626099999999,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 52
+      },
+      "total_tokens": 38644,
+      "unknown_usage_calls": 0
+    },
+    "gemma4:e4b/preload": {
+      "attempted_calls": 2,
+      "client_wall_seconds": 34.53100000000268,
+      "generated_tokens": 0,
+      "generation_seconds": null,
+      "known_duration_calls": {
+        "client_wall_seconds": 2,
+        "generation_seconds": 0,
+        "load_seconds": 0,
+        "prefill_seconds": 0
+      },
+      "known_usage_calls": 2,
+      "load_seconds": null,
+      "observed_client_wall_seconds": 34.53100000000268,
+      "observed_generated_tokens": 0,
+      "observed_generation_seconds": 0.0,
+      "observed_load_seconds": 0.0,
+      "observed_prefill_seconds": 0.0,
+      "observed_total_tokens": 0,
+      "prefill_seconds": null,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "loaded": 2
+      },
+      "total_tokens": 0,
+      "unknown_usage_calls": 0
+    },
+    "gemma4:e4b/sensitivity-bounded": {
+      "attempted_calls": 98,
+      "client_wall_seconds": 1404.905000000057,
+      "generated_tokens": 13213,
+      "generation_seconds": 654.4616669980003,
+      "known_duration_calls": {
+        "client_wall_seconds": 98,
+        "generation_seconds": 98,
+        "load_seconds": 98,
+        "prefill_seconds": 98
+      },
+      "known_usage_calls": 98,
+      "load_seconds": 19.20264989999999,
+      "observed_client_wall_seconds": 1404.905000000057,
+      "observed_generated_tokens": 13213,
+      "observed_generation_seconds": 654.4616669980003,
+      "observed_load_seconds": 19.20264989999999,
+      "observed_prefill_seconds": 727.437247997,
+      "observed_total_tokens": 74912,
+      "prefill_seconds": 727.437247997,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 98
+      },
+      "total_tokens": 74912,
+      "unknown_usage_calls": 0
+    },
+    "gemma4:e4b/sensitivity-strict": {
+      "attempted_calls": 100,
+      "client_wall_seconds": 1427.6919999999518,
+      "generated_tokens": 12987,
+      "generation_seconds": 658.5288139989999,
+      "known_duration_calls": {
+        "client_wall_seconds": 100,
+        "generation_seconds": 100,
+        "load_seconds": 100,
+        "prefill_seconds": 100
+      },
+      "known_usage_calls": 100,
+      "load_seconds": 19.46870709999999,
+      "observed_client_wall_seconds": 1427.6919999999518,
+      "observed_generated_tokens": 12987,
+      "observed_generation_seconds": 658.5288139989999,
+      "observed_load_seconds": 19.46870709999999,
+      "observed_prefill_seconds": 745.8823329969998,
+      "observed_total_tokens": 76336,
+      "prefill_seconds": 745.8823329969998,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 100
+      },
+      "total_tokens": 76336,
+      "unknown_usage_calls": 0
+    },
+    "gemma4:e4b/warmup": {
+      "attempted_calls": 12,
+      "client_wall_seconds": 288.79499999999825,
+      "generated_tokens": 3016,
+      "generation_seconds": 114.048295,
+      "known_duration_calls": {
+        "client_wall_seconds": 12,
+        "generation_seconds": 12,
+        "load_seconds": 12,
+        "prefill_seconds": 12
+      },
+      "known_usage_calls": 12,
+      "load_seconds": 0.036045,
+      "observed_client_wall_seconds": 288.79499999999825,
+      "observed_generated_tokens": 3016,
+      "observed_generation_seconds": 114.048295,
+      "observed_load_seconds": 0.036045,
+      "observed_prefill_seconds": 174.27439800000005,
+      "observed_total_tokens": 19311,
+      "prefill_seconds": 174.27439800000005,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 12
+      },
+      "total_tokens": 19311,
+      "unknown_usage_calls": 0
+    },
+    "qwen3.6:35b-a3b/confirmation": {
+      "attempted_calls": 166,
+      "client_wall_seconds": 4220.517000000036,
+      "generated_tokens": 31446,
+      "generation_seconds": 2760.499105996999,
+      "known_duration_calls": {
+        "client_wall_seconds": 166,
+        "generation_seconds": 166,
+        "load_seconds": 166,
+        "prefill_seconds": 166
+      },
+      "known_usage_calls": 166,
+      "load_seconds": 84.8203936,
+      "observed_client_wall_seconds": 4220.517000000036,
+      "observed_generated_tokens": 31446,
+      "observed_generation_seconds": 2760.499105996999,
+      "observed_load_seconds": 84.8203936,
+      "observed_prefill_seconds": 1364.416267999,
+      "observed_total_tokens": 136003,
+      "prefill_seconds": 1364.416267999,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 166
+      },
+      "total_tokens": 136003,
+      "unknown_usage_calls": 0
+    },
+    "qwen3.6:35b-a3b/context-validation": {
+      "attempted_calls": 1,
+      "client_wall_seconds": 105.48399999999674,
+      "generated_tokens": 0,
+      "generation_seconds": null,
+      "known_duration_calls": {
+        "client_wall_seconds": 1,
+        "generation_seconds": 0,
+        "load_seconds": 0,
+        "prefill_seconds": 0
+      },
+      "known_usage_calls": 1,
+      "load_seconds": null,
+      "observed_client_wall_seconds": 105.48399999999674,
+      "observed_generated_tokens": 0,
+      "observed_generation_seconds": 0.0,
+      "observed_load_seconds": 0.0,
+      "observed_prefill_seconds": 0.0,
+      "observed_total_tokens": 0,
+      "prefill_seconds": null,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "loaded": 1
+      },
+      "total_tokens": 0,
+      "unknown_usage_calls": 0
+    },
+    "qwen3.6:35b-a3b/initial-protocol-v1/calibration": {
+      "attempted_calls": 192,
+      "client_wall_seconds": 3287.316000000057,
+      "generated_tokens": 25341,
+      "generation_seconds": 2186.786974998,
+      "known_duration_calls": {
+        "client_wall_seconds": 192,
+        "generation_seconds": 192,
+        "load_seconds": 192,
+        "prefill_seconds": 192
+      },
+      "known_usage_calls": 192,
+      "load_seconds": 171.28189029999993,
+      "observed_client_wall_seconds": 3287.316000000057,
+      "observed_generated_tokens": 25341,
+      "observed_generation_seconds": 2186.786974998,
+      "observed_load_seconds": 171.28189029999993,
+      "observed_prefill_seconds": 916.7944159959999,
+      "observed_total_tokens": 144685,
+      "prefill_seconds": 916.7944159959999,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "length": 5,
+        "ok": 187
+      },
+      "total_tokens": 144685,
+      "unknown_usage_calls": 0
+    },
+    "qwen3.6:35b-a3b/initial-protocol-v1/confirmation": {
+      "attempted_calls": 162,
+      "client_wall_seconds": 3667.6640000000043,
+      "generated_tokens": 24009,
+      "generation_seconds": 2079.137597997001,
+      "known_duration_calls": {
+        "client_wall_seconds": 162,
+        "generation_seconds": 162,
+        "load_seconds": 162,
+        "prefill_seconds": 162
+      },
+      "known_usage_calls": 162,
+      "load_seconds": 78.53027999999992,
+      "observed_client_wall_seconds": 3667.6640000000043,
+      "observed_generated_tokens": 24009,
+      "observed_generation_seconds": 2079.137597997001,
+      "observed_load_seconds": 78.53027999999992,
+      "observed_prefill_seconds": 1499.234865989999,
+      "observed_total_tokens": 117926,
+      "prefill_seconds": 1499.234865989999,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 162
+      },
+      "total_tokens": 117926,
+      "unknown_usage_calls": 0
+    },
+    "qwen3.6:35b-a3b/initial-protocol-v1/context-validation": {
+      "attempted_calls": 1,
+      "client_wall_seconds": 100.15600000000268,
+      "generated_tokens": 0,
+      "generation_seconds": null,
+      "known_duration_calls": {
+        "client_wall_seconds": 1,
+        "generation_seconds": 0,
+        "load_seconds": 0,
+        "prefill_seconds": 0
+      },
+      "known_usage_calls": 1,
+      "load_seconds": null,
+      "observed_client_wall_seconds": 100.15600000000268,
+      "observed_generated_tokens": 0,
+      "observed_generation_seconds": 0.0,
+      "observed_load_seconds": 0.0,
+      "observed_prefill_seconds": 0.0,
+      "observed_total_tokens": 0,
+      "prefill_seconds": null,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "loaded": 1
+      },
+      "total_tokens": 0,
+      "unknown_usage_calls": 0
+    },
+    "qwen3.6:35b-a3b/initial-protocol-v1/pilot": {
+      "attempted_calls": 39,
+      "client_wall_seconds": 1029.52700000006,
+      "generated_tokens": 6907,
+      "generation_seconds": 610.5221449999999,
+      "known_duration_calls": {
+        "client_wall_seconds": 39,
+        "generation_seconds": 39,
+        "load_seconds": 39,
+        "prefill_seconds": 39
+      },
+      "known_usage_calls": 39,
+      "load_seconds": 99.65388489999998,
+      "observed_client_wall_seconds": 1029.52700000006,
+      "observed_generated_tokens": 6907,
+      "observed_generation_seconds": 610.5221449999999,
+      "observed_load_seconds": 99.65388489999998,
+      "observed_prefill_seconds": 316.91777899899995,
+      "observed_total_tokens": 30710,
+      "prefill_seconds": 316.91777899899995,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 39
+      },
+      "total_tokens": 30710,
+      "unknown_usage_calls": 0
+    },
+    "qwen3.6:35b-a3b/initial-protocol-v1/preload": {
+      "attempted_calls": 3,
+      "client_wall_seconds": 300.7360000000044,
+      "generated_tokens": 0,
+      "generation_seconds": null,
+      "known_duration_calls": {
+        "client_wall_seconds": 3,
+        "generation_seconds": 0,
+        "load_seconds": 0,
+        "prefill_seconds": 0
+      },
+      "known_usage_calls": 3,
+      "load_seconds": null,
+      "observed_client_wall_seconds": 300.7360000000044,
+      "observed_generated_tokens": 0,
+      "observed_generation_seconds": 0.0,
+      "observed_load_seconds": 0.0,
+      "observed_prefill_seconds": 0.0,
+      "observed_total_tokens": 0,
+      "prefill_seconds": null,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "loaded": 3
+      },
+      "total_tokens": 0,
+      "unknown_usage_calls": 0
+    },
+    "qwen3.6:35b-a3b/initial-protocol-v1/sensitivity-strict": {
+      "attempted_calls": 27,
+      "client_wall_seconds": 639.7510000000184,
+      "generated_tokens": 3903,
+      "generation_seconds": 345.84167799900007,
+      "known_duration_calls": {
+        "client_wall_seconds": 27,
+        "generation_seconds": 27,
+        "load_seconds": 27,
+        "prefill_seconds": 27
+      },
+      "known_usage_calls": 27,
+      "load_seconds": 111.08319639999999,
+      "observed_client_wall_seconds": 639.7510000000184,
+      "observed_generated_tokens": 3903,
+      "observed_generation_seconds": 345.84167799900007,
+      "observed_load_seconds": 111.08319639999999,
+      "observed_prefill_seconds": 181.108672999,
+      "observed_total_tokens": 18115,
+      "prefill_seconds": 181.108672999,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 27
+      },
+      "total_tokens": 18115,
+      "unknown_usage_calls": 0
+    },
+    "qwen3.6:35b-a3b/initial-protocol-v1/warmup": {
+      "attempted_calls": 18,
+      "client_wall_seconds": 457.75099999999657,
+      "generated_tokens": 3100,
+      "generation_seconds": 206.63453599999997,
+      "known_duration_calls": {
+        "client_wall_seconds": 18,
+        "generation_seconds": 18,
+        "load_seconds": 18,
+        "prefill_seconds": 18
+      },
+      "known_usage_calls": 18,
+      "load_seconds": 0.0464568,
+      "observed_client_wall_seconds": 457.75099999999657,
+      "observed_generated_tokens": 3100,
+      "observed_generation_seconds": 206.63453599999997,
+      "observed_load_seconds": 0.0464568,
+      "observed_prefill_seconds": 250.059012,
+      "observed_total_tokens": 24895,
+      "prefill_seconds": 250.059012,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 18
+      },
+      "total_tokens": 24895,
+      "unknown_usage_calls": 0
+    },
+    "qwen3.6:35b-a3b/pilot": {
+      "attempted_calls": 60,
+      "client_wall_seconds": 1562.911000000051,
+      "generated_tokens": 10921,
+      "generation_seconds": 882.3370059969997,
+      "known_duration_calls": {
+        "client_wall_seconds": 60,
+        "generation_seconds": 60,
+        "load_seconds": 60,
+        "prefill_seconds": 60
+      },
+      "known_usage_calls": 60,
+      "load_seconds": 207.9046432,
+      "observed_client_wall_seconds": 1562.911000000051,
+      "observed_generated_tokens": 10921,
+      "observed_generation_seconds": 882.3370059969997,
+      "observed_load_seconds": 207.9046432,
+      "observed_prefill_seconds": 468.46094199900006,
+      "observed_total_tokens": 48473,
+      "prefill_seconds": 468.46094199900006,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 60
+      },
+      "total_tokens": 48473,
+      "unknown_usage_calls": 0
+    },
+    "qwen3.6:35b-a3b/preload": {
+      "attempted_calls": 2,
+      "client_wall_seconds": 68.95299999999406,
+      "generated_tokens": 0,
+      "generation_seconds": null,
+      "known_duration_calls": {
+        "client_wall_seconds": 2,
+        "generation_seconds": 0,
+        "load_seconds": 0,
+        "prefill_seconds": 0
+      },
+      "known_usage_calls": 2,
+      "load_seconds": null,
+      "observed_client_wall_seconds": 68.95299999999406,
+      "observed_generated_tokens": 0,
+      "observed_generation_seconds": 0.0,
+      "observed_load_seconds": 0.0,
+      "observed_prefill_seconds": 0.0,
+      "observed_total_tokens": 0,
+      "prefill_seconds": null,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "loaded": 2
+      },
+      "total_tokens": 0,
+      "unknown_usage_calls": 0
+    },
+    "qwen3.6:35b-a3b/sensitivity-bounded": {
+      "attempted_calls": 69,
+      "client_wall_seconds": 1759.671000000002,
+      "generated_tokens": 12714,
+      "generation_seconds": 1128.1709960000003,
+      "known_duration_calls": {
+        "client_wall_seconds": 69,
+        "generation_seconds": 69,
+        "load_seconds": 69,
+        "prefill_seconds": 69
+      },
+      "known_usage_calls": 69,
+      "load_seconds": 102.67479959999997,
+      "observed_client_wall_seconds": 1759.671000000002,
+      "observed_generated_tokens": 12714,
+      "observed_generation_seconds": 1128.1709960000003,
+      "observed_load_seconds": 102.67479959999997,
+      "observed_prefill_seconds": 524.3286369969998,
+      "observed_total_tokens": 54435,
+      "prefill_seconds": 524.3286369969998,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 69
+      },
+      "total_tokens": 54435,
+      "unknown_usage_calls": 0
+    },
+    "qwen3.6:35b-a3b/sensitivity-strict": {
+      "attempted_calls": 65,
+      "client_wall_seconds": 1631.3129999999655,
+      "generated_tokens": 11969,
+      "generation_seconds": 1058.378981,
+      "known_duration_calls": {
+        "client_wall_seconds": 65,
+        "generation_seconds": 65,
+        "load_seconds": 65,
+        "prefill_seconds": 65
+      },
+      "known_usage_calls": 65,
+      "load_seconds": 111.40129730000002,
+      "observed_client_wall_seconds": 1631.3129999999655,
+      "observed_generated_tokens": 11969,
+      "observed_generation_seconds": 1058.378981,
+      "observed_load_seconds": 111.40129730000002,
+      "observed_prefill_seconds": 457.06270800000016,
+      "observed_total_tokens": 49188,
+      "prefill_seconds": 457.06270800000016,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 65
+      },
+      "total_tokens": 49188,
+      "unknown_usage_calls": 0
+    },
+    "qwen3.6:35b-a3b/warmup": {
+      "attempted_calls": 12,
+      "client_wall_seconds": 353.60800000000745,
+      "generated_tokens": 2957,
+      "generation_seconds": 169.679191,
+      "known_duration_calls": {
+        "client_wall_seconds": 12,
+        "generation_seconds": 12,
+        "load_seconds": 12,
+        "prefill_seconds": 12
+      },
+      "known_usage_calls": 12,
+      "load_seconds": 0.0345744,
+      "observed_client_wall_seconds": 353.60800000000745,
+      "observed_generated_tokens": 2957,
+      "observed_generation_seconds": 169.679191,
+      "observed_load_seconds": 0.0345744,
+      "observed_prefill_seconds": 183.19203100000001,
+      "observed_total_tokens": 18897,
+      "prefill_seconds": 183.19203100000001,
+      "reserved_unknown_total_tokens": 0,
+      "status_counts": {
+        "ok": 12
+      },
+      "total_tokens": 18897,
+      "unknown_usage_calls": 0
+    }
+  },
+  "campaign_saved_audit": {
+    "calls": 1835,
+    "campaign_elapsed_seconds": 43933.078731536865,
+    "charged_generated_tokens": 272592,
+    "charged_total_tokens": 1446319,
+    "generated_tokens": 272592,
+    "pending": [],
+    "terminated_unmetered": [],
+    "total_tokens": 1446319,
+    "unknown_consumption": false
+  },
+  "comparisons": {
+    "gemma4:e4b": {
+      "A_minus_B_completion": -0.4166666666666667,
+      "C_interpretation": "pooled-information reference; different information arrival",
+      "all_planned_answerable_parents": 12,
+      "both_successful_costs": {
+        "A": {
+          "attempted_calls": 20,
+          "client_wall_seconds": 332.03300000001036,
+          "generated_tokens": 2529,
+          "generation_seconds": 127.09540899999999,
+          "known_duration_calls": {
+            "client_wall_seconds": 20,
+            "generation_seconds": 20,
+            "load_seconds": 20,
+            "prefill_seconds": 20
+          },
+          "known_usage_calls": 20,
+          "load_seconds": 19.7070809,
+          "observed_client_wall_seconds": 332.03300000001036,
+          "observed_generated_tokens": 2529,
+          "observed_generation_seconds": 127.09540899999999,
+          "observed_load_seconds": 19.7070809,
+          "observed_prefill_seconds": 184.515003999,
+          "observed_total_tokens": 15874,
+          "parents": 3,
+          "parents_with_cost_records": 3,
+          "prefill_seconds": 184.515003999,
+          "reserved_unknown_total_tokens": 0,
+          "status_counts": {
+            "ok": 20
+          },
+          "total_tokens": 15874,
+          "unknown_usage_calls": 0
+        },
+        "B": {
+          "attempted_calls": 16,
+          "client_wall_seconds": 267.17099999998754,
+          "generated_tokens": 2576,
+          "generation_seconds": 133.218613,
+          "known_duration_calls": {
+            "client_wall_seconds": 16,
+            "generation_seconds": 16,
+            "load_seconds": 16,
+            "prefill_seconds": 16
+          },
+          "known_usage_calls": 16,
+          "load_seconds": 0.055083400000000005,
+          "observed_client_wall_seconds": 267.17099999998754,
+          "observed_generated_tokens": 2576,
+          "observed_generation_seconds": 133.218613,
+          "observed_load_seconds": 0.055083400000000005,
+          "observed_prefill_seconds": 133.21470399700002,
+          "observed_total_tokens": 14307,
+          "parents": 3,
+          "parents_with_cost_records": 3,
+          "prefill_seconds": 133.21470399700002,
+          "reserved_unknown_total_tokens": 0,
+          "status_counts": {
+            "ok": 16
+          },
+          "total_tokens": 14307,
+          "unknown_usage_calls": 0
+        }
+      },
+      "both_successful_parents": 3,
+      "insufficient_paired_metrics": {
+        "metrics": {
+          "false_acceptance": {
+            "all_planned_unresolved_bounds": [
+              0.0,
+              0.0
+            ],
+            "mean_difference": 0.0,
+            "negative_differences": 0,
+            "parent_bootstrap_95_interval": [
+              0.0,
+              0.0
+            ],
+            "positive_differences": 0,
+            "ties": 4
+          },
+          "grounded_abstention": {
+            "all_planned_unresolved_bounds": [
+              0.0,
+              0.0
+            ],
+            "mean_difference": 0.0,
+            "negative_differences": 0,
+            "parent_bootstrap_95_interval": [
+              0.0,
+              0.0
+            ],
+            "positive_differences": 0,
+            "ties": 4
+          },
+          "verified_supported_completion": {
+            "all_planned_unresolved_bounds": [
+              0.0,
+              0.0
+            ],
+            "mean_difference": 0.0,
+            "negative_differences": 0,
+            "parent_bootstrap_95_interval": [
+              0.0,
+              0.0
+            ],
+            "positive_differences": 0,
+            "ties": 4
+          }
+        },
+        "paired_assessed_parents": 4,
+        "planned_parents": 4
+      },
+      "losses": 5,
+      "paired_assessed_parents": 12,
+      "paired_metrics": {
+        "metrics": {
+          "false_acceptance": {
+            "all_planned_unresolved_bounds": [
+              0.08333333333333333,
+              0.08333333333333333
+            ],
+            "mean_difference": 0.08333333333333333,
+            "negative_differences": 1,
+            "parent_bootstrap_95_interval": [
+              -0.16666666666666666,
+              0.3333333333333333
+            ],
+            "positive_differences": 2,
+            "ties": 9
+          },
+          "grounded_abstention": {
+            "all_planned_unresolved_bounds": [
+              0.0,
+              0.0
+            ],
+            "mean_difference": 0.0,
+            "negative_differences": 0,
+            "parent_bootstrap_95_interval": [
+              0.0,
+              0.0
+            ],
+            "positive_differences": 0,
+            "ties": 12
+          },
+          "verified_supported_completion": {
+            "all_planned_unresolved_bounds": [
+              -0.4166666666666667,
+              -0.4166666666666667
+            ],
+            "mean_difference": -0.4166666666666667,
+            "negative_differences": 5,
+            "parent_bootstrap_95_interval": [
+              -0.6666666666666666,
+              -0.16666666666666666
+            ],
+            "positive_differences": 0,
+            "ties": 7
+          }
+        },
+        "paired_assessed_parents": 12,
+        "planned_parents": 12
+      },
+      "parent_bootstrap_95_interval": [
+        -0.6666666666666666,
+        -0.16666666666666666
+      ],
+      "scheduled_parents": 16,
+      "success_subset_selection_bias": true,
+      "ties": 7,
+      "unresolved_A_minus_B_bounds": [
+        -0.4166666666666667,
+        -0.4166666666666667
+      ],
+      "wins": 0
+    },
+    "qwen3.6:35b-a3b": {
+      "A_minus_B_completion": -0.6666666666666666,
+      "C_interpretation": "pooled-information reference; different information arrival",
+      "all_planned_answerable_parents": 12,
+      "both_successful_costs": {
+        "A": {
+          "attempted_calls": 0,
+          "client_wall_seconds": null,
+          "generated_tokens": null,
+          "generation_seconds": null,
+          "known_duration_calls": {
+            "client_wall_seconds": 0,
+            "generation_seconds": 0,
+            "load_seconds": 0,
+            "prefill_seconds": 0
+          },
+          "known_usage_calls": 0,
+          "load_seconds": null,
+          "observed_client_wall_seconds": 0.0,
+          "observed_generated_tokens": 0,
+          "observed_generation_seconds": 0.0,
+          "observed_load_seconds": 0.0,
+          "observed_prefill_seconds": 0.0,
+          "observed_total_tokens": 0,
+          "parents": 0,
+          "parents_with_cost_records": 0,
+          "prefill_seconds": null,
+          "reserved_unknown_total_tokens": 0,
+          "status_counts": {},
+          "total_tokens": null,
+          "unknown_usage_calls": 0
+        },
+        "B": {
+          "attempted_calls": 0,
+          "client_wall_seconds": null,
+          "generated_tokens": null,
+          "generation_seconds": null,
+          "known_duration_calls": {
+            "client_wall_seconds": 0,
+            "generation_seconds": 0,
+            "load_seconds": 0,
+            "prefill_seconds": 0
+          },
+          "known_usage_calls": 0,
+          "load_seconds": null,
+          "observed_client_wall_seconds": 0.0,
+          "observed_generated_tokens": 0,
+          "observed_generation_seconds": 0.0,
+          "observed_load_seconds": 0.0,
+          "observed_prefill_seconds": 0.0,
+          "observed_total_tokens": 0,
+          "parents": 0,
+          "parents_with_cost_records": 0,
+          "prefill_seconds": null,
+          "reserved_unknown_total_tokens": 0,
+          "status_counts": {},
+          "total_tokens": null,
+          "unknown_usage_calls": 0
+        }
+      },
+      "both_successful_parents": 0,
+      "insufficient_paired_metrics": {
+        "metrics": {
+          "false_acceptance": {
+            "all_planned_unresolved_bounds": [
+              0.5,
+              0.5
+            ],
+            "mean_difference": 0.5,
+            "negative_differences": 1,
+            "parent_bootstrap_95_interval": [
+              -0.5,
+              1.0
+            ],
+            "positive_differences": 3,
+            "ties": 0
+          },
+          "grounded_abstention": {
+            "all_planned_unresolved_bounds": [
+              -0.5,
+              -0.5
+            ],
+            "mean_difference": -0.5,
+            "negative_differences": 2,
+            "parent_bootstrap_95_interval": [
+              -1.0,
+              0.0
+            ],
+            "positive_differences": 0,
+            "ties": 2
+          },
+          "verified_supported_completion": {
+            "all_planned_unresolved_bounds": [
+              -0.5,
+              -0.5
+            ],
+            "mean_difference": -0.5,
+            "negative_differences": 2,
+            "parent_bootstrap_95_interval": [
+              -1.0,
+              0.0
+            ],
+            "positive_differences": 0,
+            "ties": 2
+          }
+        },
+        "paired_assessed_parents": 4,
+        "planned_parents": 4
+      },
+      "losses": 8,
+      "paired_assessed_parents": 12,
+      "paired_metrics": {
+        "metrics": {
+          "false_acceptance": {
+            "all_planned_unresolved_bounds": [
+              0.75,
+              0.75
+            ],
+            "mean_difference": 0.75,
+            "negative_differences": 0,
+            "parent_bootstrap_95_interval": [
+              0.5,
+              1.0
+            ],
+            "positive_differences": 9,
+            "ties": 3
+          },
+          "grounded_abstention": {
+            "all_planned_unresolved_bounds": [
+              0.0,
+              0.0
+            ],
+            "mean_difference": 0.0,
+            "negative_differences": 0,
+            "parent_bootstrap_95_interval": [
+              0.0,
+              0.0
+            ],
+            "positive_differences": 0,
+            "ties": 12
+          },
+          "verified_supported_completion": {
+            "all_planned_unresolved_bounds": [
+              -0.6666666666666666,
+              -0.6666666666666666
+            ],
+            "mean_difference": -0.6666666666666666,
+            "negative_differences": 8,
+            "parent_bootstrap_95_interval": [
+              -0.9166666666666666,
+              -0.4166666666666667
+            ],
+            "positive_differences": 0,
+            "ties": 4
+          }
+        },
+        "paired_assessed_parents": 12,
+        "planned_parents": 12
+      },
+      "parent_bootstrap_95_interval": [
+        -0.9166666666666666,
+        -0.4166666666666667
+      ],
+      "scheduled_parents": 16,
+      "success_subset_selection_bias": true,
+      "ties": 4,
+      "unresolved_A_minus_B_bounds": [
+        -0.6666666666666666,
+        -0.6666666666666666
+      ],
+      "wins": 0
+    }
+  },
+  "confirmation_outcome_costs": {
+    "gemma4:e4b/A": {
+      "all_planned": {
+        "attempted_calls": 108,
+        "client_wall_seconds": 1634.3100000000559,
+        "generated_tokens": 14371,
+        "generation_seconds": 724.0700679939999,
+        "known_duration_calls": {
+          "client_wall_seconds": 108,
+          "generation_seconds": 108,
+          "load_seconds": 108,
+          "prefill_seconds": 108
+        },
+        "known_usage_calls": 108,
+        "load_seconds": 19.9764228,
+        "observed_client_wall_seconds": 1634.3100000000559,
+        "observed_generated_tokens": 14371,
+        "observed_generation_seconds": 724.0700679939999,
+        "observed_load_seconds": 19.9764228,
+        "observed_prefill_seconds": 886.1878099969999,
+        "observed_total_tokens": 84283,
+        "prefill_seconds": 886.1878099969999,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {
+          "ok": 108
+        },
+        "total_tokens": 84283,
+        "trials": 16,
+        "trials_with_cost_records": 16,
+        "unknown_usage_calls": 0
+      },
+      "known_failed": {
+        "attempted_calls": 80,
+        "client_wall_seconds": 1183.9170000000595,
+        "generated_tokens": 10957,
+        "generation_seconds": 551.623961996,
+        "known_duration_calls": {
+          "client_wall_seconds": 80,
+          "generation_seconds": 80,
+          "load_seconds": 80,
+          "prefill_seconds": 80
+        },
+        "known_usage_calls": 80,
+        "load_seconds": 0.24193520000000002,
+        "observed_client_wall_seconds": 1183.9170000000595,
+        "observed_generated_tokens": 10957,
+        "observed_generation_seconds": 551.623961996,
+        "observed_load_seconds": 0.24193520000000002,
+        "observed_prefill_seconds": 628.980432998,
+        "observed_total_tokens": 62248,
+        "prefill_seconds": 628.980432998,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {
+          "ok": 80
+        },
+        "total_tokens": 62248,
+        "trials": 12,
+        "trials_with_cost_records": 12,
+        "unknown_usage_calls": 0
+      },
+      "successful": {
+        "attempted_calls": 28,
+        "client_wall_seconds": 450.3929999999964,
+        "generated_tokens": 3414,
+        "generation_seconds": 172.446105998,
+        "known_duration_calls": {
+          "client_wall_seconds": 28,
+          "generation_seconds": 28,
+          "load_seconds": 28,
+          "prefill_seconds": 28
+        },
+        "known_usage_calls": 28,
+        "load_seconds": 19.7344876,
+        "observed_client_wall_seconds": 450.3929999999964,
+        "observed_generated_tokens": 3414,
+        "observed_generation_seconds": 172.446105998,
+        "observed_load_seconds": 19.7344876,
+        "observed_prefill_seconds": 257.207376999,
+        "observed_total_tokens": 22035,
+        "prefill_seconds": 257.207376999,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {
+          "ok": 28
+        },
+        "total_tokens": 22035,
+        "trials": 4,
+        "trials_with_cost_records": 4,
+        "unknown_usage_calls": 0
+      },
+      "unresolved_or_unexecuted": {
+        "attempted_calls": 0,
+        "client_wall_seconds": null,
+        "generated_tokens": null,
+        "generation_seconds": null,
+        "known_duration_calls": {
+          "client_wall_seconds": 0,
+          "generation_seconds": 0,
+          "load_seconds": 0,
+          "prefill_seconds": 0
+        },
+        "known_usage_calls": 0,
+        "load_seconds": null,
+        "observed_client_wall_seconds": 0.0,
+        "observed_generated_tokens": 0,
+        "observed_generation_seconds": 0.0,
+        "observed_load_seconds": 0.0,
+        "observed_prefill_seconds": 0.0,
+        "observed_total_tokens": 0,
+        "prefill_seconds": null,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {},
+        "total_tokens": null,
+        "trials": 0,
+        "trials_with_cost_records": 0,
+        "unknown_usage_calls": 0
+      }
+    },
+    "gemma4:e4b/B": {
+      "all_planned": {
+        "attempted_calls": 86,
+        "client_wall_seconds": 1239.094999999972,
+        "generated_tokens": 11639,
+        "generation_seconds": 591.9068849999999,
+        "known_duration_calls": {
+          "client_wall_seconds": 86,
+          "generation_seconds": 86,
+          "load_seconds": 86,
+          "prefill_seconds": 86
+        },
+        "known_usage_calls": 86,
+        "load_seconds": 0.2730418,
+        "observed_client_wall_seconds": 1239.094999999972,
+        "observed_generated_tokens": 11639,
+        "observed_generation_seconds": 591.9068849999999,
+        "observed_load_seconds": 0.2730418,
+        "observed_prefill_seconds": 643.431194995,
+        "observed_total_tokens": 66314,
+        "prefill_seconds": 643.431194995,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {
+          "ok": 86
+        },
+        "total_tokens": 66314,
+        "trials": 16,
+        "trials_with_cost_records": 16,
+        "unknown_usage_calls": 0
+      },
+      "known_failed": {
+        "attempted_calls": 36,
+        "client_wall_seconds": 458.8139999999257,
+        "generated_tokens": 4950,
+        "generation_seconds": 247.15858400000002,
+        "known_duration_calls": {
+          "client_wall_seconds": 36,
+          "generation_seconds": 36,
+          "load_seconds": 36,
+          "prefill_seconds": 36
+        },
+        "known_usage_calls": 36,
+        "load_seconds": 0.1126164,
+        "observed_client_wall_seconds": 458.8139999999257,
+        "observed_generated_tokens": 4950,
+        "observed_generation_seconds": 247.15858400000002,
+        "observed_load_seconds": 0.1126164,
+        "observed_prefill_seconds": 210.129498,
+        "observed_total_tokens": 25749,
+        "prefill_seconds": 210.129498,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {
+          "ok": 36
+        },
+        "total_tokens": 25749,
+        "trials": 7,
+        "trials_with_cost_records": 7,
+        "unknown_usage_calls": 0
+      },
+      "successful": {
+        "attempted_calls": 50,
+        "client_wall_seconds": 780.2810000000463,
+        "generated_tokens": 6689,
+        "generation_seconds": 344.74830099999997,
+        "known_duration_calls": {
+          "client_wall_seconds": 50,
+          "generation_seconds": 50,
+          "load_seconds": 50,
+          "prefill_seconds": 50
+        },
+        "known_usage_calls": 50,
+        "load_seconds": 0.1604254,
+        "observed_client_wall_seconds": 780.2810000000463,
+        "observed_generated_tokens": 6689,
+        "observed_generation_seconds": 344.74830099999997,
+        "observed_load_seconds": 0.1604254,
+        "observed_prefill_seconds": 433.301696995,
+        "observed_total_tokens": 40565,
+        "prefill_seconds": 433.301696995,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {
+          "ok": 50
+        },
+        "total_tokens": 40565,
+        "trials": 9,
+        "trials_with_cost_records": 9,
+        "unknown_usage_calls": 0
+      },
+      "unresolved_or_unexecuted": {
+        "attempted_calls": 0,
+        "client_wall_seconds": null,
+        "generated_tokens": null,
+        "generation_seconds": null,
+        "known_duration_calls": {
+          "client_wall_seconds": 0,
+          "generation_seconds": 0,
+          "load_seconds": 0,
+          "prefill_seconds": 0
+        },
+        "known_usage_calls": 0,
+        "load_seconds": null,
+        "observed_client_wall_seconds": 0.0,
+        "observed_generated_tokens": 0,
+        "observed_generation_seconds": 0.0,
+        "observed_load_seconds": 0.0,
+        "observed_prefill_seconds": 0.0,
+        "observed_total_tokens": 0,
+        "prefill_seconds": null,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {},
+        "total_tokens": null,
+        "trials": 0,
+        "trials_with_cost_records": 0,
+        "unknown_usage_calls": 0
+      }
+    },
+    "gemma4:e4b/C": {
+      "all_planned": {
+        "attempted_calls": 38,
+        "client_wall_seconds": 635.5520000000106,
+        "generated_tokens": 5741,
+        "generation_seconds": 267.304636,
+        "known_duration_calls": {
+          "client_wall_seconds": 38,
+          "generation_seconds": 38,
+          "load_seconds": 38,
+          "prefill_seconds": 38
+        },
+        "known_usage_calls": 38,
+        "load_seconds": 0.1216258,
+        "observed_client_wall_seconds": 635.5520000000106,
+        "observed_generated_tokens": 5741,
+        "observed_generation_seconds": 267.304636,
+        "observed_load_seconds": 0.1216258,
+        "observed_prefill_seconds": 366.529089,
+        "observed_total_tokens": 33989,
+        "prefill_seconds": 366.529089,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {
+          "ok": 38
+        },
+        "total_tokens": 33989,
+        "trials": 16,
+        "trials_with_cost_records": 16,
+        "unknown_usage_calls": 0
+      },
+      "known_failed": {
+        "attempted_calls": 8,
+        "client_wall_seconds": 137.75100000000384,
+        "generated_tokens": 1498,
+        "generation_seconds": 68.589332,
+        "known_duration_calls": {
+          "client_wall_seconds": 8,
+          "generation_seconds": 8,
+          "load_seconds": 8,
+          "prefill_seconds": 8
+        },
+        "known_usage_calls": 8,
+        "load_seconds": 0.022971500000000002,
+        "observed_client_wall_seconds": 137.75100000000384,
+        "observed_generated_tokens": 1498,
+        "observed_generation_seconds": 68.589332,
+        "observed_load_seconds": 0.022971500000000002,
+        "observed_prefill_seconds": 68.800107,
+        "observed_total_tokens": 8249,
+        "prefill_seconds": 68.800107,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {
+          "ok": 8
+        },
+        "total_tokens": 8249,
+        "trials": 2,
+        "trials_with_cost_records": 2,
+        "unknown_usage_calls": 0
+      },
+      "successful": {
+        "attempted_calls": 30,
+        "client_wall_seconds": 497.80100000000675,
+        "generated_tokens": 4243,
+        "generation_seconds": 198.715304,
+        "known_duration_calls": {
+          "client_wall_seconds": 30,
+          "generation_seconds": 30,
+          "load_seconds": 30,
+          "prefill_seconds": 30
+        },
+        "known_usage_calls": 30,
+        "load_seconds": 0.0986543,
+        "observed_client_wall_seconds": 497.80100000000675,
+        "observed_generated_tokens": 4243,
+        "observed_generation_seconds": 198.715304,
+        "observed_load_seconds": 0.0986543,
+        "observed_prefill_seconds": 297.72898200000003,
+        "observed_total_tokens": 25740,
+        "prefill_seconds": 297.72898200000003,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {
+          "ok": 30
+        },
+        "total_tokens": 25740,
+        "trials": 14,
+        "trials_with_cost_records": 14,
+        "unknown_usage_calls": 0
+      },
+      "unresolved_or_unexecuted": {
+        "attempted_calls": 0,
+        "client_wall_seconds": null,
+        "generated_tokens": null,
+        "generation_seconds": null,
+        "known_duration_calls": {
+          "client_wall_seconds": 0,
+          "generation_seconds": 0,
+          "load_seconds": 0,
+          "prefill_seconds": 0
+        },
+        "known_usage_calls": 0,
+        "load_seconds": null,
+        "observed_client_wall_seconds": 0.0,
+        "observed_generated_tokens": 0,
+        "observed_generation_seconds": 0.0,
+        "observed_load_seconds": 0.0,
+        "observed_prefill_seconds": 0.0,
+        "observed_total_tokens": 0,
+        "prefill_seconds": null,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {},
+        "total_tokens": null,
+        "trials": 0,
+        "trials_with_cost_records": 0,
+        "unknown_usage_calls": 0
+      }
+    },
+    "qwen3.6:35b-a3b/A": {
+      "all_planned": {
+        "attempted_calls": 55,
+        "client_wall_seconds": 1433.5019999999931,
+        "generated_tokens": 10652,
+        "generation_seconds": 925.2881839990001,
+        "known_duration_calls": {
+          "client_wall_seconds": 55,
+          "generation_seconds": 55,
+          "load_seconds": 55,
+          "prefill_seconds": 55
+        },
+        "known_usage_calls": 55,
+        "load_seconds": 84.52078339999998,
+        "observed_client_wall_seconds": 1433.5019999999931,
+        "observed_generated_tokens": 10652,
+        "observed_generation_seconds": 925.2881839990001,
+        "observed_load_seconds": 84.52078339999998,
+        "observed_prefill_seconds": 420.25620399999997,
+        "observed_total_tokens": 43035,
+        "prefill_seconds": 420.25620399999997,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {
+          "ok": 55
+        },
+        "total_tokens": 43035,
+        "trials": 16,
+        "trials_with_cost_records": 16,
+        "unknown_usage_calls": 0
+      },
+      "known_failed": {
+        "attempted_calls": 55,
+        "client_wall_seconds": 1433.5019999999931,
+        "generated_tokens": 10652,
+        "generation_seconds": 925.2881839990001,
+        "known_duration_calls": {
+          "client_wall_seconds": 55,
+          "generation_seconds": 55,
+          "load_seconds": 55,
+          "prefill_seconds": 55
+        },
+        "known_usage_calls": 55,
+        "load_seconds": 84.52078339999998,
+        "observed_client_wall_seconds": 1433.5019999999931,
+        "observed_generated_tokens": 10652,
+        "observed_generation_seconds": 925.2881839990001,
+        "observed_load_seconds": 84.52078339999998,
+        "observed_prefill_seconds": 420.25620399999997,
+        "observed_total_tokens": 43035,
+        "prefill_seconds": 420.25620399999997,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {
+          "ok": 55
+        },
+        "total_tokens": 43035,
+        "trials": 16,
+        "trials_with_cost_records": 16,
+        "unknown_usage_calls": 0
+      },
+      "successful": {
+        "attempted_calls": 0,
+        "client_wall_seconds": null,
+        "generated_tokens": null,
+        "generation_seconds": null,
+        "known_duration_calls": {
+          "client_wall_seconds": 0,
+          "generation_seconds": 0,
+          "load_seconds": 0,
+          "prefill_seconds": 0
+        },
+        "known_usage_calls": 0,
+        "load_seconds": null,
+        "observed_client_wall_seconds": 0.0,
+        "observed_generated_tokens": 0,
+        "observed_generation_seconds": 0.0,
+        "observed_load_seconds": 0.0,
+        "observed_prefill_seconds": 0.0,
+        "observed_total_tokens": 0,
+        "prefill_seconds": null,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {},
+        "total_tokens": null,
+        "trials": 0,
+        "trials_with_cost_records": 0,
+        "unknown_usage_calls": 0
+      },
+      "unresolved_or_unexecuted": {
+        "attempted_calls": 0,
+        "client_wall_seconds": null,
+        "generated_tokens": null,
+        "generation_seconds": null,
+        "known_duration_calls": {
+          "client_wall_seconds": 0,
+          "generation_seconds": 0,
+          "load_seconds": 0,
+          "prefill_seconds": 0
+        },
+        "known_usage_calls": 0,
+        "load_seconds": null,
+        "observed_client_wall_seconds": 0.0,
+        "observed_generated_tokens": 0,
+        "observed_generation_seconds": 0.0,
+        "observed_load_seconds": 0.0,
+        "observed_prefill_seconds": 0.0,
+        "observed_total_tokens": 0,
+        "prefill_seconds": null,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {},
+        "total_tokens": null,
+        "trials": 0,
+        "trials_with_cost_records": 0,
+        "unknown_usage_calls": 0
+      }
+    },
+    "qwen3.6:35b-a3b/B": {
+      "all_planned": {
+        "attempted_calls": 79,
+        "client_wall_seconds": 1878.9990000000544,
+        "generated_tokens": 14147,
+        "generation_seconds": 1246.155076998,
+        "known_duration_calls": {
+          "client_wall_seconds": 79,
+          "generation_seconds": 79,
+          "load_seconds": 79,
+          "prefill_seconds": 79
+        },
+        "known_usage_calls": 79,
+        "load_seconds": 0.2118771,
+        "observed_client_wall_seconds": 1878.9990000000544,
+        "observed_generated_tokens": 14147,
+        "observed_generation_seconds": 1246.155076998,
+        "observed_load_seconds": 0.2118771,
+        "observed_prefill_seconds": 627.421502999,
+        "observed_total_tokens": 63089,
+        "prefill_seconds": 627.421502999,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {
+          "ok": 79
+        },
+        "total_tokens": 63089,
+        "trials": 16,
+        "trials_with_cost_records": 16,
+        "unknown_usage_calls": 0
+      },
+      "known_failed": {
+        "attempted_calls": 32,
+        "client_wall_seconds": 731.1250000000437,
+        "generated_tokens": 5587,
+        "generation_seconds": 494.2654179990001,
+        "known_duration_calls": {
+          "client_wall_seconds": 32,
+          "generation_seconds": 32,
+          "load_seconds": 32,
+          "prefill_seconds": 32
+        },
+        "known_usage_calls": 32,
+        "load_seconds": 0.08771340000000001,
+        "observed_client_wall_seconds": 731.1250000000437,
+        "observed_generated_tokens": 5587,
+        "observed_generation_seconds": 494.2654179990001,
+        "observed_load_seconds": 0.08771340000000001,
+        "observed_prefill_seconds": 234.609097,
+        "observed_total_tokens": 24574,
+        "prefill_seconds": 234.609097,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {
+          "ok": 32
+        },
+        "total_tokens": 24574,
+        "trials": 6,
+        "trials_with_cost_records": 6,
+        "unknown_usage_calls": 0
+      },
+      "successful": {
+        "attempted_calls": 47,
+        "client_wall_seconds": 1147.8740000000107,
+        "generated_tokens": 8560,
+        "generation_seconds": 751.8896589990001,
+        "known_duration_calls": {
+          "client_wall_seconds": 47,
+          "generation_seconds": 47,
+          "load_seconds": 47,
+          "prefill_seconds": 47
+        },
+        "known_usage_calls": 47,
+        "load_seconds": 0.1241637,
+        "observed_client_wall_seconds": 1147.8740000000107,
+        "observed_generated_tokens": 8560,
+        "observed_generation_seconds": 751.8896589990001,
+        "observed_load_seconds": 0.1241637,
+        "observed_prefill_seconds": 392.81240599899996,
+        "observed_total_tokens": 38515,
+        "prefill_seconds": 392.81240599899996,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {
+          "ok": 47
+        },
+        "total_tokens": 38515,
+        "trials": 10,
+        "trials_with_cost_records": 10,
+        "unknown_usage_calls": 0
+      },
+      "unresolved_or_unexecuted": {
+        "attempted_calls": 0,
+        "client_wall_seconds": null,
+        "generated_tokens": null,
+        "generation_seconds": null,
+        "known_duration_calls": {
+          "client_wall_seconds": 0,
+          "generation_seconds": 0,
+          "load_seconds": 0,
+          "prefill_seconds": 0
+        },
+        "known_usage_calls": 0,
+        "load_seconds": null,
+        "observed_client_wall_seconds": 0.0,
+        "observed_generated_tokens": 0,
+        "observed_generation_seconds": 0.0,
+        "observed_load_seconds": 0.0,
+        "observed_prefill_seconds": 0.0,
+        "observed_total_tokens": 0,
+        "prefill_seconds": null,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {},
+        "total_tokens": null,
+        "trials": 0,
+        "trials_with_cost_records": 0,
+        "unknown_usage_calls": 0
+      }
+    },
+    "qwen3.6:35b-a3b/C": {
+      "all_planned": {
+        "attempted_calls": 32,
+        "client_wall_seconds": 908.0159999999887,
+        "generated_tokens": 6647,
+        "generation_seconds": 589.055845,
+        "known_duration_calls": {
+          "client_wall_seconds": 32,
+          "generation_seconds": 32,
+          "load_seconds": 32,
+          "prefill_seconds": 32
+        },
+        "known_usage_calls": 32,
+        "load_seconds": 0.0877331,
+        "observed_client_wall_seconds": 908.0159999999887,
+        "observed_generated_tokens": 6647,
+        "observed_generation_seconds": 589.055845,
+        "observed_load_seconds": 0.0877331,
+        "observed_prefill_seconds": 316.738561,
+        "observed_total_tokens": 29879,
+        "prefill_seconds": 316.738561,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {
+          "ok": 32
+        },
+        "total_tokens": 29879,
+        "trials": 16,
+        "trials_with_cost_records": 16,
+        "unknown_usage_calls": 0
+      },
+      "known_failed": {
+        "attempted_calls": 2,
+        "client_wall_seconds": 72.76600000000326,
+        "generated_tokens": 549,
+        "generation_seconds": 48.71114,
+        "known_duration_calls": {
+          "client_wall_seconds": 2,
+          "generation_seconds": 2,
+          "load_seconds": 2,
+          "prefill_seconds": 2
+        },
+        "known_usage_calls": 2,
+        "load_seconds": 0.0052227,
+        "observed_client_wall_seconds": 72.76600000000326,
+        "observed_generated_tokens": 549,
+        "observed_generation_seconds": 48.71114,
+        "observed_load_seconds": 0.0052227,
+        "observed_prefill_seconds": 23.919552,
+        "observed_total_tokens": 2300,
+        "prefill_seconds": 23.919552,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {
+          "ok": 2
+        },
+        "total_tokens": 2300,
+        "trials": 1,
+        "trials_with_cost_records": 1,
+        "unknown_usage_calls": 0
+      },
+      "successful": {
+        "attempted_calls": 30,
+        "client_wall_seconds": 835.2499999999854,
+        "generated_tokens": 6098,
+        "generation_seconds": 540.344705,
+        "known_duration_calls": {
+          "client_wall_seconds": 30,
+          "generation_seconds": 30,
+          "load_seconds": 30,
+          "prefill_seconds": 30
+        },
+        "known_usage_calls": 30,
+        "load_seconds": 0.0825104,
+        "observed_client_wall_seconds": 835.2499999999854,
+        "observed_generated_tokens": 6098,
+        "observed_generation_seconds": 540.344705,
+        "observed_load_seconds": 0.0825104,
+        "observed_prefill_seconds": 292.819009,
+        "observed_total_tokens": 27579,
+        "prefill_seconds": 292.819009,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {
+          "ok": 30
+        },
+        "total_tokens": 27579,
+        "trials": 15,
+        "trials_with_cost_records": 15,
+        "unknown_usage_calls": 0
+      },
+      "unresolved_or_unexecuted": {
+        "attempted_calls": 0,
+        "client_wall_seconds": null,
+        "generated_tokens": null,
+        "generation_seconds": null,
+        "known_duration_calls": {
+          "client_wall_seconds": 0,
+          "generation_seconds": 0,
+          "load_seconds": 0,
+          "prefill_seconds": 0
+        },
+        "known_usage_calls": 0,
+        "load_seconds": null,
+        "observed_client_wall_seconds": 0.0,
+        "observed_generated_tokens": 0,
+        "observed_generation_seconds": 0.0,
+        "observed_load_seconds": 0.0,
+        "observed_prefill_seconds": 0.0,
+        "observed_total_tokens": 0,
+        "prefill_seconds": null,
+        "reserved_unknown_total_tokens": 0,
+        "status_counts": {},
+        "total_tokens": null,
+        "trials": 0,
+        "trials_with_cost_records": 0,
+        "unknown_usage_calls": 0
+      }
+    }
+  },
+  "controller_sampling": {
+    "known_components": 3666,
+    "missing_components": 0,
+    "observed_sampling_wall_seconds": 2789.252000000415,
+    "resource_records": 1833,
+    "scope": "Observed pre-dispatch guard/inventory plus post-receipt sampling; excludes model wait and other controller work"
+  },
+  "declared_global_wall_seconds": 172800,
+  "energy_and_price": "not measured",
+  "ledger_configuration_events": [
+    {
+      "config": {
+        "freeze_id": "0a9ee79369effcfd635fa3632927e30a62fe45b0af360896ebe81a41154e3e35",
+        "limits": {
+          "connect_timeout_seconds": 30,
+          "global_calls": 4000,
+          "global_generated_tokens": 4000000,
+          "global_total_tokens": 40000000,
+          "global_wall_seconds": 172800,
+          "max_disk_bytes": 4294967296,
+          "max_request_bytes": 262144,
+          "max_response_bytes": 65536,
+          "maximum_request_wall_seconds": 3600,
+          "read_until_deadline": true,
+          "request_wall_seconds": 1800,
+          "socket_timeout_seconds": 3600,
+          "trial_calls": 10,
+          "trial_total_tokens": 122880,
+          "trial_wall_seconds": 7200
+        },
+        "run_id": "egr-024-local-ollama-v1"
+      },
+      "created_at": "2026-10-05T14:56:49.103548+00:00",
+      "event": "config"
+    },
+    {
+      "authorization": "User prompt section 10 requires an interrupted post-freeze correction to use a new protocol and unused confirmation material while retaining all cumulative campaign costs.",
+      "config": {
+        "freeze_id": "7fb320dc8436ba8d8a41da358ad5c4189ecdf297c2dab7ae763fcc3e5d348ad8",
+        "limits": {
+          "connect_timeout_seconds": 30,
+          "global_calls": 4000,
+          "global_generated_tokens": 4000000,
+          "global_total_tokens": 40000000,
+          "global_wall_seconds": 172800,
+          "max_disk_bytes": 4294967296,
+          "max_request_bytes": 262144,
+          "max_response_bytes": 65536,
+          "maximum_request_wall_seconds": 3600,
+          "read_until_deadline": true,
+          "request_wall_seconds": 1800,
+          "socket_timeout_seconds": 3600,
+          "trial_calls": 10,
+          "trial_total_tokens": 122880,
+          "trial_wall_seconds": 7200
+        },
+        "run_id": "egr-024-local-ollama-v2"
+      },
+      "created_at": "2026-10-05T20:58:29.625362+00:00",
+      "event": "protocol_revision",
+      "from_config_sha256": "6d0eb4b2fa110fca3ced8b573030de70a647764b011f48e367671f29d09ed9c6",
+      "prior_event_count": 1915,
+      "prior_events_canonical_sha256": "8131b837c63a7eed4f336d6769cfc4e7a1415b7f15f62f33fe24b3ac28a63b29",
+      "to_config_sha256": "5970be963bc60cc47dd976b12e0600050bceb68200c3473982b08c8e37050e04"
+    }
+  ],
+  "ledger_sha256": "91cef9c9f8b8d754900a09ca6152461f9d619bd004dc859c3a1d08d898023d09",
+  "legacy_metric_mapping": "evidence_supported_completion equals verified_supported_completion; answer_grounded_correct excludes model-review acceptance",
+  "missing_terminal_keys": 0,
+  "no_cross_model_absolute_timing_claim": true,
+  "original_first_reservation_epoch": 1791212209.9767654,
+  "outcomes": {
+    "gemma4:e4b": {
+      "A": {
+        "answer_correct": 7,
+        "answer_grounded_correct": 5,
+        "answerable": {
+          "assessed": 12,
+          "planned": 12,
+          "verified_supported_completion": 3
+        },
+        "evidence_supported_completion": 4,
+        "executed": 16,
+        "execution_counts": {
+          "completed": 16
+        },
+        "false_acceptance": 2,
+        "grounded_abstention": 2,
+        "insufficient": {
+          "assessed": 4,
+          "correct_grounded_abstention": 2,
+          "planned": 4
+        },
+        "known_attempt_termination": 16,
+        "known_insufficient_parents": 4,
+        "known_usage": 16,
+        "oracle_assessed": 16,
+        "pending": 0,
+        "reviewer_false_pass": 2,
+        "scheduled": 16,
+        "stop_counts": {
+          "router_stopped": 16
+        },
+        "unexecuted": 0,
+        "verified_supported_completion": 4
+      },
+      "B": {
+        "answer_correct": 12,
+        "answer_grounded_correct": 10,
+        "answerable": {
+          "assessed": 12,
+          "planned": 12,
+          "verified_supported_completion": 8
+        },
+        "evidence_supported_completion": 9,
+        "executed": 16,
+        "execution_counts": {
+          "completed": 16
+        },
+        "false_acceptance": 1,
+        "grounded_abstention": 2,
+        "insufficient": {
+          "assessed": 4,
+          "correct_grounded_abstention": 2,
+          "planned": 4
+        },
+        "known_attempt_termination": 16,
+        "known_insufficient_parents": 4,
+        "known_usage": 16,
+        "oracle_assessed": 16,
+        "pending": 0,
+        "reviewer_false_pass": 1,
+        "scheduled": 16,
+        "stop_counts": {
+          "router_stopped": 16
+        },
+        "unexecuted": 0,
+        "verified_supported_completion": 9
+      },
+      "C": {
+        "answer_correct": 14,
+        "answer_grounded_correct": 14,
+        "answerable": {
+          "assessed": 12,
+          "planned": 12,
+          "verified_supported_completion": 10
+        },
+        "evidence_supported_completion": 14,
+        "executed": 16,
+        "execution_counts": {
+          "completed": 16
+        },
+        "false_acceptance": 2,
+        "grounded_abstention": 4,
+        "insufficient": {
+          "assessed": 4,
+          "correct_grounded_abstention": 4,
+          "planned": 4
+        },
+        "known_attempt_termination": 16,
+        "known_insufficient_parents": 4,
+        "known_usage": 16,
+        "oracle_assessed": 16,
+        "pending": 0,
+        "reviewer_false_pass": 2,
+        "scheduled": 16,
+        "stop_counts": {
+          "router_stopped": 16
+        },
+        "unexecuted": 0,
+        "verified_supported_completion": 14
+      }
+    },
+    "qwen3.6:35b-a3b": {
+      "A": {
+        "answer_correct": 3,
+        "answer_grounded_correct": 0,
+        "answerable": {
+          "assessed": 12,
+          "planned": 12,
+          "verified_supported_completion": 0
+        },
+        "evidence_supported_completion": 0,
+        "executed": 16,
+        "execution_counts": {
+          "completed": 16
+        },
+        "false_acceptance": 15,
+        "grounded_abstention": 0,
+        "insufficient": {
+          "assessed": 4,
+          "correct_grounded_abstention": 0,
+          "planned": 4
+        },
+        "known_attempt_termination": 16,
+        "known_insufficient_parents": 4,
+        "known_usage": 16,
+        "oracle_assessed": 16,
+        "pending": 0,
+        "reviewer_false_pass": 15,
+        "scheduled": 16,
+        "stop_counts": {
+          "router_stopped": 16
+        },
+        "unexecuted": 0,
+        "verified_supported_completion": 0
+      },
+      "B": {
+        "answer_correct": 12,
+        "answer_grounded_correct": 10,
+        "answerable": {
+          "assessed": 12,
+          "planned": 12,
+          "verified_supported_completion": 8
+        },
+        "evidence_supported_completion": 10,
+        "executed": 16,
+        "execution_counts": {
+          "completed": 16
+        },
+        "false_acceptance": 4,
+        "grounded_abstention": 2,
+        "insufficient": {
+          "assessed": 4,
+          "correct_grounded_abstention": 2,
+          "planned": 4
+        },
+        "known_attempt_termination": 16,
+        "known_insufficient_parents": 4,
+        "known_usage": 16,
+        "oracle_assessed": 16,
+        "pending": 0,
+        "reviewer_false_pass": 5,
+        "scheduled": 16,
+        "stop_counts": {
+          "router_stopped": 16
+        },
+        "unexecuted": 0,
+        "verified_supported_completion": 10
+      },
+      "C": {
+        "answer_correct": 15,
+        "answer_grounded_correct": 15,
+        "answerable": {
+          "assessed": 12,
+          "planned": 12,
+          "verified_supported_completion": 12
+        },
+        "evidence_supported_completion": 15,
+        "executed": 16,
+        "execution_counts": {
+          "completed": 16
+        },
+        "false_acceptance": 1,
+        "grounded_abstention": 3,
+        "insufficient": {
+          "assessed": 4,
+          "correct_grounded_abstention": 3,
+          "planned": 4
+        },
+        "known_attempt_termination": 16,
+        "known_insufficient_parents": 4,
+        "known_usage": 16,
+        "oracle_assessed": 16,
+        "pending": 0,
+        "reviewer_false_pass": 1,
+        "scheduled": 16,
+        "stop_counts": {
+          "router_stopped": 16
+        },
+        "unexecuted": 0,
+        "verified_supported_completion": 15
+      }
+    }
+  },
+  "planned_auxiliary_keys": 0,
+  "planned_confirmation_keys": 96,
+  "planned_sensitivity_keys": 64,
+  "primary_seed": 24042017,
+  "protocol_id": "egr-024-local-ollama-v2",
+  "rows": 184,
+  "stop_sensitivity": {
+    "gemma4:e4b": {
+      "recovery_minus_strict": {
+        "A": {
+          "metrics": {
+            "false_acceptance": {
+              "all_planned_unresolved_bounds": [
+                0.125,
+                0.125
+              ],
+              "mean_difference": 0.125,
+              "negative_differences": 0,
+              "parent_bootstrap_95_interval": [
+                0.0,
+                0.375
+              ],
+              "positive_differences": 1,
+              "ties": 7
+            },
+            "grounded_abstention": {
+              "all_planned_unresolved_bounds": [
+                -0.125,
+                -0.125
+              ],
+              "mean_difference": -0.125,
+              "negative_differences": 1,
+              "parent_bootstrap_95_interval": [
+                -0.375,
+                0.0
+              ],
+              "positive_differences": 0,
+              "ties": 7
+            },
+            "verified_supported_completion": {
+              "all_planned_unresolved_bounds": [
+                -0.25,
+                -0.25
+              ],
+              "mean_difference": -0.25,
+              "negative_differences": 2,
+              "parent_bootstrap_95_interval": [
+                -0.5,
+                0.0
+              ],
+              "positive_differences": 0,
+              "ties": 6
+            }
+          },
+          "paired_assessed_parents": 8,
+          "planned_parents": 8
+        },
+        "B": {
+          "metrics": {
+            "false_acceptance": {
+              "all_planned_unresolved_bounds": [
+                0.125,
+                0.125
+              ],
+              "mean_difference": 0.125,
+              "negative_differences": 0,
+              "parent_bootstrap_95_interval": [
+                0.0,
+                0.375
+              ],
+              "positive_differences": 1,
+              "ties": 7
+            },
+            "grounded_abstention": {
+              "all_planned_unresolved_bounds": [
+                0.0,
+                0.0
+              ],
+              "mean_difference": 0.0,
+              "negative_differences": 0,
+              "parent_bootstrap_95_interval": [
+                0.0,
+                0.0
+              ],
+              "positive_differences": 0,
+              "ties": 8
+            },
+            "verified_supported_completion": {
+              "all_planned_unresolved_bounds": [
+                0.0,
+                0.0
+              ],
+              "mean_difference": 0.0,
+              "negative_differences": 0,
+              "parent_bootstrap_95_interval": [
+                0.0,
+                0.0
+              ],
+              "positive_differences": 0,
+              "ties": 8
+            }
+          },
+          "paired_assessed_parents": 8,
+          "planned_parents": 8
+        }
+      },
+      "selectors": {
+        "sensitivity-bounded": {
+          "additional_callbacks": 0,
+          "continuation_triggered_trials": 0,
+          "costs": {
+            "attempted_calls": 98,
+            "client_wall_seconds": 1404.905000000057,
+            "generated_tokens": 13213,
+            "generation_seconds": 654.4616669980002,
+            "known_duration_calls": {
+              "client_wall_seconds": 98,
+              "generation_seconds": 98,
+              "load_seconds": 98,
+              "prefill_seconds": 98
+            },
+            "known_usage_calls": 98,
+            "load_seconds": 19.2026499,
+            "observed_client_wall_seconds": 1404.905000000057,
+            "observed_generated_tokens": 13213,
+            "observed_generation_seconds": 654.4616669980002,
+            "observed_load_seconds": 19.2026499,
+            "observed_prefill_seconds": 727.4372479970001,
+            "observed_total_tokens": 74912,
+            "prefill_seconds": 727.4372479970001,
+            "reserved_unknown_total_tokens": 0,
+            "status_counts": {
+              "ok": 98
+            },
+            "total_tokens": 74912,
+            "trials": 16,
+            "trials_with_cost_records": 16,
+            "unknown_usage_calls": 0
+          },
+          "executed_trials": 16,
+          "metrics": {
+            "false_acceptance": {
+              "all_planned_unresolved_bounds": [
+                0.0,
+                0.0
+              ],
+              "mean_difference": 0.0,
+              "negative_differences": 1,
+              "parent_bootstrap_95_interval": [
+                -0.375,
+                0.375
+              ],
+              "positive_differences": 1,
+              "ties": 6
+            },
+            "grounded_abstention": {
+              "all_planned_unresolved_bounds": [
+                0.0,
+                0.0
+              ],
+              "mean_difference": 0.0,
+              "negative_differences": 0,
+              "parent_bootstrap_95_interval": [
+                0.0,
+                0.0
+              ],
+              "positive_differences": 0,
+              "ties": 8
+            },
+            "verified_supported_completion": {
+              "all_planned_unresolved_bounds": [
+                -0.25,
+                -0.25
+              ],
+              "mean_difference": -0.25,
+              "negative_differences": 2,
+              "parent_bootstrap_95_interval": [
+                -0.625,
+                0.0
+              ],
+              "positive_differences": 0,
+              "ties": 6
+            }
+          },
+          "oracle_assessed_trials": 16,
+          "paired_assessed_parents": 8,
+          "planned_parents": 8,
+          "scheduled_trials": 16,
+          "trigger_fault_counts": {}
+        },
+        "sensitivity-strict": {
+          "additional_callbacks": 0,
+          "continuation_triggered_trials": 0,
+          "costs": {
+            "attempted_calls": 100,
+            "client_wall_seconds": 1427.6919999999518,
+            "generated_tokens": 12987,
+            "generation_seconds": 658.5288139989999,
+            "known_duration_calls": {
+              "client_wall_seconds": 100,
+              "generation_seconds": 100,
+              "load_seconds": 100,
+              "prefill_seconds": 100
+            },
+            "known_usage_calls": 100,
+            "load_seconds": 19.468707099999996,
+            "observed_client_wall_seconds": 1427.6919999999518,
+            "observed_generated_tokens": 12987,
+            "observed_generation_seconds": 658.5288139989999,
+            "observed_load_seconds": 19.468707099999996,
+            "observed_prefill_seconds": 745.882332997,
+            "observed_total_tokens": 76336,
+            "prefill_seconds": 745.882332997,
+            "reserved_unknown_total_tokens": 0,
+            "status_counts": {
+              "ok": 100
+            },
+            "total_tokens": 76336,
+            "trials": 16,
+            "trials_with_cost_records": 16,
+            "unknown_usage_calls": 0
+          },
+          "executed_trials": 16,
+          "metrics": {
+            "false_acceptance": {
+              "all_planned_unresolved_bounds": [
+                0.0,
+                0.0
+              ],
+              "mean_difference": 0.0,
+              "negative_differences": 0,
+              "parent_bootstrap_95_interval": [
+                0.0,
+                0.0
+              ],
+              "positive_differences": 0,
+              "ties": 8
+            },
+            "grounded_abstention": {
+              "all_planned_unresolved_bounds": [
+                0.125,
+                0.125
+              ],
+              "mean_difference": 0.125,
+              "negative_differences": 0,
+              "parent_bootstrap_95_interval": [
+                0.0,
+                0.375
+              ],
+              "positive_differences": 1,
+              "ties": 7
+            },
+            "verified_supported_completion": {
+              "all_planned_unresolved_bounds": [
+                0.0,
+                0.0
+              ],
+              "mean_difference": 0.0,
+              "negative_differences": 2,
+              "parent_bootstrap_95_interval": [
+                -0.5,
+                0.5
+              ],
+              "positive_differences": 2,
+              "ties": 4
+            }
+          },
+          "oracle_assessed_trials": 16,
+          "paired_assessed_parents": 8,
+          "planned_parents": 8,
+          "scheduled_trials": 16,
+          "trigger_fault_counts": {}
+        }
+      }
+    },
+    "qwen3.6:35b-a3b": {
+      "recovery_minus_strict": {
+        "A": {
+          "metrics": {
+            "false_acceptance": {
+              "all_planned_unresolved_bounds": [
+                -0.125,
+                -0.125
+              ],
+              "mean_difference": -0.125,
+              "negative_differences": 1,
+              "parent_bootstrap_95_interval": [
+                -0.375,
+                0.0
+              ],
+              "positive_differences": 0,
+              "ties": 7
+            },
+            "grounded_abstention": {
+              "all_planned_unresolved_bounds": [
+                0.0,
+                0.0
+              ],
+              "mean_difference": 0.0,
+              "negative_differences": 0,
+              "parent_bootstrap_95_interval": [
+                0.0,
+                0.0
+              ],
+              "positive_differences": 0,
+              "ties": 8
+            },
+            "verified_supported_completion": {
+              "all_planned_unresolved_bounds": [
+                0.0,
+                0.0
+              ],
+              "mean_difference": 0.0,
+              "negative_differences": 0,
+              "parent_bootstrap_95_interval": [
+                0.0,
+                0.0
+              ],
+              "positive_differences": 0,
+              "ties": 8
+            }
+          },
+          "paired_assessed_parents": 8,
+          "planned_parents": 8
+        },
+        "B": {
+          "metrics": {
+            "false_acceptance": {
+              "all_planned_unresolved_bounds": [
+                0.25,
+                0.25
+              ],
+              "mean_difference": 0.25,
+              "negative_differences": 0,
+              "parent_bootstrap_95_interval": [
+                0.0,
+                0.625
+              ],
+              "positive_differences": 2,
+              "ties": 6
+            },
+            "grounded_abstention": {
+              "all_planned_unresolved_bounds": [
+                0.0,
+                0.0
+              ],
+              "mean_difference": 0.0,
+              "negative_differences": 0,
+              "parent_bootstrap_95_interval": [
+                0.0,
+                0.0
+              ],
+              "positive_differences": 0,
+              "ties": 8
+            },
+            "verified_supported_completion": {
+              "all_planned_unresolved_bounds": [
+                -0.125,
+                -0.125
+              ],
+              "mean_difference": -0.125,
+              "negative_differences": 1,
+              "parent_bootstrap_95_interval": [
+                -0.375,
+                0.0
+              ],
+              "positive_differences": 0,
+              "ties": 7
+            }
+          },
+          "paired_assessed_parents": 8,
+          "planned_parents": 8
+        }
+      },
+      "selectors": {
+        "sensitivity-bounded": {
+          "additional_callbacks": 0,
+          "continuation_triggered_trials": 0,
+          "costs": {
+            "attempted_calls": 69,
+            "client_wall_seconds": 1759.671000000002,
+            "generated_tokens": 12714,
+            "generation_seconds": 1128.170996,
+            "known_duration_calls": {
+              "client_wall_seconds": 69,
+              "generation_seconds": 69,
+              "load_seconds": 69,
+              "prefill_seconds": 69
+            },
+            "known_usage_calls": 69,
+            "load_seconds": 102.6747996,
+            "observed_client_wall_seconds": 1759.671000000002,
+            "observed_generated_tokens": 12714,
+            "observed_generation_seconds": 1128.170996,
+            "observed_load_seconds": 102.6747996,
+            "observed_prefill_seconds": 524.3286369969999,
+            "observed_total_tokens": 54435,
+            "prefill_seconds": 524.3286369969999,
+            "reserved_unknown_total_tokens": 0,
+            "status_counts": {
+              "ok": 69
+            },
+            "total_tokens": 54435,
+            "trials": 16,
+            "trials_with_cost_records": 16,
+            "unknown_usage_calls": 0
+          },
+          "executed_trials": 16,
+          "metrics": {
+            "false_acceptance": {
+              "all_planned_unresolved_bounds": [
+                0.5,
+                0.5
+              ],
+              "mean_difference": 0.5,
+              "negative_differences": 1,
+              "parent_bootstrap_95_interval": [
+                0.0,
+                1.0
+              ],
+              "positive_differences": 5,
+              "ties": 2
+            },
+            "grounded_abstention": {
+              "all_planned_unresolved_bounds": [
+                -0.25,
+                -0.25
+              ],
+              "mean_difference": -0.25,
+              "negative_differences": 2,
+              "parent_bootstrap_95_interval": [
+                -0.5,
+                0.0
+              ],
+              "positive_differences": 0,
+              "ties": 6
+            },
+            "verified_supported_completion": {
+              "all_planned_unresolved_bounds": [
+                -0.5,
+                -0.5
+              ],
+              "mean_difference": -0.5,
+              "negative_differences": 4,
+              "parent_bootstrap_95_interval": [
+                -0.875,
+                -0.125
+              ],
+              "positive_differences": 0,
+              "ties": 4
+            }
+          },
+          "oracle_assessed_trials": 16,
+          "paired_assessed_parents": 8,
+          "planned_parents": 8,
+          "scheduled_trials": 16,
+          "trigger_fault_counts": {}
+        },
+        "sensitivity-strict": {
+          "additional_callbacks": 0,
+          "continuation_triggered_trials": 0,
+          "costs": {
+            "attempted_calls": 65,
+            "client_wall_seconds": 1631.3129999999655,
+            "generated_tokens": 11969,
+            "generation_seconds": 1058.3789809999998,
+            "known_duration_calls": {
+              "client_wall_seconds": 65,
+              "generation_seconds": 65,
+              "load_seconds": 65,
+              "prefill_seconds": 65
+            },
+            "known_usage_calls": 65,
+            "load_seconds": 111.40129729999998,
+            "observed_client_wall_seconds": 1631.3129999999655,
+            "observed_generated_tokens": 11969,
+            "observed_generation_seconds": 1058.3789809999998,
+            "observed_load_seconds": 111.40129729999998,
+            "observed_prefill_seconds": 457.062708,
+            "observed_total_tokens": 49188,
+            "prefill_seconds": 457.062708,
+            "reserved_unknown_total_tokens": 0,
+            "status_counts": {
+              "ok": 65
+            },
+            "total_tokens": 49188,
+            "trials": 16,
+            "trials_with_cost_records": 16,
+            "unknown_usage_calls": 0
+          },
+          "executed_trials": 16,
+          "metrics": {
+            "false_acceptance": {
+              "all_planned_unresolved_bounds": [
+                0.875,
+                0.875
+              ],
+              "mean_difference": 0.875,
+              "negative_differences": 0,
+              "parent_bootstrap_95_interval": [
+                0.625,
+                1.0
+              ],
+              "positive_differences": 7,
+              "ties": 1
+            },
+            "grounded_abstention": {
+              "all_planned_unresolved_bounds": [
+                -0.25,
+                -0.25
+              ],
+              "mean_difference": -0.25,
+              "negative_differences": 2,
+              "parent_bootstrap_95_interval": [
+                -0.5,
+                0.0
+              ],
+              "positive_differences": 0,
+              "ties": 6
+            },
+            "verified_supported_completion": {
+              "all_planned_unresolved_bounds": [
+                -0.625,
+                -0.625
+              ],
+              "mean_difference": -0.625,
+              "negative_differences": 5,
+              "parent_bootstrap_95_interval": [
+                -0.875,
+                -0.25
+              ],
+              "positive_differences": 0,
+              "ties": 3
+            }
+          },
+          "oracle_assessed_trials": 16,
+          "paired_assessed_parents": 8,
+          "planned_parents": 8,
+          "scheduled_trials": 16,
+          "trigger_fault_counts": {}
+        }
+      }
+    }
+  },
+  "termination_markers": [],
+  "unknown_tokens_are_not_zero": true
+}

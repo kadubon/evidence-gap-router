@@ -1,5 +1,21 @@
 # Validation evidence and native profiles
 
+## v0.2.4 completed local measurement checks
+
+After all 96 main and 64 fresh sensitivity trials and the six-request custom
+example completed, the post-run gate confirmed exact equality for all 25 runtime
+and 10 harness files against the measured candidate, site-packages, Git and freeze.
+The cumulative 1,835 responses have known usage; pending/usage-unknown counts are
+zero. Owned-server cleanup was positively verified without touching shared servers.
+
+The final local locked sync, Ruff lint/format (119 files), mypy (14 modules) and
+source suite passed: **698 tests, no skips, in 31.05 seconds** on Windows x64 /
+Python 3.12.14. Safe extraction and model-free reanalysis verified all 5,785 raw
+manifest entries and four byte-equal result files, with zero model requests.
+Final distribution, exact-commit native CI and official public installation are
+distinct gates recorded in the later
+[Release verification](https://github.com/kadubon/evidence-gap-router/releases/download/v0.2.4/publication-verification-v0.2.4.json).
+
 ## v0.2.4 development validation
 
 The corrective implementation `11a1c54764edbc0e390473929182a911f9e127b0`
@@ -9,7 +25,8 @@ and mypy (14 SDK modules). The same ordinary candidate wheel then passed
 44 benchmark-smoke trials and three complete document examples (182 links).
 The initial optional-default receipt defect and its retained invalid confirmation
 are separate from the corrective protocol and its new freeze. Final exact-commit
-native release checks and public downloads are still pending in this snapshot.
+native release checks and public downloads follow this source snapshot; their
+actual outcomes are in the [Release verification](https://github.com/kadubon/evidence-gap-router/releases/download/v0.2.4/publication-verification-v0.2.4.json).
 
 The subsequent pre-freeze task-scope repair passed **697 source tests in 28.35 s**,
 Ruff check/format (119 files) and mypy (14 SDK modules). The earlier 696-test run
@@ -27,6 +44,17 @@ from the forecast.
 The same ordinary candidate passed 296 installed SDK regressions, **224 portable
 contracts in 15.98 s**, 44 benchmark-smoke trials and three document examples
 (183 links) on Windows x64. No live worker was running during these full gates.
+
+The corrective pre-confirmation byte check compared all 25 installed runtime
+files with the candidate, source and Git, and all 10 harness files with Git and
+the new freeze. Its measurement commit is
+`23dff942cfbbc76d73799893acaa3a394d70621f`, with freeze SHA256
+`3860d9d89f3ca0eeb1e5db6a24612a1d11075b44dde6d9b300244cc90c5a579c`.
+The ordinary candidate completed 24 new pilot trials (92 known calls, no faults).
+Actual template/tokenizer checks covered 1,335 inputs with zero generation and
+two charged empty preloads; maximum input plus output cap was Qwen 4,612 / Gemma
+4,222 against context 8,192. These are distinct live observations, not pytest
+counts. The original cumulative ledger had 1,099 known responses at this freeze.
 
 Immediately before confirmation, `bb6304e2f8b58b98feb9ce3010a0b8e2055eae57`
 passed **683 source tests in 28.18 seconds**, Ruff check/format (119 Python

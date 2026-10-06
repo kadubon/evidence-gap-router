@@ -5,7 +5,7 @@
 A small Python SDK that chooses the next acquisition or verification from
 missing evidence and unfinished checks in a finite, host-declared action set.
 
-Python **3.12+** · Apache-2.0 · [日本語](README.ja.md) · [Documentation](docs/index.md)
+Python **3.12+** · Apache-2.0 · [日本語](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/README.ja.md) · [Documentation](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/index.md)
 
 ## When to use it
 
@@ -27,7 +27,7 @@ egr demo --json
 ```
 
 These commands need no model or network after installation. The demo uses
-artificial data. [Getting started](docs/getting-started.md) creates actual UTF-8
+artificial data. [Getting started](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/getting-started.md) creates actual UTF-8
 CSV/JSON files, including quoted paths with spaces and Japanese characters,
 then checks them with `egr check-data`.
 
@@ -130,29 +130,46 @@ contract and inputs. An ID supplied by an output grants no authority.
 and unresolved domain requirements are separate. Pending attempts and unknown
 budgeted consumption block automatic continuation.
 
-See [Concepts](docs/design.md), [API](docs/api.md) and
-[snapshot/migration](docs/migration.md) for acquisition, invalidation, rechecking,
+See [Concepts](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/design.md), [API](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/api.md) and
+[snapshot/migration](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/migration.md) for acquisition, invalidation, rechecking,
 selectors and retained costs. Limited callback views are application disclosures,
 not a Python sandbox. The host owns input trust, effects, costs and single-writer use.
 
 ## Local Ollama experiment
 
-The optional [Ollama guide](docs/ollama-guide.md) uses source-level examples with
+The optional [Ollama guide](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-guide.md) uses source-level examples with
 an ordinary installed SDK and explicit local inference. Ollama is not required
 by core imports or the offline CLI. Model weights and user credentials are absent
 from the package; normal tests and release CI do not run model inference.
-
-The initial v0.2.4 confirmation exposed an optional-field receipt defect. Its
-results and costs are retained; a corrective protocol uses unused public
-instances and the original cumulative limits. Semantic criteria are unchanged.
-See the [current technical report](docs/ollama-experiment-v0.2.4.md),
-[Japanese summary](docs/ollama-experiment-v0.2.4.ja.md) and
-[archived v0.2.3 report](docs/ollama-experiment.md).
 
 A uses EGR ordering; B uses strong verify-first ordering with the same public
 runner, pool, permissions, callbacks and budgets. C is a pooled-information
 reference. The comparison concerns extra selection value within the shared
 feasibility mechanism, not independent agent frameworks or a model ranking.
 
-[Audit](docs/audit-024.md) · [Validation](docs/validation.md) ·
-[Releasing](docs/releasing.md) · [Security](SECURITY.md)
+Current local tags `qwen3.6:35b-a3b` and `gemma4:e4b` completed 96 main trials
+on one Windows CPU host. Each arm has 16 artificial parents: 12 answerable and
+four insufficient. Verified completion requires independently supported evidence
+and the current review/acceptance conditions.
+
+| Model | Arm | Answerable verified /12 | All verified /16 | False acceptance /16 |
+|---|---|---:|---:|---:|
+| Qwen | A | 0 | 0 | 15 |
+| Qwen | B | 8 | 10 | 4 |
+| Qwen | C | 12 | 15 | 1 |
+| Gemma | A | 3 | 4 | 2 |
+| Gemma | B | 8 | 9 | 1 |
+| Gemma | C | 10 | 14 | 2 |
+
+A underperformed B in this frozen profile. All main trials have known usage;
+there were zero unexecuted trials or transport/format faults. Small artificial
+tasks share development families; these results do not establish general
+performance. All 64 stop-sensitivity trials completed; recovery triggered zero
+times, so its benefit remains unmeasured.
+Initial invalid measurements and all expenses remain retained separately.
+See the [technical report](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-experiment-v0.2.4.md),
+[Japanese summary](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-experiment-v0.2.4.ja.md) and
+[archived v0.2.3 report](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/ollama-experiment.md).
+
+[Audit](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/audit-024.md) · [Validation](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/validation.md) ·
+[Releasing](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/docs/releasing.md) · [Security](https://github.com/kadubon/evidence-gap-router/blob/v0.2.4/SECURITY.md)
