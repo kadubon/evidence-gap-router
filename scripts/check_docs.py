@@ -40,8 +40,12 @@ def main() -> None:
             raise ValueError(f"Install version differs from this candidate: {name}")
     report = {"version": args.version, "local_links_checked": checked, "examples": []}
     if args.python:
-        python = args.python.resolve(strict=True)
-        if python.is_relative_to(root):
+        # Preserve a venv's interpreter symlink when launching: resolving the
+        # executable itself would select the base interpreter on POSIX.
+        python = args.python.absolute()
+        if not python.is_file():
+            raise FileNotFoundError(python)
+        if python.parent.resolve(strict=True).is_relative_to(root):
             raise ValueError("Example verification needs an ordinary environment outside checkout")
         with tempfile.TemporaryDirectory(prefix="egr-docs-") as temporary:
             directory = Path(temporary)

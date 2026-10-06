@@ -48,6 +48,16 @@ not establish a new defect in the SDK's acceptance, permission or helper rules.
 Those rules continue to use schema 2 and the public `plan/start/observe/step/run`
 interfaces. Long-call recovery is an explicit local experiment host policy.
 
+Manual CI `37408651034` at results commit `c9a9d63` passed Linux's 296 installed
+SDK regressions, then failed executable documentation: resolving a POSIX venv's
+Python symlink selected its base interpreter. The documentation checker now
+launches the original absolute interpreter path and resolves only its parent
+for the outside-checkout guard. A real symlink-venv regression passed on Linux;
+Windows skips that POSIX-specific test. The corrected ordinary Linux wheel check
+passed 296 SDK regressions, 224 portable contracts and all three document examples.
+This source-only validation repair changes no measured runtime or harness byte.
+The failed run is retained and cannot authorize publication.
+
 ## Executed baseline and candidate checks
 
 The unchanged v0.2.3 source (`6dae35fc9fdd3cf7d751aa73d0c72a435b47578b`)
@@ -102,6 +112,7 @@ it does not make older artifact fingerprints interchangeable.
 | A mechanical post-freeze correction needed a fresh protocol while retaining all earlier costs | One verified append-only protocol revision changes only run/freeze/owned epoch identity | Exact prefix and clock retained; unknown use, changed limits, tampered budget/exit proof and stale clients remain blocked |
 | A fresh rule header named an internal ID different from its question's entity | A neutral public-rule header and new unused development IDs | `test_corrective_rules_do_not_override_question_scope_with_internal_ids` checks question facts and exact witness spans |
 | The resource forecast ignored corrective warm request prefixes | Include paid original/corrective development timing without primary outcomes | `test_corrective_development_timings_enter_forecast_without_primary_outcomes` covers new warm/pilot IDs and excludes confirmation/sensitivity/calibration |
+| Resolving a POSIX venv interpreter symlink launched the base Python for documentation examples | Retain the selected executable path; resolve its parent for the checkout boundary | A real outside-checkout symlink venv executes three examples and the module CLI; ordinary Linux SDK/portable/document checks pass |
 
 Old FAIL/UNKNOWN, pending invocation, withdrawal, contract changes, exact-ID
 resolution, helper/proof AND/OR and grounded-cycle behavior remain covered by

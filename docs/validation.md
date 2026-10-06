@@ -16,6 +16,19 @@ Final distribution, exact-commit native CI and official public installation are
 distinct gates recorded in the later
 [Release verification](https://github.com/kadubon/evidence-gap-router/releases/download/v0.2.4/publication-verification-v0.2.4.json).
 
+These 698 source tests preceded manual run `37408651034` at `c9a9d63`. That run
+passed Linux's 296 installed SDK tests but found a documentation-launcher defect:
+resolving the venv interpreter symlink selected base Python. After the source-only
+repair, an actual ordinary Linux install passed the 296 SDK tests, 224 portable
+contracts and three full document examples. A new executable POSIX-symlink
+regression passed on Linux; it is explicitly inapplicable on Windows. Final source
+and new exact-commit CI counts are recorded separately in Release verification.
+
+The repaired Windows source passed locked sync, Ruff (120 files), mypy (14
+modules) and **698 passed / one POSIX-only skip in 27.77 seconds**. Its raw
+measurement fingerprints remain unchanged; the additional test exercises only
+the executable documentation launcher.
+
 ## v0.2.4 development validation
 
 The corrective implementation `11a1c54764edbc0e390473929182a911f9e127b0`

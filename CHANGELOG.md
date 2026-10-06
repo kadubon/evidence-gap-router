@@ -16,6 +16,8 @@
 - Reorganize English/Japanese entry points, execute ordinary installed callback
   and UTF-8 file examples, and add hash-pinned bounded raw extraction/reanalysis.
   See the current experiment reports for measured conditions and limitations.
+- Preserve POSIX venv interpreter symlinks when executing documentation examples;
+  verify the actual selected environment rather than launching base Python.
 
 ## 0.2.3
 

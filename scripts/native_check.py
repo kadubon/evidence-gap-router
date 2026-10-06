@@ -11,6 +11,7 @@ import tomllib
 from pathlib import Path
 
 SOURCE_ONLY_TESTS = {
+    "test_docs.py",
     "test_release_guard.py",
     "test_package_audit.py",
     "test_publication_verification.py",
